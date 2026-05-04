@@ -40,4 +40,7 @@ USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-CMD ["node", "server.js"]
+COPY --from=builder --chown=nextjs:nodejs /app/.env.production ./
+COPY --from=builder --chown=nextjs:nodejs /app/start-standalone.js ./
+RUN npm install dotenv
+CMD ["node", "start-standalone.js"]
