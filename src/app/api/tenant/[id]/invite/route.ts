@@ -28,15 +28,21 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: currentMembership } = await supabaseAdmin
-      .from("tenant_users")
-      .select("role")
-      .eq("tenant_id", tenantId)
-      .eq("user_id", user.id)
-      .single();
+    // Platform super-admin bypass: PLATFORM_ADMIN_EMAIL can manage any tenant
+    const platformAdminEmail = process.env.PLATFORM_ADMIN_EMAIL;
+    const isPlatformAdmin = platformAdminEmail && user.email === platformAdminEmail;
 
-    if (!currentMembership || !["OWNER", "ADMIN"].includes(currentMembership.role)) {
-      return NextResponse.json({ error: "Forbidden: Solo OWNER/ADMIN pueden invitar usuarios" }, { status: 403 });
+    if (!isPlatformAdmin) {
+      const { data: currentMembership } = await supabaseAdmin
+        .from("tenant_users")
+        .select("role")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (!currentMembership || !["OWNER", "ADMIN"].includes(currentMembership.role)) {
+        return NextResponse.json({ error: "Forbidden: Solo OWNER/ADMIN pueden invitar usuarios" }, { status: 403 });
+      }
     }
 
     const body = await request.json();
