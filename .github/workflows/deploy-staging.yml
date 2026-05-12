@@ -1,25 +1,27 @@
-name: Deploy Mission Control → Production
+name: Deploy Mission Control → Staging
 
 on:
   push:
     branches:
-      - main
+      - staging
   workflow_dispatch:
 
 env:
   PROJECT_ID: teseobot-487515
   REGION: us-central1
-  SERVICE_NAME: crm-mission-control
+  SERVICE_NAME: crm-mission-control-staging
   GAR_LOCATION: us-central1-docker.pkg.dev
   REPOSITORY: crm-agentico
+  IMAGE_TAG: ${{ github.sha }}
 
+# Permisos mínimos para OIDC (sin JSON estático)
 permissions:
   contents: read
   id-token: write
 
 jobs:
   build-and-deploy:
-    name: Build & Deploy → Production
+    name: Build & Deploy → Staging
     runs-on: ubuntu-latest
 
     steps:
@@ -34,13 +36,15 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
+      # ── Docker Buildx con caché de GitHub Actions ──────────────────────────
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Configure Docker for GCP Artifact Registry
         run: gcloud auth configure-docker ${{ env.GAR_LOCATION }} --quiet
 
-      # ── Build SIN build-args de secretos ──────────────────────────────────
+      # ── Build SIN build-args de secretos (secretos solo se inyectan en runtime) ──
+      # NEXT_PUBLIC_* se resuelven en runtime via GCP Secret Manager en Cloud Run.
       - name: Build and Push Docker Image (with GHA cache)
         uses: docker/build-push-action@v5
         with:
@@ -48,35 +52,37 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-            ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:latest
+            ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:staging-latest
+          # Caché de capas entre builds: reduce tiempo de 5min → ~40s
           cache-from: type=gha,scope=${{ env.SERVICE_NAME }}
           cache-to: type=gha,mode=max,scope=${{ env.SERVICE_NAME }}
 
-      # ── Escaneo de vulnerabilidades (bloquea si hay CRITICAL) ─────────────
+      # ── Escaneo de vulnerabilidades de imagen ──────────────────────────────
       - name: Scan Image for Vulnerabilities (Trivy)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          image-ref: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}
           format: table
           exit-code: '1'
           severity: CRITICAL
 
-      # ── Deploy a Cloud Run Production ──────────────────────────────────────
-      - name: Deploy to Cloud Run (Production)
+      # ── Deploy a Cloud Run Staging (secretos inyectados por Secret Manager) ──
+      - name: Deploy to Cloud Run (Staging)
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
-          image: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          flags: '--cpu-boost'
+          image: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ env.IMAGE_TAG }}
+          flags: '--cpu-boost'  # Reduce cold-start latency
           env_vars: |
-            NODE_ENV=production
+            NODE_ENV=staging
+          # Secretos inyectados desde GCP Secret Manager en runtime (nunca en build)
           secrets: |
             NEXT_PUBLIC_SUPABASE_URL=MISSION_CONTROL_SUPABASE_URL:latest
             NEXT_PUBLIC_SUPABASE_ANON_KEY=MISSION_CONTROL_SUPABASE_ANON_KEY:latest
             SUPABASE_SERVICE_ROLE_KEY=MISSION_CONTROL_SUPABASE_SERVICE_KEY:latest
 
-      - name: Print Production URL
-        run: echo "🚀 Producción desplegada en ${{ steps.deploy.outputs.url }}"
+      - name: Print Staging URL
+        run: echo "✅ Staging desplegado en ${{ steps.deploy.outputs.url }}"

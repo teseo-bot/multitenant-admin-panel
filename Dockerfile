@@ -11,13 +11,13 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 COPY start-standalone.js ./
-COPY .env.production ./
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# NEXT_PUBLIC_* requieren ARG porque Next.js los incrusta en el bundle estático en build time.
+# SUPABASE_SERVICE_ROLE_KEY es server-only y NUNCA debe bakearse en una capa de imagen.
+# Se inyecta exclusivamente en runtime desde GCP Secret Manager via Cloud Run.
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-ARG SUPABASE_SERVICE_ROLE_KEY
-
 
 RUN npm run build
 
@@ -41,6 +41,6 @@ USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-COPY --from=builder --chown=nextjs:nodejs /app/.env.production ./
+# .env.production NO se copia al runner: los secretos llegan vía GCP Secret Manager en runtime.
 COPY --from=builder --chown=nextjs:nodejs /app/start-standalone.js ./
 CMD ["node", "start-standalone.js"]

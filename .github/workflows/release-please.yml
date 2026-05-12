@@ -1,0 +1,39 @@
+name: Release Please (Semantic Versioning)
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+
+    steps:
+      - name: Run Release Please
+        id: release
+        uses: google-github-actions/release-please-action@v4
+        with:
+          release-type: node
+          # El CHANGELOG.md se genera automáticamente a partir de Conventional Commits:
+          # feat: → MINOR bump (v1.1.0)
+          # fix:  → PATCH bump (v1.0.1)
+          # feat!: o BREAKING CHANGE → MAJOR bump (v2.0.0)
+          changelog-types: |
+            [
+              {"type":"feat","section":"✨ Features"},
+              {"type":"fix","section":"🐛 Bug Fixes"},
+              {"type":"perf","section":"⚡ Performance"},
+              {"type":"security","section":"🔒 Security"},
+              {"type":"refactor","section":"♻️ Refactor"},
+              {"type":"docs","section":"📖 Docs"},
+              {"type":"chore","section":"🔧 Chore","hidden":true}
+            ]
