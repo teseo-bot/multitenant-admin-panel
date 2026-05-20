@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import pkg from "../../../package.json";
 
 interface SidebarFooterProps {
   expanded: boolean;
@@ -90,6 +91,15 @@ export function SidebarFooter({ expanded, user, onLogout }: SidebarFooterProps) 
           </form>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Version Indicator */}
+      {expanded && (
+        <div className="text-center">
+          <span className="text-[10px] font-mono text-muted-foreground/50 select-none">
+            v{pkg.version}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

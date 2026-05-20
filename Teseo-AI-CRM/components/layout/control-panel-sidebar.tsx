@@ -10,8 +10,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
+import pkg from "../../../package.json"
 
 const items = [
   {
@@ -67,6 +69,11 @@ export function ControlPanelSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="p-4 flex justify-center">
+        <span className="text-[10px] font-mono text-muted-foreground/50 select-none">
+          v{pkg.version}
+        </span>
+      </SidebarFooter>
     </Sidebar>
   )
 }
