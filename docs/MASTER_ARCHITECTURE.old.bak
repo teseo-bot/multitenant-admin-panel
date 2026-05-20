@@ -1,0 +1,36 @@
+# MASTER ARCHITECTURE (SSOT)
+**Date:** 27 April 2026
+**Status:** ACTIVE
+
+## 1. Core Ecosystem (Hub & Spoke)
+- **teseo-mission-control (Admin):** Global B2B control panel. Manages Tenant configurations, limits, FinOps, and Kill Switches. Uses Supabase (Service Role) to provision configs.
+- **Teseo-AI-CRM (Tenant Frontend):** Customer-facing Command Center. Uses dynamic theming (oklch), segregated URL/Subdomain rendering, and consumes \`tenant_configs\` for branding and features.
+- **crm-agentico-orchestrator:** Node.js/LangGraph service running on Cloud Run Gen2. Evaluates incoming webhooks (Meta, Telegram, MCP) and applies LLM Tier selection per agent (Gatekeeper, SDR, RAG).
+- **Supabase (Data Plane):** Central Postgres DB serving auth, tenant isolation (RLS), config storage (JSONB), and vector embeddings (RAG).
+
+## 2. Architectural Decisions (Sprint 27 April 2026)
+- **Deprecations:** Legacy monolith config documents are DEPRECATED. `tenant_configs` JSONB is the unified source of truth for features (channels, mcp_servers, customer_data, semantic_prompts).
+- **Channel Omnichannel:** Moved from hardcoded DB columns to a JSONB array/dict (`features.channels` and `features.mcp_servers`) ensuring scalability to add future MCPs without SQL migrations.
+- **UI Decoupling:** `TenantThemeStyle` removed from Mission Control to prevent corporate branding leakage. Tenant portal remains entirely dynamic.
+- **Scorched Earth Backup:** `POST /api/tenant/[id]/backup` acts as the gateway for the Kill Switch, triggering an async Postgres schema backup prior to suspending access.
+- **Inverse Render Prop for Navigation:** Adopted strictly to fix hydration crashes with `@base-ui` React components in Shadcn (Error 31).
+
+## 3. Deployment Constraints
+- **Polyrepo:** Strict separation of concerns (one repo per app/service).
+- **Cloud Run:** All stateless frontends and orchestrators deploy as containerized services on GCP `us-central1`.
+
+## 4. Architectural Decisions (Sprint 28 April 2026)
+- **Webhook Proxy & Sidecar Trirreme:** Implementación estable de la arquitectura Multi-Container en Cloud Run Gen2 para `crm-agentico-orchestrator`. El sidecar Trirreme (Rust headless browser) se ejecuta de forma local en el pod. Inyección de llaves en producción (`TELEGRAM_BOT_TOKEN`, `TENANT_OS_URL`) estrictamente mediada por GCP Secret Manager. El enrutamiento de webhooks a través del Gatekeeper ha sido certificado (0 errores de autorización 401).
+
+---
+
+## [UPDATE 30 Abril 2026] Clean Room & Multi-Tenant Docker Swarm
+
+**Decisión Arquitectónica (ADR): Orquestación de Enjambres Concurrentes en Polyrepo**
+- **Clean Room:** La raíz absoluta del proyecto ha sido extraída de los proyectos generales hacia `/Users/teseohome/Teseo_AI/`.
+- **Topología de Servicios (Maestro):** Un solo `docker-compose.yml` gobierna los recursos inter-agentes.
+  - `postgres` (puerto 5436) provee LangGraph Checkpointing.
+  - `obscura` (puerto 9222) provee scraping headless para el orquestador.
+  - `odoo_mcp` (puerto 3100) actúa como proxy hacia GCP.
+  - `fleetco_tenant` (puerto 4000) actúa como el tenant semilla para los enjambres.
+- **Deprecación Estricta:** Cualquier ADR, RFC, o Post-Mortem previo que asuma que "Obscura fue sustituido por Trirreme" o que recomiende el uso de un `docker-compose.yml` aislado por cada repositorio queda marcado como **DEPRECATED**. La orquestación es centralizada en la red `teseo_network`. El código de `trirreme` era una clonación exacta de `obscura` y ha sido restituido a su nombre original.

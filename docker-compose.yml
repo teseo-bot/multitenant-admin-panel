@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: teseo_postgres_dev
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  orchestrator:
+    build:
+      context: ./crm-agentico-orchestrator
+      dockerfile: Dockerfile.dev
+    container_name: teseo_orchestrator_dev
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres
+      - NODE_ENV=development
+      - TELEGRAM_BOT_TOKEN=dev_dummy_token
+      - TENANT_OS_URL=http://frontend:3000
+      - M2M_API_KEY=dev_m2m_key
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./Teseo-AI-CRM
+      dockerfile: Dockerfile
+    container_name: teseo_frontend_prod
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=http://localhost:5432 # Ajustar según el entorno si hay API gateway real
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy_anon_key
+      - SUPABASE_SERVICE_ROLE_KEY=dummy_service_key
+      - ORCHESTRATOR_URL=http://orchestrator:3000
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

@@ -1,0 +1,346 @@
+
+> crm-agentico-panel@0.1.0 dev
+> next dev -p 5175
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:5175
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 981ms
+ ✓ Compiled /middleware in 211ms (125 modules)
+ ○ Compiling /command-center ...
+ ✓ Compiled /command-center in 2.1s (1424 modules)
+Warning: React does not recognize the `autoSaveId` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `autosaveid` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at div
+    at Ut (webpack-internal:///(ssr)/./node_modules/react-resizable-panels/dist/react-resizable-panels.js:1342:25)
+    at ResizablePanelGroup (webpack-internal:///(ssr)/./components/ui/resizable.tsx:14:32)
+    at div
+    at CommandCenterLayout (webpack-internal:///(ssr)/./components/command-center/command-center-layout.tsx:28:84)
+    at Lazy
+    at div
+    at div
+    at InnerLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:242:11)
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at NotFoundBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:347:11)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at Lazy
+    at OuterLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:367:11)
+    at Lazy
+    at InnerLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:242:11)
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at NotFoundErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:347:11)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at Lazy
+    at OuterLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:367:11)
+    at Lazy
+    at main
+    at div
+    at SidebarProvider (webpack-internal:///(ssr)/./components/ui/sidebar.tsx:72:28)
+    at Lazy
+    at FloatingDelayGroup (webpack-internal:///(ssr)/./node_modules/@base-ui/react/esm/floating-ui-react/components/FloatingDelayGroup.js:48:13)
+    at TooltipProvider (webpack-internal:///(ssr)/./node_modules/@base-ui/react/esm/tooltip/provider/TooltipProvider.js:19:13)
+    at TooltipProvider (webpack-internal:///(ssr)/./components/ui/tooltip.tsx:21:28)
+    at Lazy
+    at InnerLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:242:11)
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at NotFoundErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:347:11)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at Lazy
+    at OuterLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:367:11)
+    at Lazy
+    at QueryClientProvider (webpack-internal:///(ssr)/./node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:23:30)
+    at Providers (webpack-internal:///(ssr)/./app/providers.tsx:14:22)
+    at Lazy
+    at V (webpack-internal:///(ssr)/./node_modules/next-themes/dist/index.mjs:47:24)
+    at J (webpack-internal:///(ssr)/./node_modules/next-themes/dist/index.mjs:42:48)
+    at ThemeProvider (webpack-internal:///(ssr)/./components/theme-provider.tsx:13:26)
+    at Lazy
+    at body
+    at html
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at ReactDevOverlay (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/react-dev-overlay/app/ReactDevOverlay.js:87:9)
+    at HotReload (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:322:11)
+    at Router (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/app-router.js:202:11)
+    at ErrorBoundaryHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:112:9)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at AppRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/app-router.js:564:13)
+    at Lazy
+    at r7 (/Users/teseohome/projects/Teseo-AI-CRM/crm-agentico-panel/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:40:19155)
+    at r7 (/Users/teseohome/projects/Teseo-AI-CRM/crm-agentico-panel/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:40:19155)
+    at ServerInsertedHTMLProvider (/Users/teseohome/projects/Teseo-AI-CRM/crm-agentico-panel/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:40:24939)
+ HEAD /command-center 200 in 2216ms
+ ✓ Compiled in 181ms (696 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (215kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ GET /command-center 200 in 16ms
+ ✓ Compiled /api/leads in 232ms (881 modules)
+ GET /api/leads 401 in 310ms
+ GET /api/leads 401 in 6ms
+Warning: React does not recognize the `autoSaveId` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `autosaveid` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at div
+    at Ut (webpack-internal:///(ssr)/./node_modules/react-resizable-panels/dist/react-resizable-panels.js:1342:25)
+    at ResizablePanelGroup (webpack-internal:///(ssr)/./components/ui/resizable.tsx:14:32)
+    at div
+    at CommandCenterLayout (webpack-internal:///(ssr)/./components/command-center/command-center-layout.tsx:28:84)
+    at Lazy
+    at div
+    at div
+    at InnerLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:242:11)
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at NotFoundBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:347:11)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at Lazy
+    at OuterLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:367:11)
+    at Lazy
+    at InnerLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:242:11)
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at NotFoundErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:347:11)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at Lazy
+    at OuterLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:367:11)
+    at Lazy
+    at main
+    at div
+    at SidebarProvider (webpack-internal:///(ssr)/./components/ui/sidebar.tsx:72:28)
+    at Lazy
+    at FloatingDelayGroup (webpack-internal:///(ssr)/./node_modules/@base-ui/react/esm/floating-ui-react/components/FloatingDelayGroup.js:48:13)
+    at TooltipProvider (webpack-internal:///(ssr)/./node_modules/@base-ui/react/esm/tooltip/provider/TooltipProvider.js:19:13)
+    at TooltipProvider (webpack-internal:///(ssr)/./components/ui/tooltip.tsx:21:28)
+    at Lazy
+    at InnerLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:242:11)
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at NotFoundErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:347:11)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at Lazy
+    at OuterLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:367:11)
+    at Lazy
+    at QueryClientProvider (webpack-internal:///(ssr)/./node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:23:30)
+    at Providers (webpack-internal:///(ssr)/./app/providers.tsx:14:22)
+    at Lazy
+    at V (webpack-internal:///(ssr)/./node_modules/next-themes/dist/index.mjs:47:24)
+    at J (webpack-internal:///(ssr)/./node_modules/next-themes/dist/index.mjs:42:48)
+    at ThemeProvider (webpack-internal:///(ssr)/./components/theme-provider.tsx:13:26)
+    at Lazy
+    at body
+    at html
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at ReactDevOverlay (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/react-dev-overlay/app/ReactDevOverlay.js:87:9)
+    at HotReload (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:322:11)
+    at Router (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/app-router.js:202:11)
+    at ErrorBoundaryHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:112:9)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at AppRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/app-router.js:564:13)
+    at Lazy
+    at r7 (/Users/teseohome/projects/Teseo-AI-CRM/crm-agentico-panel/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:40:19155)
+    at r7 (/Users/teseohome/projects/Teseo-AI-CRM/crm-agentico-panel/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:40:19155)
+    at ServerInsertedHTMLProvider (/Users/teseohome/projects/Teseo-AI-CRM/crm-agentico-panel/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:40:24939)
+ GET /command-center 200 in 99ms
+ GET /api/leads 401 in 3ms
+ GET /api/leads 401 in 6ms
+ GET /api/leads 401 in 6ms
+ GET /command-center 200 in 14ms
+ GET /api/leads 401 in 4ms
+ GET /api/leads 401 in 6ms
+ GET /api/leads 401 in 2ms
+ GET /api/leads 401 in 7ms
+ ✓ Compiled in 271ms (1415 modules)
+ ✓ Compiled in 93ms (1399 modules)
+Warning: React does not recognize the `autoSaveId` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `autosaveid` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at div
+    at Ut (webpack-internal:///(ssr)/./node_modules/react-resizable-panels/dist/react-resizable-panels.js:1342:25)
+    at ResizablePanelGroup (webpack-internal:///(ssr)/./components/ui/resizable.tsx:14:32)
+    at div
+    at CommandCenterLayout (webpack-internal:///(ssr)/./components/command-center/command-center-layout.tsx:28:84)
+    at Lazy
+    at div
+    at div
+    at InnerLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:242:11)
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at NotFoundBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:347:11)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at Lazy
+    at OuterLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:367:11)
+    at Lazy
+    at InnerLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:242:11)
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at NotFoundErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:347:11)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at Lazy
+    at OuterLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:367:11)
+    at Lazy
+    at main
+    at div
+    at SidebarProvider (webpack-internal:///(ssr)/./components/ui/sidebar.tsx:72:28)
+    at Lazy
+    at FloatingDelayGroup (webpack-internal:///(ssr)/./node_modules/@base-ui/react/esm/floating-ui-react/components/FloatingDelayGroup.js:48:13)
+    at TooltipProvider (webpack-internal:///(ssr)/./node_modules/@base-ui/react/esm/tooltip/provider/TooltipProvider.js:19:13)
+    at TooltipProvider (webpack-internal:///(ssr)/./components/ui/tooltip.tsx:21:28)
+    at Lazy
+    at InnerLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:242:11)
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at NotFoundErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:347:11)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at Lazy
+    at OuterLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:367:11)
+    at Lazy
+    at QueryClientProvider (webpack-internal:///(ssr)/./node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:23:30)
+    at Providers (webpack-internal:///(ssr)/./app/providers.tsx:14:22)
+    at Lazy
+    at V (webpack-internal:///(ssr)/./node_modules/next-themes/dist/index.mjs:47:24)
+    at J (webpack-internal:///(ssr)/./node_modules/next-themes/dist/index.mjs:42:48)
+    at ThemeProvider (webpack-internal:///(ssr)/./components/theme-provider.tsx:13:26)
+    at Lazy
+    at body
+    at html
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at ReactDevOverlay (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/react-dev-overlay/app/ReactDevOverlay.js:87:9)
+    at HotReload (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:322:11)
+    at Router (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/app-router.js:202:11)
+    at ErrorBoundaryHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:112:9)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at AppRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/app-router.js:564:13)
+    at Lazy
+    at r7 (/Users/teseohome/projects/Teseo-AI-CRM/crm-agentico-panel/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:40:19155)
+    at r7 (/Users/teseohome/projects/Teseo-AI-CRM/crm-agentico-panel/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:40:19155)
+    at ServerInsertedHTMLProvider (/Users/teseohome/projects/Teseo-AI-CRM/crm-agentico-panel/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:40:24939)
+ GET /command-center 200 in 122ms
+ ✓ Compiled /api/leads in 106ms (882 modules)
+ GET /api/leads 401 in 170ms
+ ○ Compiling /auth/login ...
+ ✓ Compiled /auth/login in 659ms (1842 modules)
+ GET /auth/login 200 in 776ms
+Warning: React does not recognize the `autoSaveId` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `autosaveid` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at div
+    at Ut (webpack-internal:///(ssr)/./node_modules/react-resizable-panels/dist/react-resizable-panels.js:1342:25)
+    at ResizablePanelGroup (webpack-internal:///(ssr)/./components/ui/resizable.tsx:14:32)
+    at div
+    at CommandCenterLayout (webpack-internal:///(ssr)/./components/command-center/command-center-layout.tsx:28:84)
+    at Lazy
+    at div
+    at div
+    at InnerLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:242:11)
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at NotFoundBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:347:11)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at Lazy
+    at OuterLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:367:11)
+    at Lazy
+    at InnerLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:242:11)
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at NotFoundErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:347:11)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at Lazy
+    at OuterLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:367:11)
+    at Lazy
+    at main
+    at div
+    at SidebarProvider (webpack-internal:///(ssr)/./components/ui/sidebar.tsx:72:28)
+    at Lazy
+    at FloatingDelayGroup (webpack-internal:///(ssr)/./node_modules/@base-ui/react/esm/floating-ui-react/components/FloatingDelayGroup.js:48:13)
+    at TooltipProvider (webpack-internal:///(ssr)/./node_modules/@base-ui/react/esm/tooltip/provider/TooltipProvider.js:19:13)
+    at TooltipProvider (webpack-internal:///(ssr)/./components/ui/tooltip.tsx:21:28)
+    at Lazy
+    at InnerLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:242:11)
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at NotFoundErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:347:11)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at Lazy
+    at OuterLayoutRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/layout-router.js:367:11)
+    at Lazy
+    at QueryClientProvider (webpack-internal:///(ssr)/./node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:23:30)
+    at Providers (webpack-internal:///(ssr)/./app/providers.tsx:14:22)
+    at Lazy
+    at V (webpack-internal:///(ssr)/./node_modules/next-themes/dist/index.mjs:47:24)
+    at J (webpack-internal:///(ssr)/./node_modules/next-themes/dist/index.mjs:42:48)
+    at ThemeProvider (webpack-internal:///(ssr)/./components/theme-provider.tsx:13:26)
+    at Lazy
+    at body
+    at html
+    at RedirectErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:73:9)
+    at RedirectBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/redirect-boundary.js:81:11)
+    at ReactDevOverlay (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/react-dev-overlay/app/ReactDevOverlay.js:87:9)
+    at HotReload (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:322:11)
+    at Router (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/app-router.js:202:11)
+    at ErrorBoundaryHandler (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:112:9)
+    at ErrorBoundary (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/error-boundary.js:158:11)
+    at AppRouter (webpack-internal:///(ssr)/./node_modules/next/dist/client/components/app-router.js:564:13)
+    at Lazy
+    at r7 (/Users/teseohome/projects/Teseo-AI-CRM/crm-agentico-panel/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:40:19155)
+    at r7 (/Users/teseohome/projects/Teseo-AI-CRM/crm-agentico-panel/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:40:19155)
+    at ServerInsertedHTMLProvider (/Users/teseohome/projects/Teseo-AI-CRM/crm-agentico-panel/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:40:24939)
+ GET /command-center 200 in 27ms
+ POST /api/leads 401 in 28ms
+ GET /auth/login 200 in 15ms
+ GET /auth/login 200 in 17ms
+ GET /command-center 200 in 19ms
