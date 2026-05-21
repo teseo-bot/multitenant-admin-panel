@@ -38,8 +38,6 @@ export async function POST(
 
     const { action } = parsedBody.data;
 
-    const supabase = await createClient();
-
     const {
       data: { user },
       error: userError,
@@ -81,40 +79,25 @@ export async function POST(
     }
 
     // Call LangGraph internal webhook to inject is_human_handled state
-    if (updatedLead.thread_id && action === 'take_over') {
+    if (updatedLead?.thread_id && action === 'take_over') {
       const COMPILER_URL = process.env.COMPILER_INTERNAL_URL || 'http://localhost:8000';
-      
       fetch(`${COMPILER_URL}/api/internal/graph/interrupt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          thread_id: updatedLead.thread_id,
-          is_human_handled: true
-        })
-      }).catch(err => {
-        console.error('Failed to signal LangGraph orchestrator:', err);
-      });
-    } else if (updatedLead.thread_id && action === 'return_to_agent') {
+        body: JSON.stringify({ thread_id: updatedLead.thread_id, is_human_handled: true })
+      }).catch(err => console.error(err));
+    } else if (updatedLead?.thread_id && action === 'return_to_agent') {
       const COMPILER_URL = process.env.COMPILER_INTERNAL_URL || 'http://localhost:8000';
-      
       fetch(`${COMPILER_URL}/api/internal/graph/interrupt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          thread_id: updatedLead.thread_id,
-          is_human_handled: false
-        })
-      }).catch(err => {
-        console.error('Failed to signal LangGraph orchestrator:', err);
-      });
+        body: JSON.stringify({ thread_id: updatedLead.thread_id, is_human_handled: false })
+      }).catch(err => console.error(err));
     }
 
     return NextResponse.json(updatedLead, { status: 200 });
   } catch (error: unknown) {
     console.error('Unhandled error in POST /api/leads/[id]/handoff:', error);
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

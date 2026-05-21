@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import pkg from "../../../package.json";
+
+const VERSION = "1.0.1";
 
 interface SidebarFooterProps {
   expanded: boolean;
@@ -96,7 +97,7 @@ export function SidebarFooter({ expanded, user, onLogout }: SidebarFooterProps) 
       {expanded && (
         <div className="text-center">
           <span className="text-[10px] font-mono text-muted-foreground/50 select-none">
-            v{pkg.version}
+            v{VERSION}
           </span>
         </div>
       )}
