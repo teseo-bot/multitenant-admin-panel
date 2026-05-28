@@ -1,0 +1,78 @@
+name: Deploy Mission Control → Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: teseocontextkdb
+  REGION: us-central1
+  SERVICE_NAME: crm-mission-control
+  GAR_LOCATION: us-central1-docker.pkg.dev
+  REPOSITORY: teseo-context-repo
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy → Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP via Workload Identity
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/137810875111/locations/global/workloadIdentityPools/github-actions/providers/github-actions-provider'
+          service_account: 'github-deployer@teseocontextkdb.iam.gserviceaccount.com'
+
+      - name: Fetch Secrets from GCP for NextJS Build
+        id: fetch-secrets
+        uses: google-github-actions/get-secretmanager-secrets@v2
+        with:
+          secrets: |-
+            SUPABASE_URL:teseocontextkdb/SUPABASE_URL/latest
+            SUPABASE_ANON_KEY:teseocontextkdb/SUPABASE_ANON_KEY/latest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure Docker for GCP Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }} --quiet
+
+      - name: Build and Push Docker Image (with GHA cache)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Teseo-AI-CRM
+          file: ./Teseo-AI-CRM/Dockerfile
+          push: true
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ steps.fetch-secrets.outputs.SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ steps.fetch-secrets.outputs.SUPABASE_ANON_KEY }}
+          tags: |
+            ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+            ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:latest
+
+      - name: Deploy to Cloud Run (Production)
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          flags: '--cpu-boost'
+          env_vars: |
+            NODE_ENV=production
+          secrets: |
+            NEXT_PUBLIC_SUPABASE_URL=SUPABASE_URL:latest
+            SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest
+
+      - name: Print Production URL
+        run: echo "🚀 Producción desplegada en ${{ steps.deploy.outputs.url }}"
