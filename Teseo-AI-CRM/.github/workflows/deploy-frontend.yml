@@ -1,4 +1,4 @@
-name: Deploy Teseo-AI-CRM Frontend to Cloud Run
+name: Deploy Mission Control → Production
 
 on:
   push:
@@ -7,75 +7,74 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_ID: teseobot-487515
+  PROJECT_ID: teseocontextkdb
   REGION: us-central1
-  SERVICE_NAME: crm-frontend
+  SERVICE_NAME: multitenant-admin-panel
   GAR_LOCATION: us-central1-docker.pkg.dev
-  REPOSITORY: crm-agentico
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  REPOSITORY: teseo-context-repo
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   build-and-deploy:
-    name: Build & Deploy to Cloud Run
+    name: Build & Deploy → Production
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Authenticate to GCP
+      - name: Authenticate to GCP via Workload Identity
         id: auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+          workload_identity_provider: 'projects/137810875111/locations/global/workloadIdentityPools/github-actions/providers/github-actions-provider'
+          service_account: 'github-deployer@teseocontextkdb.iam.gserviceaccount.com'
+
+      - name: Fetch Secrets from GCP for NextJS Build
+        id: fetch-secrets
+        uses: google-github-actions/get-secretmanager-secrets@v2
+        with:
+          secrets: |-
+            SUPABASE_URL:teseocontextkdb/SUPABASE_URL/latest
+            SUPABASE_ANON_KEY:teseocontextkdb/SUPABASE_ANON_KEY/latest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Configure Docker for GCP Artifact Registry
-        run: |-
-          gcloud auth configure-docker ${{ env.GAR_LOCATION }}
+        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }} --quiet
 
-      - name: Build Docker Image
-        working-directory: .
-        env:
-          SUPA_URL: ${{ secrets.MISSION_CONTROL_SUPABASE_URL }}
-          SUPA_ANON: ${{ secrets.MISSION_CONTROL_SUPABASE_ANON_KEY }}
-        run: |-
-          docker build -t ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
-          --build-arg NEXT_PUBLIC_SUPABASE_URL="$SUPA_URL" \
-          --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$SUPA_ANON" -f ./Dockerfile .
+      - name: Build and Push Docker Image (with GHA cache)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Teseo-AI-CRM
+          file: ./Teseo-AI-CRM/Dockerfile
+          push: true
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ steps.fetch-secrets.outputs.SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ steps.fetch-secrets.outputs.SUPABASE_ANON_KEY }}
+          tags: |
+            ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+            ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:latest
+          cache-from: type=gha,scope=${{ env.SERVICE_NAME }}
+          cache-to: type=gha,mode=max,scope=${{ env.SERVICE_NAME }}
 
-      - name: Push Image to Artifact Registry
-        run: |-
-          docker push ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-
-      - name: Deploy to Cloud Run
+      - name: Deploy to Cloud Run (Production)
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
           image: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          flags: '--cpu-boost'
           env_vars: |
             NODE_ENV=production
           secrets: |
-            DATABASE_URL=DATABASE_URL:latest
-            DB_PASSWORD=DB_PASSWORD:latest
-            JWT_SECRET=JWT_SECRET:latest
-            KDB_DATABASE_URL=KDB_DATABASE_URL:latest
-            M2M_API_KEY=M2M_API_KEY:latest
-            MISSION_CONTROL_INTERNAL_API_KEY=MISSION_CONTROL_INTERNAL_API_KEY:latest
-            MISSION_CONTROL_SUPABASE_ANON_KEY=MISSION_CONTROL_SUPABASE_ANON_KEY:latest
-            MISSION_CONTROL_SUPABASE_SERVICE_KEY=MISSION_CONTROL_SUPABASE_SERVICE_KEY:latest
-            MISSION_CONTROL_SUPABASE_URL=MISSION_CONTROL_SUPABASE_URL:latest
-            OCR_BASE_URL=OCR_BASE_URL:latest
-            OPENAI_API_KEY=OPENAI_API_KEY:latest
-            OPENCLAW_GATEWAY_URL=OPENCLAW_GATEWAY_URL:latest
-            REDIS_PASSWORD=REDIS_PASSWORD:latest
-            REDIS_URL=REDIS_URL:latest
-            TELEGRAM_BOT_TOKEN=TELEGRAM_BOT_TOKEN:latest
-            TELEGRAM_STAFF_GROUPS=TELEGRAM_STAFF_GROUPS:latest
-            WHATSAPP_API_TOKEN=WHATSAPP_API_TOKEN:latest
-            WHATSAPP_PHONE_NUMBER_ID=WHATSAPP_PHONE_NUMBER_ID:latest
-            WHATSAPP_VERIFY_TOKEN=WHATSAPP_VERIFY_TOKEN:latest
+            NEXT_PUBLIC_SUPABASE_URL=SUPABASE_URL:latest
+            SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest
 
-      - name: Show Deployment URL
-        run: echo "Deployed URL - ${{ steps.deploy.outputs.url }}"
+      - name: Print Production URL
+        run: echo "🚀 Producción desplegada en ${{ steps.deploy.outputs.url }}"
