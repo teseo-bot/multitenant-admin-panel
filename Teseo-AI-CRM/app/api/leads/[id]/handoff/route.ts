@@ -38,7 +38,6 @@ export async function POST(
 
     const { action } = parsedBody.data;
 
-    const supabase = await createClient();
 
     const {
       data: { user },

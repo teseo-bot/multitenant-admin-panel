@@ -89,7 +89,7 @@ export function LeadDetail({ leadId }: LeadDetailProps) {
 
       {/* Main Content: Resizable two-column layout */}
       <ResizablePanelGroup
-        direction="horizontal"
+        {...{direction: "horizontal"} as any}
         className="flex-1 min-h-0 border rounded-b-xl overflow-hidden"
       >
         {/* ─── LEFT: Chat Frame (default ~65%) ─────────────────────── */}

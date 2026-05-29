@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import pkg from "../../../package.json";
+import pkg from "../../package.json";
 
 interface SidebarFooterProps {
   expanded: boolean;

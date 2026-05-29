@@ -13,7 +13,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
-import pkg from "../../../package.json"
+import pkg from "../../package.json"
 
 const items = [
   {
