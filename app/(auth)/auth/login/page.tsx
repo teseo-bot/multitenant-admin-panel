@@ -21,7 +21,7 @@ import { Loader2 } from "lucide-react";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/inbox";
+  const redirectTo = searchParams.get("redirectTo") || "/tenants";
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
 
