@@ -9,7 +9,7 @@ on:
 env:
   PROJECT_ID: teseocontextkdb
   REGION: us-central1
-  SERVICE_NAME: crm-mission-control
+  SERVICE_NAME: multitenant-admin-panel
   GAR_LOCATION: us-central1-docker.pkg.dev
   REPOSITORY: teseo-context-repo
 
