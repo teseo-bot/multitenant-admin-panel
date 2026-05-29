@@ -50,8 +50,8 @@ jobs:
       - name: Build and Push Docker Image (with GHA cache)
         uses: docker/build-push-action@v5
         with:
-          context: ./Teseo-AI-CRM
-          file: ./Teseo-AI-CRM/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
           build-args: |
             NEXT_PUBLIC_SUPABASE_URL=${{ steps.fetch-secrets.outputs.SUPABASE_URL }}

@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "PRD-CRM-LAYOUT-SPRINT.md",
+                "file": "ADR-113_HYBRID_FEDERATED_DB_ARCHITECTURE.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "PRD-CRM-LAYOUT-SPRINT"
+              "title": "ADR-113_HYBRID_FEDERATED_DB_ARCHITECTURE"
             }
           }
         ],
@@ -200,14 +200,9 @@
   },
   "active": "f6390d8a5d29ba4f",
   "lastOpenFiles": [
-    "ADR-170-HUNTER-NODE-AND-CRM-LAYOUT.md",
-    "auditoria_task2_retry.md",
-    "ADR-171-SRE-WATCHDOG.md",
-    "ADR-114-Role-Validation-Pattern.md",
-    "PRD-CRM-LAYOUT-SPRINT.md",
-    "ADR-113_HYBRID_FEDERATED_DB_ARCHITECTURE.md",
     "ADR-113.md",
     "ADR-113-Asset-Studio-Architecture.md",
+    "ADR-113_HYBRID_FEDERATED_DB_ARCHITECTURE.md",
     "ADR-166-Command-Center-Ribbon-Layout.md",
     "MASTER_ARCHITECTURE_2.md",
     "ADR-139-MultiTenant-Onboarding.md",
@@ -226,6 +221,11 @@
     "PRD-BLOQUE31-LangGraph-DynamicPrompts.md",
     "PRD-BLOQUE31-LangGraph.md",
     "POST_MORTEM_BLOQUE29_STABILIZATION.md",
+    "LEARNER_ORCHESTRATOR_BL31.md",
+    "ADR-110-Topologia-Repositorios.md",
+    "ADR-068-Frontend-RBAC.md",
+    "AUDIT_REPORT_RBAC.md",
+    "QA_REPORT_RBAC.md",
     "qa_dashboard.png",
     "rfcs"
   ]
