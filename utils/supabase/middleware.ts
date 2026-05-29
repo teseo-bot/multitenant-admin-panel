@@ -43,7 +43,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && AUTH_ROUTES.some(r => pathname.startsWith(r))) {
     const url = request.nextUrl.clone()
-    url.pathname = '/tenants'
+    url.pathname = '/admin/users'
     return NextResponse.redirect(url)
   }
 
