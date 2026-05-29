@@ -4,7 +4,7 @@ set -e
 echo "Deploying crm-mission-control to Production (us-central1)..."
 gcloud builds submit /Users/teseohome/projects/Teseo-AI-CRM/src/mission-control \
   --config /Users/teseohome/projects/Teseo-AI-CRM/src/mission-control/cloudbuild.yaml \
-  --substitutions=_NEXT_PUBLIC_SUPABASE_URL="https://lrptuwekwgbjutklctwr.supabase.co",_NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxycHR1d2Vrd2dianV0a2xjdHdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1NTM0MDksImV4cCI6MjA5MjEyOTQwOX0.vMVT21nNhqOxYAlHospzHlY1M2SgGX5UJzAAwVZYSa4"
+  --substitutions=_NEXT_PUBLIC_SUPABASE_URL="https://jpmxqzrdeclkgpfuedjf.supabase.co",_NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwbXhxenJkZWNsa2dwZnVlZGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTExNDAsImV4cCI6MjA5NTQ4NzE0MH0.F9qM_RVoo3MBeYGrhRicXLZ0gVM2uk2iukbO1tkQZ3I"
 
 echo "Updating Cloud Run service..."
 gcloud run deploy crm-mission-control \

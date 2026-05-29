@@ -11,7 +11,7 @@ El problema radica en que el archivo `middleware.ts` de Next.js se ejecuta en el
 - Se mantiene el bypass de inyección `.env.production` para el build estático.
 - En el archivo `utils/supabase/middleware.ts` se inyectó un **Fallback Estricto** (Hardcoded Fallback) para las credenciales públicas.
 ```typescript
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://lrptuwekwgbjutklctwr.supabase.co"
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://jpmxqzrdeclkgpfuedjf.supabase.co"
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGci..."
 ```
 Dado que estas credenciales son explícitamente `NEXT_PUBLIC_` (diseñadas para ser legibles por el cliente) y seguras mediante RLS, no representan un riesgo crítico de seguridad al estar hardcodeadas en un fallback, pero garantizan que el Edge Runtime nunca intente instanciar un cliente Supabase nulo.
