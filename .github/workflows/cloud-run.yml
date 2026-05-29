@@ -69,6 +69,8 @@ jobs:
           image: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
           flags: '--cpu-boost'
           env_vars: |
+            COMPILER_INTERNAL_URL=https://context-kdb-orchestrator-psnwfqyhla-uc.a.run.app
+
             NODE_ENV=production
           secrets: |
             NEXT_PUBLIC_SUPABASE_URL=SUPABASE_URL:latest
