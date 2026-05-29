@@ -33,9 +33,9 @@ export function UserForm({ initialData, onSubmit, isLoading }: UserFormProps) {
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
-      name: initialData?.name || "",
+      name: initialData?.name || (initialData as any)?.full_name || "",
       email: initialData?.email || "",
-      role: initialData?.role || "member",
+      role: (initialData?.role as any) === 'GLOBAL_ADMIN' ? 'admin' : (initialData?.role || "member"),
       isActive: initialData?.isActive ?? true,
     },
   })
@@ -82,9 +82,9 @@ export function UserForm({ initialData, onSubmit, isLoading }: UserFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
+                  <SelectItem value="owner">Owner</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="operator">Operator</SelectItem>
-                  <SelectItem value="member">Viewer</SelectItem>
+                  <SelectItem value="member">Member</SelectItem>
                 </SelectContent>
               </Select>
               <FormDescription>

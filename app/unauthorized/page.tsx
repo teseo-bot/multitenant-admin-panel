@@ -15,8 +15,8 @@ export default function UnauthorizedPage() {
             You do not have permission to view this page. If you believe this is an error, please contact your administrator.
           </p>
         </div>
-        <Button render={<Link href="/dashboard" />}>
-          Return to Dashboard
+        <Button render={<Link href="/" />}>
+          Return to Home
         </Button>
       </div>
     </div>
