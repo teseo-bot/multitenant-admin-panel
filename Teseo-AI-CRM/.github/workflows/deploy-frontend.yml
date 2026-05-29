@@ -72,9 +72,6 @@ jobs:
           flags: '--cpu-boost'
           env_vars: |
             NODE_ENV=production
-          secrets: |
-            NEXT_PUBLIC_SUPABASE_URL=SUPABASE_URL:latest
-            SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest
 
       - name: Print Production URL
         run: echo "🚀 Producción desplegada en ${{ steps.deploy.outputs.url }}"
