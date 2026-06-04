@@ -10,8 +10,8 @@ import { Toaster } from "@/components/ui/sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Teseo AI CRM",
-  description: "Agentic CRM Dashboard",
+  title: "Teseo Multitenant Context",
+  description: "Agentic Multitenant Platform",
 };
 
 export default function RootLayout({

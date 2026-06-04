@@ -4,6 +4,8 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { UserRole } from "@/lib/validators/user";
 import { pool } from "@/lib/db";
 
+export const dynamic = 'force-dynamic';
+
 const getAdminClient = () => {
   return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
