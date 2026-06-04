@@ -11,9 +11,9 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { use } from "react"
 
-export default function EditUserPage({ params }: { params: Promise<{ userId: string }> }) {
+export default function EditUserPage({ params }: { params: { userId: string } }) {
   const router = useRouter()
-  const { userId } = use(params)
+  const { userId } = params
   
   const { data: user, isLoading, isError } = useUser(userId)
   const { mutate: updateUser, isPending } = useUpdateUser()

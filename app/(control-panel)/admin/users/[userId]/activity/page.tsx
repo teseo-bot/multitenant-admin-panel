@@ -15,8 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-export default function UserActivityPage({ params }: { params: Promise<{ userId: string }> }) {
-  const { userId } = use(params)
+export default function UserActivityPage({ params }: { params: { userId: string } }) {
+  const { userId } = params
   
   const { data: activity, isLoading, isError } = useUserActivity(userId)
 
