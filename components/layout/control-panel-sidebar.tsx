@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Shield, Settings, Activity, ArrowLeft } from "lucide-react"
+import { LayoutDashboard, Users, Settings, Building2 } from "lucide-react"
 
 import {
   Sidebar,
@@ -9,62 +9,61 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarHeader,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarFooter,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 import pkg from "../../package.json"
 
-const items = [
-  {
-    title: "Overview",
-    url: "/admin",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Users",
-    url: "/admin/users",
-    icon: Users,
-  },
-  {
-    title: "Resilience",
-    url: "/admin/resilience",
-    icon: Shield,
-  },
-  {
-    title: "Activity",
-    url: "/admin/activity",
-    icon: Activity,
-  },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
-]
-
 export function ControlPanelSidebar() {
   return (
     <Sidebar>
-      <SidebarHeader className="border-b px-6 py-4">
-        <Link href="/" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Mission Control</span>
-        </Link>
-      </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="pt-4">
         <SidebarGroup>
-          <SidebarGroupLabel>Control Panel</SidebarGroupLabel>
+          <SidebarGroupLabel>Platform Admin</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton render={<Link href={item.url} />}>
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton render={<Link href="/admin" />}>
+                  <LayoutDashboard />
+                  <span>Control Panel</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton render={<Link href="/tenants" />}>
+                  <Building2 />
+                  <span>Tenants</span>
+                </SidebarMenuButton>
+                <SidebarMenuSub>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton render={<Link href="/tenants" />}>
+                      <span>Estado</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton render={<Link href="/tenants/database" />}>
+                      <span>Base de Datos</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                </SidebarMenuSub>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton render={<Link href="/admin/users" />}>
+                  <Users />
+                  <span>Users</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton render={<Link href="/settings" />}>
+                  <Settings />
+                  <span>Settings</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

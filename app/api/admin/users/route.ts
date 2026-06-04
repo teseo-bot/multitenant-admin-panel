@@ -4,6 +4,8 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { UserRole } from "@/lib/validators/user";
 import { pool } from "@/lib/db";
 
+export const dynamic = 'force-dynamic';
+
 // Crear un cliente con la clave maestra (Service Role)
 const getAdminClient = () => {
   return createSupabaseClient(
