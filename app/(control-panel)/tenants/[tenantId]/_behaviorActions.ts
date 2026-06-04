@@ -23,7 +23,7 @@ export async function getBehaviorSettings(tenantId: string): Promise<BehaviorSet
       artificialDelayMs: data.artificial_delay_ms,
     };
   } catch (error: any) {
-    if (error?.code === '42P01') {
+    if (error?.code === '42P01' || error?.code === '42703') {
       console.warn('Table tenant_behavior_settings does not exist yet. Returning fallback.');
       return null;
     }

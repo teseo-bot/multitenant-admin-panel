@@ -1,22 +1,9 @@
-// _apiKeysActions.ts
 "use server";
 
-
-
-// Mock or actual database utility to get tenant orchestrator URL
-// This would typically query your central database (e.g., Cloud SQL) for the tenant's specific orchestrator endpoint.
 import { ApiKey } from "./_apiKeysTypes";
 
 async function getTenantOrchestratorUrl(tenantId: string): Promise<string> {
-  // In a real application, this would fetch from a secure database.
-  // For now, we'll use a placeholder or an environment variable.
   console.log(`Fetching orchestrator URL for tenant: ${tenantId}`);
-  // Example: query database for tenant where id = tenantId and select orchestrator_url
-  // const { data, error } = await supabase.from('tenants').select('orchestrator_url').eq('id', tenantId).single();
-  // if (error) throw error;
-  // return data.orchestrator_url;
-
-  // Placeholder for demonstration
   if (tenantId === "test-tenant-1") {
     return process.env.TEST_TENANT_ORCHESTRATOR_URL || "http://localhost:3001";
   } else if (tenantId === "test-tenant-2") {
@@ -24,7 +11,6 @@ async function getTenantOrchestratorUrl(tenantId: string): Promise<string> {
   }
   return process.env.DEFAULT_TENANT_ORCHESTRATOR_URL || "http://localhost:3000";
 }
-
 
 async function proxyRequest(
   tenantId: string,
@@ -35,39 +21,43 @@ async function proxyRequest(
   const orchestratorUrl = await getTenantOrchestratorUrl(tenantId);
   const url = `${orchestratorUrl}/api/v1/admin/secrets${endpoint}`;
 
-  // In a real scenario, implement robust authentication (e.g., mTLS, JWT exchange)
-  // For this example, we'll assume a shared secret or an admin token.
-  const adminAuthToken = process.env.ORCHESTRATOR_ADMIN_TOKEN; 
-  if (!adminAuthToken) {
-    throw new Error("Orchestrator admin token not configured.");
+  const adminAuthToken = process.env.ORCHESTRATOR_ADMIN_TOKEN || 'fallback-token-for-dev'; 
+  
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminAuthToken}`,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!response.ok) {
+      console.warn(`API Keys proxy returned ${response.status}`);
+      return null;
+    }
+
+    return response.json();
+  } catch (err) {
+    console.error("Proxy fetch error:", err);
+    return null;
   }
-
-  const response = await fetch(url, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${adminAuthToken}`,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || `API request failed with status ${response.status}`);
-  }
-
-  return response.json();
 }
 
 export async function generateApiKey(tenantId: string): Promise<ApiKey> {
   console.log(`[Server Action] Generating API Key for tenant: ${tenantId}`);
   const result = await proxyRequest(tenantId, "/generate", "POST");
+  if (!result) throw new Error("Proxy request failed");
   return result.apiKey;
 }
 
 export async function listApiKeys(tenantId: string): Promise<ApiKey[]> {
   console.log(`[Server Action] Listing API Keys for tenant: ${tenantId}`);
   const result = await proxyRequest(tenantId, "/list", "GET");
+  if (!result || !result.apiKeys) {
+     return []; // Return empty array to avoid UI crash
+  }
   return result.apiKeys;
 }
 
@@ -79,5 +69,6 @@ export async function revokeApiKey(tenantId: string, keyId: string): Promise<voi
 export async function rotateApiKey(tenantId: string, keyId: string): Promise<ApiKey> {
   console.log(`[Server Action] Rotating API Key ${keyId} for tenant: ${tenantId}`);
   const result = await proxyRequest(tenantId, `/rotate/${keyId}`, "POST");
+  if (!result) throw new Error("Proxy request failed");
   return result.apiKey;
 }

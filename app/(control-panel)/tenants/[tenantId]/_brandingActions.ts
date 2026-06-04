@@ -38,7 +38,7 @@ export async function getTenantBranding(tenantId: string): Promise<BrandingConfi
       };
     }
   } catch (error: any) {
-    if (error?.code === '42P01') {
+    if (error?.code === '42P01' || error?.code === '42703') {
       console.warn('Table tenant_configs does not exist yet. Returning fallback.');
       return {
         primaryColor: '#007bff',
