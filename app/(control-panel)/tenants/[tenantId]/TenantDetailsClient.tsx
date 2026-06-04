@@ -2,16 +2,16 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTenantOperationSettings, getTenantClientSettings } from "./_actions";
-import { BehaviorSettings, getBehaviorSettings, saveBehaviorSettings } from "./_behaviorActions";
-import { BehaviorFormValues } from "./schemas";
+import { getBehaviorSettings } from "./_behaviorActions";
+import { BehaviorSettings } from "./_behaviorTypes";
 import { getTenantBranding, updateTenantBranding } from "./_brandingActions";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { saveBehaviorSettings } from "./_behaviorActions";
 
-// Vistas individuales a implementar:
 import { OperationTab } from "./tabs/OperationTab";
 import { ClientTab } from "./tabs/ClientTab";
 import { BrandingTab } from "./tabs/BrandingTab";
@@ -25,9 +25,8 @@ export function TenantDetailsClient({ tenantId }: { tenantId: string }) {
   const [initialOperationData, setInitialOperationData] = useState<any>(null);
   const [initialClientData, setInitialClientData] = useState<any>(null);
   const [initialBrandingData, setInitialBrandingData] = useState<any>(null);
-  const [initialBehaviorData, setInitialBehaviorData] = useState<BehaviorFormValues | null>(null);
+  const [initialBehaviorData, setInitialBehaviorData] = useState<BehaviorSettings | null>(null);
 
-  // Simulate initial loading and fetching data
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
@@ -39,32 +38,36 @@ export function TenantDetailsClient({ tenantId }: { tenantId: string }) {
         getBehaviorSettings(tenantId),
       ]);
 
-      if (opData) {
-        setInitialOperationData({
-          ...opData,
-          telegramWhitelistedGroupIds: Array.isArray(opData.telegramWhitelistedGroupIds) 
-            ? opData.telegramWhitelistedGroupIds.join(',') 
-            : opData.telegramWhitelistedGroupIds,
-        });
-      }
+      setInitialOperationData(opData || {
+        name: "",
+        domain: "",
+        orchestratorUrl: "",
+        telegramBotToken: "",
+        telegramWhitelistedGroupIds: "",
+        status: true
+      });
       
-      if (cliData) {
-        setInitialClientData(cliData);
-      }
-      if (brandingData) {
-        setInitialBrandingData(brandingData);
-      }
-      // Ensure initialBehaviorData always has concrete values
-      const defaultedBehaviorData: BehaviorFormValues = behaviorData ? {
-        readingSpeedWPM: behaviorData.readingSpeedWPM,
-        streamingChunkSize: behaviorData.streamingChunkSize,
-        artificialDelayMs: behaviorData.artificialDelayMs,
-      } : {
-        readingSpeedWPM: 250, // Default value as per schema
-        streamingChunkSize: 64, // Default value as per schema
-        artificialDelayMs: 100, // Default value as per schema
-      };
-      setInitialBehaviorData(defaultedBehaviorData);
+      setInitialClientData(cliData || {
+        companyName: "",
+        contactName: "",
+        email: "",
+        phone: "",
+        monthlyTokenLimit: 0,
+      });
+
+      setInitialBrandingData(brandingData || {
+        primaryColor: '#007bff',
+        accentColor: '#6c757d',
+        logoUrl: '',
+        themeMode: 'system'
+      });
+
+      setInitialBehaviorData(behaviorData || {
+        tenantId,
+        readingSpeedWPM: 250,
+        streamingChunkSize: 64,
+        artificialDelayMs: 100,
+      });
 
       setLoading(false);
     }
@@ -82,13 +85,9 @@ export function TenantDetailsClient({ tenantId }: { tenantId: string }) {
           </Link>
           <h2 className="text-3xl font-bold tracking-tight">Configuración del Tenant</h2>
         </div>
-        <Button>
-          <Save className="h-4 w-4 mr-2" />
-          Guardar Cambios
-        </Button>
       </div>
 
-      {loading || !initialOperationData || !initialClientData || !initialBrandingData || !initialBehaviorData ? (
+      {loading ? (
         <div className="space-y-8 mt-8">
           <Skeleton className="h-10 w-[400px]" />
           <Skeleton className="h-[600px] w-full" />
@@ -115,7 +114,7 @@ export function TenantDetailsClient({ tenantId }: { tenantId: string }) {
             <BrandingTab tenantId={tenantId} initialData={initialBrandingData} onSave={updateTenantBranding} />
           </TabsContent>
           <TabsContent value="behavior" className="pt-4">
-            <BehaviorTab tenantId={tenantId} initialData={initialBehaviorData} onSave={saveBehaviorSettings} />
+            <BehaviorTab tenantId={tenantId} initialData={initialBehaviorData as any} onSave={saveBehaviorSettings} />
           </TabsContent>
           <TabsContent value="prompts" className="pt-4">
             <PromptsTab tenantId={tenantId} />

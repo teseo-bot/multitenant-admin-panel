@@ -1,17 +1,8 @@
 'use server';
 
-import { z } from 'zod';
+import { BehaviorSettings } from "./_behaviorTypes";
 import { pool } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-
-const behaviorSchema = z.object({
-  tenantId: z.string().uuid(),
-  readingSpeedWPM: z.number().int().min(100).max(1000),
-  streamingChunkSize: z.number().int().min(1).max(1024),
-  artificialDelayMs: z.number().int().min(0).max(5000),
-});
-
-export type BehaviorSettings = z.infer<typeof behaviorSchema>;
 
 export async function getBehaviorSettings(tenantId: string): Promise<BehaviorSettings | null> {
   try {
@@ -31,24 +22,18 @@ export async function getBehaviorSettings(tenantId: string): Promise<BehaviorSet
       streamingChunkSize: data.streaming_chunk_size,
       artificialDelayMs: data.artificial_delay_ms,
     };
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === '42P01') {
+      console.warn('Table tenant_behavior_settings does not exist yet. Returning fallback.');
+      return null;
+    }
     console.error('Error fetching behavior settings:', error);
     return null;
   }
 }
 
 export async function saveBehaviorSettings(data: BehaviorSettings) {
-  const validatedFields = behaviorSchema.safeParse(data);
-
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Invalid fields! Failed to save behavior settings.',
-      success: false, // Ensure success is explicitly false here
-    };
-  }
-
-  const { tenantId, readingSpeedWPM, streamingChunkSize, artificialDelayMs } = validatedFields.data;
+  const { tenantId, readingSpeedWPM, streamingChunkSize, artificialDelayMs } = data;
 
   try {
     await pool.query(

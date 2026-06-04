@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { BehaviorSettings } from '../_behaviorActions'; // Import BehaviorSettings
+import { BehaviorSettings } from "../_behaviorTypes"; // Import BehaviorSettings
 import { toast } from 'sonner';
 import { useEffect } from 'react';
 

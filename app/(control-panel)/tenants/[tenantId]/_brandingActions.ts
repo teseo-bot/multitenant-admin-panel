@@ -1,20 +1,15 @@
 "use server";
 
+import { BrandingConfig } from "./_brandingTypes";
 import { Pool } from 'pg';
-import { z } from 'zod';
+
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-const brandingConfigSchema = z.object({
-  primaryColor: z.string(),
-  accentColor: z.string(),
-  logoUrl: z.string().url(),
-  themeMode: z.enum(["light", "dark", "system"]),
-});
 
-export type BrandingConfig = z.infer<typeof brandingConfigSchema>;
+
 
 export async function getTenantBranding(tenantId: string): Promise<BrandingConfig | null> {
   try {
@@ -42,7 +37,16 @@ export async function getTenantBranding(tenantId: string): Promise<BrandingConfi
         themeMode: 'system',
       };
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === '42P01') {
+      console.warn('Table tenant_configs does not exist yet. Returning fallback.');
+      return {
+        primaryColor: '#007bff',
+        accentColor: '#6c757d',
+        logoUrl: 'https://example.com/default-logo.png',
+        themeMode: 'system',
+      };
+    }
     console.error(`Failed to fetch branding for tenant ${tenantId}:`, error);
     throw new Error('Failed to fetch tenant branding configuration.');
   }
@@ -50,7 +54,7 @@ export async function getTenantBranding(tenantId: string): Promise<BrandingConfi
 
 export async function updateTenantBranding(tenantId: string, data: BrandingConfig) {
   try {
-    brandingConfigSchema.parse(data); // Validate incoming data
+    
     const client = await pool.connect();
     const result = await client.query(
       `INSERT INTO tenant_configs (tenant_id, primary_color, accent_color, logo_url, theme_mode)
