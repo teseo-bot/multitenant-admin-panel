@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { pool } from "@/lib/db";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const supabase = await createClient();
 

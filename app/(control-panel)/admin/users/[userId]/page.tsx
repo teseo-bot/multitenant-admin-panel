@@ -48,9 +48,11 @@ export default function EditUserPage({ params }: { params: Promise<{ userId: str
   return (
     <div className="flex-1 space-y-4 p-8 pt-6 max-w-2xl">
       <div className="flex items-center space-x-2">
-        <Button variant="ghost" size="icon" render={<Link href="/admin/users" />}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
+        <Link href="/admin/users">
+          <Button variant="ghost" size="icon">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        </Link>
         <h2 className="text-3xl font-bold tracking-tight">Edit User</h2>
       </div>
       
