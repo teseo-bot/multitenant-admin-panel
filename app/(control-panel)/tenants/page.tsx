@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/utils/supabase/client"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -14,6 +16,7 @@ import {
 } from "@/components/ui/table"
 
 export default function TenantsPage() {
+  const router = useRouter()
   const [tenants, setTenants] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -61,11 +64,16 @@ export default function TenantsPage() {
                 <TableHead>Domain</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created At</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {tenants.map((tenant) => (
-                <TableRow key={tenant.id}>
+                <TableRow 
+                  key={tenant.id} 
+                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                  onClick={() => router.push(`/tenants/${tenant.id}`)}
+                >
                   <TableCell className="font-medium text-xs">{tenant.id}</TableCell>
                   <TableCell>{tenant.name}</TableCell>
                   <TableCell>{tenant.domain || "-"}</TableCell>
@@ -75,11 +83,16 @@ export default function TenantsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>{new Date(tenant.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Link href={`/tenants/${tenant.id}`}>
+                      <Badge className="cursor-pointer">Manage</Badge>
+                    </Link>
+                  </TableCell>
                 </TableRow>
               ))}
               {tenants.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     No tenants found.
                   </TableCell>
                 </TableRow>
