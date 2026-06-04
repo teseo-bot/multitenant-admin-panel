@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { UserRole } from '@/lib/validators/user';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const supabase = await createClient();
@@ -15,7 +17,18 @@ export async function GET() {
       .single();
 
     if (tuError || !tenantUser) {
-      return NextResponse.json({ error: 'Tenant not found for user' }, { status: 404 });
+      // Fallback graceful para Global Admins sin tenant_user o usuarios huerfanos,
+      // evitando el error 404 (Not Found) en producción que rompía el useTenantTheme.
+      return NextResponse.json({
+        organization: { id: 'platform', name: 'Teseo Platform', domain: 'teseo.lat' },
+        role: 'platform_admin',
+        branding: {
+          primaryColor: 'oklch(0.556 0.2 250)',
+          accentColor: 'oklch(0.97 0 0)',
+          logoUrl: null,
+          themeMode: 'SYSTEM'
+        }
+      });
     }
 
     const { data: config, error: configError } = await supabase
