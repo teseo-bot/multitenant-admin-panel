@@ -67,7 +67,7 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
           image: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          flags: '--cpu-boost'
+          flags: '--cpu-boost --set-cloudsql-instances=teseocontextkdb:us-central1:context-kdb-db'
           env_vars: |
             COMPILER_INTERNAL_URL=https://context-kdb-orchestrator-psnwfqyhla-uc.a.run.app
             NODE_ENV=production
