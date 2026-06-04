@@ -78,7 +78,7 @@ export function ApiKeysTab({ tenantId }: { tenantId: string }) {
         <CardHeader>
           <CardTitle>API Key Management</CardTitle>
           <CardDescription>
-            Delegated secrets proxy. Keys are securely stored in the Tenant's remote Secret Manager.
+            Delegated secrets proxy. Keys are securely stored in the Tenant&#39;s remote Secret Manager.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 w-full">
