@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { updateTenantClientSettings, clientFormSchema } from "../_actions";
+import { updateTenantClientSettings } from "../_actions";
+import { clientFormSchema } from "../schemas";
 
 type ClientFormValues = z.infer<typeof clientFormSchema>;
 

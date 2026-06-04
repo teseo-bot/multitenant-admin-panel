@@ -3,7 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTenantOperationSettings, getTenantClientSettings } from "./_actions";
 import { BehaviorSettings, getBehaviorSettings, saveBehaviorSettings } from "./_behaviorActions";
-import { BehaviorFormValues } from "./tabs/BehaviorTab";
+import { BehaviorFormValues } from "./schemas";
 import { getTenantBranding, updateTenantBranding } from "./_brandingActions";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Save } from "lucide-react";

@@ -1,32 +1,12 @@
 "use server";
 
-import { z } from "zod";
 import { Pool } from "pg";
 import { revalidatePath } from "next/cache";
+import { OperationFormValues, ClientFormValues } from "./schemas";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
-
-// Operation Form Schema
-export const operationFormSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  domain: z.string().url({
-    message: "Domain must be a valid URL.",
-  }),
-  orchestratorUrl: z.string().url({
-    message: "Orchestrator URL must be a valid URL.",
-  }),
-  telegramBotToken: z.string().min(10, {
-    message: "Telegram Bot Token must be at least 10 characters.",
-  }),
-  telegramWhitelistedGroupIds: z.array(z.string()),
-  status: z.boolean(),
-});
-
-type OperationFormValues = z.infer<typeof operationFormSchema>;
 
 export async function getTenantOperationSettings(tenantId: string) {
   try {
@@ -43,7 +23,11 @@ export async function getTenantOperationSettings(tenantId: string) {
       telegramWhitelistedGroupIds: Array.isArray(tenant.telegram_whitelisted_group_ids) ? tenant.telegram_whitelisted_group_ids : [],
       status: tenant.status === 'active',
     };
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === '42P01') {
+      console.warn("Table does not exist yet, returning fallback.");
+      return null;
+    }
     console.error("Error fetching tenant operation settings:", error);
     return null;
   }
@@ -77,17 +61,6 @@ export async function updateTenantOperationSettings(
   }
 }
 
-// Client Form Schema
-export const clientFormSchema = z.object({
-  companyName: z.string().min(2, "Company Name must be at least 2 characters."),
-  contactName: z.string().min(2, "Contact Name must be at least 2 characters."),
-  email: z.string().email("Must be a valid email address."),
-  phone: z.string().optional(),
-  monthlyTokenLimit: z.number().min(0, "Must be a positive number.").optional(),
-});
-
-type ClientFormValues = z.infer<typeof clientFormSchema>;
-
 export async function getTenantClientSettings(tenantId: string) {
   try {
     const { rows } = await pool.query(
@@ -107,9 +80,12 @@ export async function getTenantClientSettings(tenantId: string) {
       phone: tenant.phone || "",
       monthlyTokenLimit: tenant.finops_token_ledger || 0,
     };
-  } catch (error) {
-    console.error("Error fetching tenant client settings:", error);
-    // return empty structure instead of null for forms
+  } catch (error: any) {
+    if (error?.code === '42P01') {
+      console.warn("Table does not exist yet for client settings, returning fallback.");
+    } else {
+      console.error("Error fetching tenant client settings:", error);
+    }
     return {
       companyName: "",
       contactName: "",
