@@ -1,13 +1,12 @@
 "use server";
 
 import { ApiKey } from "./_apiKeysTypes";
+import { getTenantOperationSettings } from "./_actions";
 
 async function getTenantOrchestratorUrl(tenantId: string): Promise<string> {
-  console.log(`Fetching orchestrator URL for tenant: ${tenantId}`);
-  if (tenantId === "test-tenant-1") {
-    return process.env.TEST_TENANT_ORCHESTRATOR_URL || "http://localhost:3001";
-  } else if (tenantId === "test-tenant-2") {
-    return process.env.TEST_TENANT_2_ORCHESTRATOR_URL || "http://localhost:3002";
+  const opData = await getTenantOperationSettings(tenantId);
+  if (opData && opData.orchestratorUrl) {
+    return opData.orchestratorUrl;
   }
   return process.env.DEFAULT_TENANT_ORCHESTRATOR_URL || "http://localhost:3000";
 }
@@ -19,7 +18,10 @@ async function proxyRequest(
   body?: object
 ): Promise<any> {
   const orchestratorUrl = await getTenantOrchestratorUrl(tenantId);
-  const url = `${orchestratorUrl}/api/v1/admin/secrets${endpoint}`;
+  
+  // Clean up double slashes
+  const baseUrl = orchestratorUrl.endsWith('/') ? orchestratorUrl.slice(0, -1) : orchestratorUrl;
+  const url = `${baseUrl}/api/v1/admin/secrets${endpoint}`;
 
   const adminAuthToken = process.env.ORCHESTRATOR_ADMIN_TOKEN || 'fallback-token-for-dev'; 
   

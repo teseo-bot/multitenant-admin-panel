@@ -1,10 +1,10 @@
 "use client";
 
 import { ReactNode } from "react";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { AppTopBar } from "./AppTopBar";
 import { HorizontalMenuSlot } from "./HorizontalMenuSlot";
-import { useSidebarState } from "./hooks/use-sidebar-state";
 import { usePageTitle } from "./hooks/use-page-title";
 import { cn } from "@/lib/utils";
 
@@ -22,49 +22,37 @@ interface GlobalLayoutProps {
 }
 
 export function GlobalLayout({ children, user, horizontalNav, onLogout }: GlobalLayoutProps) {
-  const { expanded, toggleSidebar, isMounted } = useSidebarState(true);
   const title = usePageTitle();
 
-  // Avoid hydration mismatch on sidebar width by forcing expanded initially 
-  // or hiding transitions until mounted.
-  const sidebarWidthClass = !isMounted 
-    ? "md:ml-[260px]" // SSR default
-    : expanded 
-      ? "md:ml-[260px]" 
-      : "md:ml-[64px]";
-
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <AppSidebar 
-        expanded={isMounted ? expanded : true} 
-        onToggle={toggleSidebar} 
-        user={user} 
-        onLogout={onLogout}
-        className="hidden md:flex"
-      />
-      
-      <div 
-        className={cn(
-          "flex flex-col flex-1 transition-[margin] duration-300 ease-in-out",
-          sidebarWidthClass
-        )}
-      >
-        <AppTopBar 
-          expanded={isMounted ? expanded : true} 
-          onToggleSidebar={toggleSidebar} 
-          title={title} 
-          user={user} 
-          onLogout={onLogout}
-        />
-        
-        <HorizontalMenuSlot>
-          {horizontalNav}
-        </HorizontalMenuSlot>
+    <SidebarProvider>
+      <div className="min-h-screen bg-background flex flex-col w-full">
+        <div className="flex flex-1 overflow-hidden w-full h-screen">
+          <AppSidebar 
+            expanded={true} 
+            user={user} 
+            onLogout={onLogout}
+            className="hidden md:flex relative left-0 top-0 h-full z-40 border-r"
+          />
+          <SidebarInset className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+            <AppTopBar 
+              expanded={true} 
+              onToggleSidebar={() => {}} 
+              title={title} 
+              user={user} 
+              onLogout={onLogout}
+            />
+            
+            <HorizontalMenuSlot>
+              {horizontalNav}
+            </HorizontalMenuSlot>
 
-        <main className="flex-1 flex flex-col min-h-0 bg-muted/20">
-          {children}
-        </main>
+            <main className="flex-1 flex flex-col min-h-0 bg-muted/20">
+              {children}
+            </main>
+          </SidebarInset>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

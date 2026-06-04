@@ -29,10 +29,6 @@ export async function getTenantUsers(tenantId: string) {
     return { success: true, users: result.rows as TenantUser[] };
   } catch (error: any) {
     console.error("Error fetching tenant users:", error);
-    // If the table doesn't exist yet, we can return an empty array to avoid breaking the UI during dev
-    if (error?.code === '42P01') { 
-        return { success: true, users: [] };
-    }
     return { success: false, error: "Failed to fetch tenant users." };
   }
 }
@@ -107,9 +103,6 @@ export async function getFleetcoPlusStatus(tenantId: string) {
     return { success: true, enabled: false };
   } catch (error: any) {
     console.error("Error fetching Fleetco+ status:", error);
-    if (error?.code === '42703') { // column does not exist
-        return { success: true, enabled: false };
-    }
     return { success: false, error: "Failed to fetch status." };
   }
 }

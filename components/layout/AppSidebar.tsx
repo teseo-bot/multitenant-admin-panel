@@ -31,7 +31,7 @@ export function AppSidebar({ expanded, user, onLogout, className }: AppSidebarPr
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen flex flex-col bg-card border-r transition-[width] duration-300 ease-in-out",
+        "relative flex z-40 h-screen flex flex-col bg-card border-r transition-[width] duration-300 ease-in-out",
         expanded ? "w-[260px]" : "w-[64px]",
         className
       )}

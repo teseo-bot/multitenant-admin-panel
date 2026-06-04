@@ -38,15 +38,6 @@ export async function getTenantBranding(tenantId: string): Promise<BrandingConfi
       };
     }
   } catch (error: any) {
-    if (error?.code === '42P01' || error?.code === '42703') {
-      console.warn('Table tenant_configs does not exist yet. Returning fallback.');
-      return {
-        primaryColor: '#007bff',
-        accentColor: '#6c757d',
-        logoUrl: 'https://example.com/default-logo.png',
-        themeMode: 'system',
-      };
-    }
     console.error(`Failed to fetch branding for tenant ${tenantId}:`, error);
     throw new Error('Failed to fetch tenant branding configuration.');
   }

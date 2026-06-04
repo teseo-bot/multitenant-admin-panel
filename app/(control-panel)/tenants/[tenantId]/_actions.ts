@@ -24,10 +24,6 @@ export async function getTenantOperationSettings(tenantId: string) {
       status: tenant.status === 'active',
     };
   } catch (error: any) {
-    if (error?.code === '42P01' || error?.code === '42703') {
-      console.warn("Table does not exist yet, returning fallback.");
-      return null;
-    }
     console.error("Error fetching tenant operation settings:", error);
     return null;
   }
@@ -81,11 +77,7 @@ export async function getTenantClientSettings(tenantId: string) {
       monthlyTokenLimit: tenant.finops_token_ledger || 0,
     };
   } catch (error: any) {
-    if (error?.code === '42P01' || error?.code === '42703') {
-      console.warn("Table does not exist yet for client settings, returning fallback.");
-    } else {
-      console.error("Error fetching tenant client settings:", error);
-    }
+    console.error("Error fetching tenant client settings:", error);
     return {
       companyName: "",
       contactName: "",

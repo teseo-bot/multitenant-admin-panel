@@ -6,13 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 export function AccessRolesTab({ tenantId }: { tenantId: string }) {
   return (
-    <div className="space-y-6 w-full max-w-full">
+    <div className="space-y-6 w-full min-w-0">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle className="text-primary">Fleetco+ Ribbon</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-primary">Fleetco+ Ribbon</CardTitle>
+            <Badge variant="secondary">WIP</Badge>
+          </div>
           <CardDescription>
             Habilita el acceso a funciones premium (Fleetco+) para los usuarios de este tenant.
           </CardDescription>
@@ -21,20 +25,23 @@ export function AccessRolesTab({ tenantId }: { tenantId: string }) {
 
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Usuarios del Tenant</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Usuarios del Tenant</CardTitle>
+            <Badge variant="secondary">WIP</Badge>
+          </div>
           <CardDescription>
-            Gestiona los accesos y roles de los usuarios que operan dentro de este tenant.
+            Gestiona los accesos y roles de los usuarios que operan dentro de este tenant. (Funcionalidad en desarrollo)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 w-full">
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
+          <div className="flex flex-col sm:flex-row gap-4 items-end opacity-50 pointer-events-none">
             <div className="flex-1 min-w-0 w-full space-y-2">
               <Label htmlFor="email">Correo Electrónico</Label>
-              <Input id="email" placeholder="usuario@empresa.com" className="w-full" />
+              <Input id="email" placeholder="usuario@empresa.com" className="w-full" disabled />
             </div>
             <div className="w-full sm:w-[200px] space-y-2">
               <Label>Rol</Label>
-              <Select defaultValue="viewer">
+              <Select defaultValue="viewer" disabled>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -45,10 +52,10 @@ export function AccessRolesTab({ tenantId }: { tenantId: string }) {
                 </SelectContent>
               </Select>
             </div>
-            <Button className="w-full sm:w-auto">Invitar</Button>
+            <Button className="w-full sm:w-auto" disabled>Invitar</Button>
           </div>
 
-          <div className="rounded-md border mt-4 w-full overflow-hidden">
+          <div className="rounded-md border mt-4 w-full overflow-hidden opacity-50">
             <div className="overflow-x-auto w-full">
               <Table className="w-full min-w-full">
                 <TableHeader>
@@ -61,7 +68,7 @@ export function AccessRolesTab({ tenantId }: { tenantId: string }) {
                 <TableBody>
                   <TableRow>
                     <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
-                      No hay usuarios registrados en este tenant.
+                      Datos mockeados en desarrollo.
                     </TableCell>
                   </TableRow>
                 </TableBody>
