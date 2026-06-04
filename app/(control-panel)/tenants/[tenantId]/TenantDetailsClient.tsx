@@ -1,6 +1,10 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getTenantOperationSettings, getTenantClientSettings } from "./_actions";
+import { BehaviorSettings, getBehaviorSettings, saveBehaviorSettings } from "./_behaviorActions";
+import { BehaviorFormValues } from "./tabs/BehaviorTab";
+import { getTenantBranding, updateTenantBranding } from "./_brandingActions";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Save } from "lucide-react";
 import Link from "next/link";
@@ -8,21 +12,63 @@ import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Vistas individuales a implementar:
-// import { OperationTab } from "./tabs/OperationTab";
-// import { ClientTab } from "./tabs/ClientTab";
-// import { BrandingTab } from "./tabs/BrandingTab";
-// import { BehaviorTab } from "./tabs/BehaviorTab";
-// import { PromptsTab } from "./tabs/PromptsTab";
-// import { AccessRolesTab } from "./tabs/AccessRolesTab";
-// import { ApiKeysTab } from "./tabs/ApiKeysTab";
+import { OperationTab } from "./tabs/OperationTab";
+import { ClientTab } from "./tabs/ClientTab";
+import { BrandingTab } from "./tabs/BrandingTab";
+import { BehaviorTab } from "./tabs/BehaviorTab";
+import { PromptsTab } from "./tabs/PromptsTab";
+import { AccessRolesTab } from "./tabs/AccessRolesTab";
+import { ApiKeysTab } from "./tabs/ApiKeysTab";
 
 export function TenantDetailsClient({ tenantId }: { tenantId: string }) {
   const [loading, setLoading] = useState(true);
+  const [initialOperationData, setInitialOperationData] = useState<any>(null);
+  const [initialClientData, setInitialClientData] = useState<any>(null);
+  const [initialBrandingData, setInitialBrandingData] = useState<any>(null);
+  const [initialBehaviorData, setInitialBehaviorData] = useState<BehaviorFormValues | null>(null);
 
-  // Simular carga inicial
+  // Simulate initial loading and fetching data
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timer);
+    async function fetchData() {
+      setLoading(true);
+      
+      const [opData, cliData, brandingData, behaviorData] = await Promise.all([
+        getTenantOperationSettings(tenantId),
+        getTenantClientSettings(tenantId),
+        getTenantBranding(tenantId),
+        getBehaviorSettings(tenantId),
+      ]);
+
+      if (opData) {
+        setInitialOperationData({
+          ...opData,
+          telegramWhitelistedGroupIds: Array.isArray(opData.telegramWhitelistedGroupIds) 
+            ? opData.telegramWhitelistedGroupIds.join(',') 
+            : opData.telegramWhitelistedGroupIds,
+        });
+      }
+      
+      if (cliData) {
+        setInitialClientData(cliData);
+      }
+      if (brandingData) {
+        setInitialBrandingData(brandingData);
+      }
+      // Ensure initialBehaviorData always has concrete values
+      const defaultedBehaviorData: BehaviorFormValues = behaviorData ? {
+        readingSpeedWPM: behaviorData.readingSpeedWPM,
+        streamingChunkSize: behaviorData.streamingChunkSize,
+        artificialDelayMs: behaviorData.artificialDelayMs,
+      } : {
+        readingSpeedWPM: 250, // Default value as per schema
+        streamingChunkSize: 64, // Default value as per schema
+        artificialDelayMs: 100, // Default value as per schema
+      };
+      setInitialBehaviorData(defaultedBehaviorData);
+
+      setLoading(false);
+    }
+    fetchData();
   }, [tenantId]);
 
   return (
@@ -42,7 +88,7 @@ export function TenantDetailsClient({ tenantId }: { tenantId: string }) {
         </Button>
       </div>
 
-      {loading ? (
+      {loading || !initialOperationData || !initialClientData || !initialBrandingData || !initialBehaviorData ? (
         <div className="space-y-8 mt-8">
           <Skeleton className="h-10 w-[400px]" />
           <Skeleton className="h-[600px] w-full" />
@@ -60,39 +106,25 @@ export function TenantDetailsClient({ tenantId }: { tenantId: string }) {
           </TabsList>
           
           <TabsContent value="operation" className="pt-4">
-             <div className="rounded-md border p-8 text-center text-muted-foreground border-dashed">
-                Tab de Operación (Identidad, Routing, Kill Switch, Telegram Bot) en desarrollo.
-             </div>
+            <OperationTab tenantId={tenantId} initialData={initialOperationData} />
           </TabsContent>
           <TabsContent value="client" className="pt-4">
-             <div className="rounded-md border p-8 text-center text-muted-foreground border-dashed">
-                Tab de Datos del Cliente (Razón Social, Contactos) en desarrollo.
-             </div>
+            <ClientTab tenantId={tenantId} initialData={initialClientData} />
           </TabsContent>
           <TabsContent value="branding" className="pt-4">
-             <div className="rounded-md border p-8 text-center text-muted-foreground border-dashed">
-                Tab de Branding (Logotipo, Colores, Tema) en desarrollo.
-             </div>
+            <BrandingTab tenantId={tenantId} initialData={initialBrandingData} onSave={updateTenantBranding} />
           </TabsContent>
           <TabsContent value="behavior" className="pt-4">
-             <div className="rounded-md border p-8 text-center text-muted-foreground border-dashed">
-                Tab de Comportamiento (Humanizador, WPM, Chunk Size, Delays) en desarrollo.
-             </div>
+            <BehaviorTab tenantId={tenantId} initialData={initialBehaviorData} onSave={saveBehaviorSettings} />
           </TabsContent>
           <TabsContent value="prompts" className="pt-4">
-             <div className="rounded-md border p-8 text-center text-muted-foreground border-dashed">
-                Tab de Prompts (SDR, Gatekeeper, Chit-Chat) en desarrollo.
-             </div>
+            <PromptsTab tenantId={tenantId} />
           </TabsContent>
           <TabsContent value="roles" className="pt-4">
-             <div className="rounded-md border p-8 text-center text-muted-foreground border-dashed">
-                Tab de Accesos & Roles en desarrollo.
-             </div>
+            <AccessRolesTab tenantId={tenantId} />
           </TabsContent>
           <TabsContent value="keys" className="pt-4">
-             <div className="rounded-md border p-8 text-center text-muted-foreground border-dashed">
-                Tab de API Keys (Vault Provider) en desarrollo.
-             </div>
+            <ApiKeysTab tenantId={tenantId} />
           </TabsContent>
         </Tabs>
       )}
