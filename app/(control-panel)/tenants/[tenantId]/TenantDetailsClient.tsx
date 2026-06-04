@@ -75,7 +75,7 @@ export function TenantDetailsClient({ tenantId }: { tenantId: string }) {
   }, [tenantId]);
 
   return (
-    <div className="flex-1 space-y-6 p-8 pt-6 max-w-7xl mx-auto">
+    <div className="flex-1 space-y-6 p-8 pt-6 w-full max-w-full overflow-x-hidden">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Link href="/tenants">
@@ -94,7 +94,7 @@ export function TenantDetailsClient({ tenantId }: { tenantId: string }) {
         </div>
       ) : (
         <Tabs defaultValue="operation" className="space-y-4">
-          <TabsList className="overflow-x-auto w-full justify-start border-b rounded-none pb-px bg-transparent h-auto p-0">
+          <TabsList className="overflow-x-auto flex-wrap w-full justify-start border-b rounded-none pb-px bg-transparent h-auto p-0">
             <TabsTrigger value="operation" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">Operación</TabsTrigger>
             <TabsTrigger value="client" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">Cliente</TabsTrigger>
             <TabsTrigger value="branding" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">Branding & UI</TabsTrigger>

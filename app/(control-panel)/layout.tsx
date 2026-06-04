@@ -7,7 +7,7 @@ export default function ControlPanelLayout({ children }: { children: React.React
     <TooltipProvider>
       <SidebarProvider>
         <ControlPanelSidebar />
-        <SidebarInset className="min-w-0 overflow-hidden h-screen">
+        <SidebarInset className="min-w-0 overflow-y-auto w-full h-screen flex-1 flex flex-col">
           {children}
         </SidebarInset>
       </SidebarProvider>
