@@ -70,11 +70,11 @@ jobs:
           flags: '--cpu-boost'
           env_vars: |
             COMPILER_INTERNAL_URL=https://context-kdb-orchestrator-psnwfqyhla-uc.a.run.app
-
             NODE_ENV=production
           secrets: |
             NEXT_PUBLIC_SUPABASE_URL=SUPABASE_URL:latest
             SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest
+            DATABASE_URL=DATABASE_URL:latest
 
       - name: Print Production URL
         run: echo "🚀 Producción desplegada en ${{ steps.deploy.outputs.url }}"
