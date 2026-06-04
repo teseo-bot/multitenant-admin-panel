@@ -3,42 +3,14 @@
 // import { Pool } from 'pg';
 // const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-export interface SystemModule {
-  id: string;
-  name: string;
-}
 
-export interface AgentRole {
-  id: string;
-  name: string;
-  module_id: string;
-}
 
-export interface PromptVersion {
-  id: string;
-  role_id: string;
-  version: number;
-  prompt_content: string;
-  is_active: boolean;
-  created_at: string;
-}
 
-export interface ABVariant {
-  id: string;
-  experiment_id: string;
-  prompt_version_id: string;
-  traffic_split: number;
-}
 
-export interface ABExperiment {
-  id: string;
-  role_id: string;
-  name: string;
-  status: 'active' | 'inactive';
-  variants: ABVariant[];
-}
 
 // Mock Data
+import { SystemModule, AgentRole, PromptVersion, ABExperiment, ABVariant } from "./_promptsTypes";
+
 const mockModules: SystemModule[] = [
   { id: 'mod_crm', name: 'CRM' },
   { id: 'mod_assets', name: 'Assets Studio' },

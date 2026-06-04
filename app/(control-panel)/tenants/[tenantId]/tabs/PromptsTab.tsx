@@ -9,12 +9,14 @@ import {
   getSystemModules,
   getAgentRoles,
   getPromptVersions,
-  getABExperiments,
+  getABExperiments
+} from '../_promptsActions';
+import {
   SystemModule,
   AgentRole,
   PromptVersion,
   ABExperiment
-} from '../_promptsActions';
+} from '../_promptsTypes';
 
 export function PromptsTab({ tenantId }: { tenantId: string }) {
   const [modules, setModules] = useState<SystemModule[]>([]);

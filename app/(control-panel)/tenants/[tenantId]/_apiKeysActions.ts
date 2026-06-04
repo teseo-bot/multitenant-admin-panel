@@ -1,10 +1,12 @@
 // _apiKeysActions.ts
 "use server";
 
-import { createServerClient } from "@supabase/auth-helpers-nextjs";
+
 
 // Mock or actual database utility to get tenant orchestrator URL
 // This would typically query your central database (e.g., Cloud SQL) for the tenant's specific orchestrator endpoint.
+import { ApiKey } from "./_apiKeysTypes";
+
 async function getTenantOrchestratorUrl(tenantId: string): Promise<string> {
   // In a real application, this would fetch from a secure database.
   // For now, we'll use a placeholder or an environment variable.
@@ -23,13 +25,6 @@ async function getTenantOrchestratorUrl(tenantId: string): Promise<string> {
   return process.env.DEFAULT_TENANT_ORCHESTRATOR_URL || "http://localhost:3000";
 }
 
-interface ApiKey {
-  id: string;
-  prefix: string;
-  createdAt: string;
-  lastUsed: string | null;
-  status: "active" | "revoked";
-}
 
 async function proxyRequest(
   tenantId: string,
