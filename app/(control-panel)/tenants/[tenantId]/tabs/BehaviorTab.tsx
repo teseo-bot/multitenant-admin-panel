@@ -174,8 +174,8 @@ export function BehaviorTab({ tenantId, initialData, onSave }: BehaviorTabProps)
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-background">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Simulación "Typing" Intermitente</FormLabel>
-                      <FormDescription>Activa el indicador de "escribiendo..." de forma intermitente antes de la respuesta final.</FormDescription>
+                      <FormLabel className="text-base">Simulación &quot;Typing&quot; Intermitente</FormLabel>
+                      <FormDescription>Activa el indicador de &quot;escribiendo...&quot; de forma intermitente antes de la respuesta final.</FormDescription>
                     </div>
                     <FormControl>
                       <Switch checked={field.value} onCheckedChange={field.onChange} />
