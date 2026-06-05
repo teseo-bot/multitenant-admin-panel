@@ -14,18 +14,6 @@ export function AccessRolesTab({ tenantId }: { tenantId: string }) {
       <Card className="w-full">
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle className="text-primary">Fleetco+ Ribbon</CardTitle>
-            <Badge variant="secondary">WIP</Badge>
-          </div>
-          <CardDescription>
-            Habilita el acceso a funciones premium (Fleetco+) para los usuarios de este tenant.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-
-      <Card className="w-full">
-        <CardHeader>
-          <div className="flex justify-between items-center">
             <CardTitle>Usuarios del Tenant</CardTitle>
             <Badge variant="secondary">WIP</Badge>
           </div>

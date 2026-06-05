@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -15,21 +14,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from "@/components/ui/textarea";
 import { BehaviorSettings } from "../_behaviorTypes";
 import { toast } from 'sonner';
 import { useEffect } from 'react';
-
-const behaviorFormSchema = z.object({
-  readingSpeedWPM: z.number().int().min(50).max(1000).default(250),
-  streamingChunkSize: z.number().int().min(1).max(1024).default(64),
-  artificialDelayMs: z.number().int().min(0).max(5000).default(100),
-  humanizerEnabled: z.boolean().default(true),
-  typoRate: z.number().min(0).max(1).default(0.0),
-  pauseBeforeReplyMs: z.number().int().min(0).max(10000).default(1000),
-  typingSpeedVariance: z.number().min(0).max(1).default(0.2),
-});
-
-export type BehaviorFormValues = z.infer<typeof behaviorFormSchema>;
+import { BehaviorFormValues, behaviorFormSchema } from "../schemas";
 
 interface BehaviorTabProps {
   tenantId: string;
@@ -38,7 +27,7 @@ interface BehaviorTabProps {
 }
 
 export function BehaviorTab({ tenantId, initialData, onSave }: BehaviorTabProps) {
-  const form = useForm<BehaviorFormValues>({
+  const form = useForm<any>({
     resolver: zodResolver(behaviorFormSchema) as any,
     mode: 'onChange',
   });
@@ -49,10 +38,13 @@ export function BehaviorTab({ tenantId, initialData, onSave }: BehaviorTabProps)
     }
   }, [initialData, form]);
 
-  async function onSubmit(data: BehaviorFormValues) {
+  async function onSubmit(data: any) {
     const result = await onSave({
       ...data,
       tenantId,
+      allowedExpressions: data.allowedExpressions || "",
+      forbiddenExpressions: data.forbiddenExpressions || "",
+      intermittentTyping: data.intermittentTyping || false,
     });
     if (result.success) {
       toast.success(result.message);
@@ -130,45 +122,93 @@ export function BehaviorTab({ tenantId, initialData, onSave }: BehaviorTabProps)
           />
 
           {form.watch('humanizerEnabled') && (
-            <div className="grid gap-6 sm:grid-cols-2 mt-4">
+            <div className="space-y-6 mt-4">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="pauseBeforeReplyMs"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Pause Before Reply (ms)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} onChange={(e) => field.onChange(parseInt(e.target.value, 10))} />
+                      </FormControl>
+                      <FormDescription>Simulates thinking/typing preparation time. (0-10000 ms)</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="typingSpeedVariance"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Typing Speed Variance</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.05" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value))} />
+                      </FormControl>
+                      <FormDescription>Random variance in chunk delivery speed. (0.0 - 1.0)</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="typoRate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Typo Rate</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value))} />
+                      </FormControl>
+                      <FormDescription>Probability of generating a typo. (0.0 - 1.0)</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
-                name="pauseBeforeReplyMs"
+                name="intermittentTyping"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-background">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Simulación "Typing" Intermitente</FormLabel>
+                      <FormDescription>Activa el indicador de "escribiendo..." de forma intermitente antes de la respuesta final.</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="allowedExpressions"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pause Before Reply (ms)</FormLabel>
+                    <FormLabel>Expresiones Permitidas (Sobrenombres)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={(e) => field.onChange(parseInt(e.target.value, 10))} />
+                      <Textarea placeholder="Ej: Señor, Ingeniero, Doctor" {...field} />
                     </FormControl>
-                    <FormDescription>Simulates thinking/typing preparation time. (0-10000 ms)</FormDescription>
+                    <FormDescription>Términos preferidos separados por comas. El LLM los usará activamente.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
-                name="typingSpeedVariance"
+                name="forbiddenExpressions"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Typing Speed Variance</FormLabel>
+                    <FormLabel>Expresiones Prohibidas (Evitar)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.05" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value))} />
+                      <Textarea placeholder="Ej: chamo, patrón, !, ¿, emojis, bullets" {...field} />
                     </FormControl>
-                    <FormDescription>Random variance in chunk delivery speed. (0.0 - 1.0)</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="typoRate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Typo Rate</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value))} />
-                    </FormControl>
-                    <FormDescription>Probability of generating a typo. (0.0 - 1.0)</FormDescription>
+                    <FormDescription>Modismos o caracteres prohibidos en este tenant, separados por comas.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

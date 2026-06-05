@@ -37,7 +37,7 @@ export function TenantDetailsClient({
 
   const defaultOpData = initialOperationData ? {
     ...initialOperationData,
-    telegramWhitelistedGroupIds: initialOperationData.telegramWhitelistedGroupIds.join(', ')
+    telegramWhitelistedGroupIds: initialOperationData.telegramWhitelistedGroupIds || ""
   } : {
     name: "",
     domain: "",
@@ -82,6 +82,9 @@ export function TenantDetailsClient({
     typoRate: 0.0,
     pauseBeforeReplyMs: 1000,
     typingSpeedVariance: 0.2,
+    allowedExpressions: "",
+    forbiddenExpressions: "",
+    intermittentTyping: false,
   };
 
   return (

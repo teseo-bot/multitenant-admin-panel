@@ -7,4 +7,7 @@ export type BehaviorSettings = {
   typoRate: number;
   pauseBeforeReplyMs: number;
   typingSpeedVariance: number;
+  allowedExpressions: string;
+  forbiddenExpressions: string;
+  intermittentTyping: boolean;
 };

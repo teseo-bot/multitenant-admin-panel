@@ -5,7 +5,7 @@ export const operationFormSchema = z.object({
   domain: z.string().url({ message: "Domain must be a valid URL." }),
   orchestratorUrl: z.string().url({ message: "Orchestrator URL must be a valid URL." }),
   telegramBotToken: z.string().min(10, { message: "Telegram Bot Token must be at least 10 characters." }),
-  telegramWhitelistedGroupIds: z.array(z.string()),
+  telegramWhitelistedGroupIds: z.string().optional(),
   status: z.boolean(),
 });
 export type OperationFormValues = z.infer<typeof operationFormSchema>;
@@ -41,6 +41,9 @@ export const behaviorFormSchema = z.object({
   typoRate: z.number().min(0).max(1).default(0.0),
   pauseBeforeReplyMs: z.number().min(0).max(10000).default(1000),
   typingSpeedVariance: z.number().min(0).max(1).default(0.2),
+  allowedExpressions: z.string().optional(),
+  forbiddenExpressions: z.string().optional(),
+  intermittentTyping: z.boolean().default(false),
 });
 export type BehaviorFormValues = z.infer<typeof behaviorFormSchema>;
 

@@ -20,7 +20,7 @@ export async function getTenantOperationSettings(tenantId: string) {
       domain: tenant.domain || "",
       orchestratorUrl: tenant.orchestrator_url || "",
       telegramBotToken: tenant.telegram_bot_token || "",
-      telegramWhitelistedGroupIds: Array.isArray(tenant.telegram_whitelisted_group_ids) ? tenant.telegram_whitelisted_group_ids : [],
+      telegramWhitelistedGroupIds: Array.isArray(tenant.telegram_whitelisted_group_ids) ? tenant.telegram_whitelisted_group_ids.join(', ') : "",
       status: tenant.status === 'active',
       suspensionStatus: tenant.suspension_status || "active",
       suspensionReason: tenant.suspension_reason || "",
@@ -37,6 +37,12 @@ export async function updateTenantOperationSettings(
 ) {
   try {
     const statusStr = values.status ? 'active' : 'suspended';
+    
+    // Parse the comma-separated string back to a JSON array of strings
+    const telegramGroupIdsArray = values.telegramWhitelistedGroupIds 
+      ? values.telegramWhitelistedGroupIds.split(',').map(id => id.trim()).filter(Boolean)
+      : [];
+
     await pool.query(
       `UPDATE tenants 
        SET name = $1, domain = $2, orchestrator_url = $3, telegram_bot_token = $4, telegram_whitelisted_group_ids = $5, status = $6
@@ -46,7 +52,7 @@ export async function updateTenantOperationSettings(
         values.domain,
         values.orchestratorUrl,
         values.telegramBotToken,
-        JSON.stringify(values.telegramWhitelistedGroupIds),
+        JSON.stringify(telegramGroupIdsArray),
         statusStr,
         tenantId
       ]
