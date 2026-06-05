@@ -16,6 +16,7 @@ import { BrandingTab } from "./tabs/BrandingTab";
 import { BehaviorTab } from "./tabs/BehaviorTab";
 import { PromptsTab } from "./tabs/PromptsTab";
 import { AccessRolesTab } from "./tabs/AccessRolesTab";
+import { IntegrationsTab } from "./tabs/IntegrationsTab";
 import { ApiKeysTab } from "./tabs/ApiKeysTab";
 import { SuspensionTab } from "./tabs/SuspensionTab";
 
@@ -109,6 +110,7 @@ export function TenantDetailsClient({
           <TabsTrigger value="behavior" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">Comportamiento</TabsTrigger>
           <TabsTrigger value="prompts" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">Prompts & IA</TabsTrigger>
           <TabsTrigger value="roles" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">Accesos & Roles</TabsTrigger>
+          <TabsTrigger value="integrations" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">Integraciones</TabsTrigger>
           <TabsTrigger value="keys" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">API Keys</TabsTrigger>
         </TabsList>
         
@@ -132,6 +134,9 @@ export function TenantDetailsClient({
         </TabsContent>
         <TabsContent value="roles" className="pt-4 min-w-0">
           <AccessRolesTab tenantId={tenantId} />
+        </TabsContent>
+        <TabsContent value="integrations" className="pt-4 min-w-0">
+          <IntegrationsTab tenantId={tenantId} />
         </TabsContent>
         <TabsContent value="keys" className="pt-4 min-w-0">
           <ApiKeysTab tenantId={tenantId} />
