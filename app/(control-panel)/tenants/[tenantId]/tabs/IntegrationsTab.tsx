@@ -97,7 +97,7 @@ export function IntegrationsTab({ tenantId }: { tenantId: string }) {
                 onChange={(e) => setConfigJson(e.target.value)} 
               />
               <p className="text-xs text-muted-foreground">
-                Define el JSON con las variables necesarias. Ej: {"{"}"api_key": "123", "base_url": "https://"{ "}"}
+                Define el JSON con las variables necesarias. Ej: {`{"api_key": "123", "base_url": "https://"}`}
               </p>
             </div>
           </div>
