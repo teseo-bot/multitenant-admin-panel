@@ -50,5 +50,6 @@ export type BehaviorFormValues = z.infer<typeof behaviorFormSchema>;
 export const suspensionFormSchema = z.object({
   suspensionStatus: z.enum(["active", "delayed", "unpaid", "suspended"]),
   suspensionReason: z.string().optional(),
+  suspensionMessage: z.string().optional(),
 });
 export type SuspensionFormValues = z.infer<typeof suspensionFormSchema>;

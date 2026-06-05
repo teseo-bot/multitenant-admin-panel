@@ -7,119 +7,60 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export type TenantUserRole = "Owner" | "Admin" | "Viewer";
-
-export interface TenantUser {
+export type TenantUser = {
   id: string;
-  tenant_id: string;
   email: string;
-  role: TenantUserRole;
-  created_at: string;
-}
+  role: string;
+  tokenUsage: number;
+  lastActive: string | null;
+  createdAt: string;
+};
 
-export async function getTenantUsers(tenantId: string) {
+export async function getTenantUsers(tenantId: string): Promise<TenantUser[]> {
   try {
-    const query = `
-      SELECT id, tenant_id, email, role, created_at
-      FROM tenant_users
-      WHERE tenant_id = $1
-      ORDER BY created_at DESC;
-    `;
-    const result = await pool.query(query, [tenantId]);
-    return { success: true, users: result.rows as TenantUser[] };
-  } catch (error: any) {
+    const { rows } = await pool.query(
+      `SELECT id, email, role, token_usage, last_active, created_at 
+       FROM tenant_users 
+       WHERE tenant_id = $1 
+       ORDER BY created_at ASC`,
+      [tenantId]
+    );
+    return rows.map((r: any) => ({
+      id: r.id,
+      email: r.email,
+      role: r.role,
+      tokenUsage: r.token_usage || 0,
+      lastActive: r.last_active ? r.last_active.toISOString() : null,
+      createdAt: r.created_at.toISOString(),
+    }));
+  } catch (error) {
     console.error("Error fetching tenant users:", error);
-    return { success: false, error: "Failed to fetch tenant users." };
+    return [];
   }
 }
 
-export async function inviteTenantUser(tenantId: string, email: string, role: TenantUserRole) {
+export async function createTenantAdmin(tenantId: string, email: string) {
   try {
-    const query = `
-      INSERT INTO tenant_users (tenant_id, email, role)
-      VALUES ($1, $2, $3)
-      RETURNING id;
-    `;
-    await pool.query(query, [tenantId, email, role]);
-    
-    revalidatePath(`/tenants/${tenantId}`);
+    await pool.query(
+      `INSERT INTO tenant_users (tenant_id, email, role)
+       VALUES ($1, $2, 'admin')`,
+      [tenantId, email]
+    );
+    revalidatePath(`/control-panel/tenants/${tenantId}`);
     return { success: true };
   } catch (error: any) {
-    console.error("Error inviting user:", error);
-    return { success: false, error: "Failed to invite user. " + error?.message };
+    console.error("Error creating tenant admin:", error);
+    return { success: false, error: error.message };
   }
 }
 
-export async function updateTenantUserRole(userId: string, newRole: TenantUserRole) {
+export async function deleteTenantUser(tenantId: string, userId: string) {
   try {
-    const query = `
-      UPDATE tenant_users
-      SET role = $1
-      WHERE id = $2
-      RETURNING tenant_id;
-    `;
-    const res = await pool.query(query, [newRole, userId]);
-    
-    if (res.rows.length > 0) {
-        revalidatePath(`/tenants/${res.rows[0].tenant_id}`);
-    }
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating user role:", error);
-    return { success: false, error: "Failed to update user role." };
-  }
-}
-
-export async function removeTenantUser(userId: string) {
-  try {
-    const query = `
-      DELETE FROM tenant_users
-      WHERE id = $1
-      RETURNING tenant_id;
-    `;
-    const res = await pool.query(query, [userId]);
-    
-    if (res.rows.length > 0) {
-        revalidatePath(`/tenants/${res.rows[0].tenant_id}`);
-    }
-    return { success: true };
-  } catch (error) {
-    console.error("Error removing user:", error);
-    return { success: false, error: "Failed to remove user." };
-  }
-}
-
-export async function getFleetcoPlusStatus(tenantId: string) {
-  try {
-    const query = `
-      SELECT fleetco_plus_enabled
-      FROM tenants
-      WHERE id = $1;
-    `;
-    const result = await pool.query(query, [tenantId]);
-    if (result.rows.length > 0) {
-        return { success: true, enabled: result.rows[0].fleetco_plus_enabled };
-    }
-    return { success: true, enabled: false };
-  } catch (error: any) {
-    console.error("Error fetching Fleetco+ status:", error);
-    return { success: false, error: "Failed to fetch status." };
-  }
-}
-
-export async function toggleFleetcoPlusStatus(tenantId: string, enabled: boolean) {
-  try {
-    // Note: Assuming 'fleetco_plus_enabled' column exists. If not, this might throw, which is handled.
-    const query = `
-      UPDATE tenants
-      SET fleetco_plus_enabled = $1
-      WHERE id = $2;
-    `;
-    await pool.query(query, [enabled, tenantId]);
-    revalidatePath(`/tenants/${tenantId}`);
+    await pool.query(`DELETE FROM tenant_users WHERE id = $1 AND tenant_id = $2`, [userId, tenantId]);
+    revalidatePath(`/control-panel/tenants/${tenantId}`);
     return { success: true };
   } catch (error: any) {
-    console.error("Error toggling Fleetco+ status:", error);
-    return { success: false, error: "Failed to update Fleetco+ status." };
+    console.error("Error deleting user:", error);
+    return { success: false, error: error.message };
   }
 }

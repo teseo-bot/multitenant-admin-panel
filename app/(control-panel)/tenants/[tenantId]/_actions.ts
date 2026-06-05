@@ -10,7 +10,7 @@ const pool = new Pool({
 
 export async function getTenantOperationSettings(tenantId: string) {
   try {
-    const { rows } = await pool.query(`SELECT name, domain, orchestrator_url, telegram_bot_token, telegram_whitelisted_group_ids, status, suspension_status, suspension_reason FROM tenants WHERE id = $1`, [tenantId]);
+    const { rows } = await pool.query(`SELECT name, domain, orchestrator_url, telegram_bot_token, telegram_whitelisted_group_ids, status, suspension_status, suspension_reason, suspension_message FROM tenants WHERE id = $1`, [tenantId]);
     if (rows.length === 0) {
       return null;
     }
@@ -24,6 +24,7 @@ export async function getTenantOperationSettings(tenantId: string) {
       status: tenant.status === 'active',
       suspensionStatus: tenant.suspension_status || "active",
       suspensionReason: tenant.suspension_reason || "",
+      suspensionMessage: tenant.suspension_message || "",
     };
   } catch (error: any) {
     console.error("Error fetching tenant operation settings:", error);
@@ -38,7 +39,6 @@ export async function updateTenantOperationSettings(
   try {
     const statusStr = values.status ? 'active' : 'suspended';
     
-    // Parse the comma-separated string back to a JSON array of strings
     const telegramGroupIdsArray = values.telegramWhitelistedGroupIds 
       ? values.telegramWhitelistedGroupIds.split(',').map(id => id.trim()).filter(Boolean)
       : [];
@@ -69,9 +69,9 @@ export async function updateTenantSuspension(tenantId: string, values: Suspensio
   try {
     await pool.query(
       `UPDATE tenants 
-       SET suspension_status = $1, suspension_reason = $2
-       WHERE id = $3`,
-      [values.suspensionStatus, values.suspensionReason || null, tenantId]
+       SET suspension_status = $1, suspension_reason = $2, suspension_message = $3
+       WHERE id = $4`,
+      [values.suspensionStatus, values.suspensionReason || null, values.suspensionMessage || null, tenantId]
     );
     revalidatePath(`/tenants/${tenantId}`);
     return { success: true };

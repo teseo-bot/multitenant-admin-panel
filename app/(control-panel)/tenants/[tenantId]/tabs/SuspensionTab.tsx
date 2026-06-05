@@ -13,6 +13,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from 'sonner';
 import { updateTenantSuspension } from "../_actions";
@@ -28,6 +29,8 @@ export function SuspensionTab({ tenantId, initialData }: SuspensionTabProps) {
     resolver: zodResolver(suspensionFormSchema),
     defaultValues: initialData,
   });
+
+  const watchStatus = form.watch("suspensionStatus");
 
   async function onSubmit(values: SuspensionFormValues) {
     const response = await updateTenantSuspension(tenantId, values);
@@ -65,26 +68,49 @@ export function SuspensionTab({ tenantId, initialData }: SuspensionTabProps) {
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Cambiar el estado puede restringir inmediatamente el acceso a la plataforma.
+                  Cambiar el estado puede restringir el acceso a la plataforma.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="suspensionReason"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Motivo (Opcional)</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ej. Pago no recibido Factura #1234" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {watchStatus !== 'active' && (
+            <>
+              <FormField
+                control={form.control}
+                name="suspensionReason"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Motivo Interno (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ej. Pago no recibido Factura #1234" {...field} />
+                    </FormControl>
+                    <FormDescription>Solo visible para administradores.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="suspensionMessage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mensaje para el Usuario</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Estimado cliente, su cuenta presenta un saldo pendiente..." 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>Este mensaje se mostrará al usuario en un modal al iniciar sesión.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
 
           <Button type="submit" variant="destructive">Aplicar Estado</Button>
         </div>

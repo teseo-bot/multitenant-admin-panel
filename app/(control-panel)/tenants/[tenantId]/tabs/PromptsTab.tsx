@@ -1,148 +1,164 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import {
-  getSystemModules,
-  getAgentRoles,
-  getPromptVersions,
-  getABExperiments
-} from '../_promptsActions';
-import {
-  SystemModule,
-  AgentRole,
-  PromptVersion,
-  ABExperiment
-} from '../_promptsTypes';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { getTenantAgents, createTenantAgent, deleteTenantAgent, TenantAgent } from "../_promptsActions";
+import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 export function PromptsTab({ tenantId }: { tenantId: string }) {
-  const [modules, setModules] = useState<SystemModule[]>([]);
-  const [selectedModule, setSelectedModule] = useState<string | null>(null);
-  
-  const [roles, setRoles] = useState<AgentRole[]>([]);
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  
-  const [prompts, setPrompts] = useState<PromptVersion[]>([]);
-  const [experiments, setExperiments] = useState<ABExperiment[]>([]);
+  const [agents, setAgents] = useState<TenantAgent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Form states
+  const [name, setName] = useState("");
+  const [model, setModel] = useState("gpt-4o");
+  const [systemPrompt, setSystemPrompt] = useState("");
+  const [moduleAssigned, setModuleAssigned] = useState("sales");
 
   useEffect(() => {
-    getSystemModules().then(setModules);
-  }, []);
+    loadAgents();
+  }, [tenantId]);
 
-  useEffect(() => {
-    if (selectedModule) {
-      getAgentRoles(selectedModule).then(setRoles);
-      setSelectedRole(null);
-      setPrompts([]);
-      setExperiments([]);
+  async function loadAgents() {
+    setIsLoading(true);
+    const data = await getTenantAgents(tenantId);
+    setAgents(data);
+    setIsLoading(false);
+  }
+
+  async function handleCreateAgent() {
+    if (!name || !systemPrompt) {
+      toast.error("El nombre y el prompt son obligatorios.");
+      return;
     }
-  }, [selectedModule]);
-
-  useEffect(() => {
-    if (selectedRole) {
-      getPromptVersions(selectedRole).then(setPrompts);
-      getABExperiments(selectedRole).then(setExperiments);
+    const res = await createTenantAgent(tenantId, { name, model, systemPrompt, moduleAssigned });
+    if (res.success) {
+      toast.success("Agente creado exitosamente.");
+      setName("");
+      setSystemPrompt("");
+      loadAgents();
+    } else {
+      toast.error(res.error || "Error al crear agente.");
     }
-  }, [selectedRole]);
+  }
 
-  const activePrompt = prompts.find(p => p.is_active);
+  async function handleDelete(id: string) {
+    if (confirm("¿Estás seguro de eliminar este agente?")) {
+      const res = await deleteTenantAgent(tenantId, id);
+      if (res.success) {
+        toast.success("Agente eliminado.");
+        loadAgents();
+      } else {
+        toast.error(res.error || "Error al eliminar.");
+      }
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-6 w-full min-w-0">
+      <Card className="w-full">
         <CardHeader>
-          <CardTitle>Dynamic Role Selection</CardTitle>
-          <CardDescription>Select a module and a role to configure Prompts & A/B testing.</CardDescription>
+          <CardTitle>Crear Nuevo Agente</CardTitle>
+          <CardDescription>
+            Define un agente, configúrale un prompt maestro y asígnalo a un submódulo.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="flex space-x-4">
-          <div className="flex-1">
-            <label className="text-sm font-medium mb-1 block">Module</label>
-            <Select value={selectedModule || undefined} onValueChange={setSelectedModule}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Module" />
-              </SelectTrigger>
-              <SelectContent>
-                {modules.map(m => (
-                  <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Nombre del Agente</Label>
+              <Input placeholder="Ej. Ventas Bot" value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Módulo Asignado</Label>
+              <Select value={moduleAssigned} onValueChange={(val) => setModuleAssigned(val || "sales")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sales">Ventas & Leads</SelectItem>
+                  <SelectItem value="support">Soporte Técnico</SelectItem>
+                  <SelectItem value="concierge">Conserje (General)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Modelo LLM</Label>
+              <Select value={model} onValueChange={(val) => setModel(val || "gpt-4o")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt-4o">GPT-4o (OpenAI)</SelectItem>
+                  <SelectItem value="claude-3.5-sonnet">Claude 3.5 Sonnet (Anthropic)</SelectItem>
+                  <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (Google)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label>System Prompt Base</Label>
+              <Textarea 
+                placeholder="Eres un experto en..." 
+                rows={4}
+                value={systemPrompt} 
+                onChange={(e) => setSystemPrompt(e.target.value)} 
+              />
+            </div>
           </div>
-          <div className="flex-1">
-            <label className="text-sm font-medium mb-1 block">Role</label>
-            <Select value={selectedRole || undefined} onValueChange={setSelectedRole} disabled={!selectedModule}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Role" />
-              </SelectTrigger>
-              <SelectContent>
-                {roles.map(r => (
-                  <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Button onClick={handleCreateAgent}>Crear y Asignar Agente</Button>
         </CardContent>
       </Card>
 
-      {selectedRole && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Active Prompt Version</CardTitle>
-              <CardDescription>
-                {activePrompt ? `Version ${activePrompt.version} (Active)` : 'No active prompt found.'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea 
-                readOnly 
-                value={activePrompt?.prompt_content || ''} 
-                className="h-64 font-mono text-sm"
-                placeholder="Select a role to view its active prompt."
-              />
-              <Button className="mt-4 w-full">Draft New Version</Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>A/B Experiments</CardTitle>
-              <CardDescription>Active experiments splitting traffic between prompt versions.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {experiments.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No active experiments for this role.</p>
-              ) : (
-                <div className="space-y-4">
-                  {experiments.map(exp => (
-                    <div key={exp.id} className="border rounded-md p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-semibold">{exp.name}</span>
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full uppercase">{exp.status}</span>
-                      </div>
-                      <div className="space-y-2 mt-4">
-                        {exp.variants.map(variant => (
-                          <div key={variant.id} className="flex justify-between text-sm items-center">
-                            <span>Prompt {variant.prompt_version_id}</span>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-xs text-muted-foreground">Split:</span>
-                              <span className="font-mono bg-muted px-2 py-1 rounded">{(variant.traffic_split * 100).toFixed(0)}%</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <Button variant="outline" size="sm" className="mt-4 w-full">Edit Allocation</Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Agentes Asignados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Módulo</TableHead>
+                  <TableHead>Modelo</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center h-24">Cargando agentes...</TableCell>
+                  </TableRow>
+                ) : agents.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground h-24">No hay agentes configurados.</TableCell>
+                  </TableRow>
+                ) : (
+                  agents.map((agent) => (
+                    <TableRow key={agent.id}>
+                      <TableCell className="font-medium">{agent.name}</TableCell>
+                      <TableCell className="capitalize">{agent.moduleAssigned}</TableCell>
+                      <TableCell>{agent.model}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(agent.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

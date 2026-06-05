@@ -1,64 +1,131 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { getTenantUsers, createTenantAdmin, deleteTenantUser, TenantUser } from "../_accessActions";
+import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 export function AccessRolesTab({ tenantId }: { tenantId: string }) {
+  const [users, setUsers] = useState<TenantUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    loadUsers();
+  }, [tenantId]);
+
+  async function loadUsers() {
+    setIsLoading(true);
+    const data = await getTenantUsers(tenantId);
+    setUsers(data);
+    setIsLoading(false);
+  }
+
+  async function handleCreateAdmin() {
+    if (!email) {
+      toast.error("El correo electrónico es obligatorio.");
+      return;
+    }
+    const res = await createTenantAdmin(tenantId, email);
+    if (res.success) {
+      toast.success("Usuario Administrador creado exitosamente.");
+      setEmail("");
+      loadUsers();
+    } else {
+      toast.error(res.error || "Error al crear administrador.");
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (confirm("¿Estás seguro de eliminar este usuario?")) {
+      const res = await deleteTenantUser(tenantId, id);
+      if (res.success) {
+        toast.success("Usuario eliminado.");
+        loadUsers();
+      } else {
+        toast.error(res.error || "Error al eliminar.");
+      }
+    }
+  }
+
   return (
     <div className="space-y-6 w-full min-w-0">
       <Card className="w-full">
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Usuarios del Tenant</CardTitle>
-            <Badge variant="secondary">WIP</Badge>
-          </div>
+          <CardTitle>Invitar Administrador</CardTitle>
           <CardDescription>
-            Gestiona los accesos y roles de los usuarios que operan dentro de este tenant. (Funcionalidad en desarrollo)
+            Crea el usuario administrador para este tenant. Este usuario tendrá permisos para invitar a su vez a otros operadores.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 w-full">
-          <div className="flex flex-col sm:flex-row gap-4 items-end opacity-50 pointer-events-none">
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
             <div className="flex-1 min-w-0 w-full space-y-2">
               <Label htmlFor="email">Correo Electrónico</Label>
-              <Input id="email" placeholder="usuario@empresa.com" className="w-full" disabled />
+              <Input 
+                id="email" 
+                type="email"
+                placeholder="admin@empresa.com" 
+                className="w-full" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
-            <div className="w-full sm:w-[200px] space-y-2">
-              <Label>Rol</Label>
-              <Select defaultValue="viewer" disabled>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="owner">Owner</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="viewer">Viewer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button className="w-full sm:w-auto" disabled>Invitar</Button>
+            <Button className="w-full sm:w-auto" onClick={handleCreateAdmin}>Crear Admin</Button>
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="rounded-md border mt-4 w-full overflow-hidden opacity-50">
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Usuarios y Telemetría</CardTitle>
+          <CardDescription>
+            Uso de tokens y actividad de los usuarios registrados en este tenant.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border w-full overflow-hidden">
             <div className="overflow-x-auto w-full">
               <Table className="w-full min-w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Email</TableHead>
                     <TableHead>Rol</TableHead>
+                    <TableHead>Uso (Tokens)</TableHead>
+                    <TableHead>Última Actividad</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
-                      Datos mockeados en desarrollo.
-                    </TableCell>
-                  </TableRow>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center h-24">Cargando usuarios...</TableCell>
+                    </TableRow>
+                  ) : users.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
+                        No hay usuarios en este tenant.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.email}</TableCell>
+                        <TableCell className="capitalize">{user.role}</TableCell>
+                        <TableCell>{user.tokenUsage.toLocaleString()}</TableCell>
+                        <TableCell>{user.lastActive ? new Date(user.lastActive).toLocaleDateString() : 'Nunca'}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(user.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
