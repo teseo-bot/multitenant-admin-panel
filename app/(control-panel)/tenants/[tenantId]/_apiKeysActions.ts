@@ -1,76 +1,66 @@
 "use server";
 
-import { ApiKey } from "./_apiKeysTypes";
-import { getTenantOperationSettings } from "./_actions";
+import { Pool } from "pg";
+import { revalidatePath } from "next/cache";
 
-async function getTenantOrchestratorUrl(tenantId: string): Promise<string> {
-  const opData = await getTenantOperationSettings(tenantId);
-  if (opData && opData.orchestratorUrl) {
-    return opData.orchestratorUrl;
-  }
-  return process.env.DEFAULT_TENANT_ORCHESTRATOR_URL || "http://localhost:3000";
-}
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
-async function proxyRequest(
-  tenantId: string,
-  endpoint: string,
-  method: "GET" | "POST" | "PUT" | "DELETE",
-  body?: object
-): Promise<any> {
-  const orchestratorUrl = await getTenantOrchestratorUrl(tenantId);
-  
-  // Clean up double slashes
-  const baseUrl = orchestratorUrl.endsWith('/') ? orchestratorUrl.slice(0, -1) : orchestratorUrl;
-  const url = `${baseUrl}/api/v1/admin/secrets${endpoint}`;
+export type TenantLLMKey = {
+  id: string;
+  provider: string;
+  apiKeyPrefix: string; // we only send prefix to UI for security
+  createdAt: string;
+};
 
-  const adminAuthToken = process.env.ORCHESTRATOR_ADMIN_TOKEN || 'fallback-token-for-dev'; 
-  
+export async function getLLMKeys(tenantId: string): Promise<TenantLLMKey[]> {
   try {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${adminAuthToken}`,
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-
-    if (!response.ok) {
-      console.warn(`API Keys proxy returned ${response.status}`);
-      return null;
-    }
-
-    return response.json();
-  } catch (err) {
-    console.error("Proxy fetch error:", err);
-    return null;
+    const { rows } = await pool.query(
+      `SELECT id, provider, api_key, created_at 
+       FROM tenant_llm_keys 
+       WHERE tenant_id = $1 
+       ORDER BY created_at DESC`,
+      [tenantId]
+    );
+    return rows.map((r: any) => ({
+      id: r.id,
+      provider: r.provider,
+      // Mask key for UI
+      apiKeyPrefix: r.api_key ? r.api_key.substring(0, 8) + '...' : '',
+      createdAt: r.created_at.toISOString(),
+    }));
+  } catch (error) {
+    console.error("Error fetching LLM keys:", error);
+    return [];
   }
 }
 
-export async function generateApiKey(tenantId: string): Promise<ApiKey> {
-  console.log(`[Server Action] Generating API Key for tenant: ${tenantId}`);
-  const result = await proxyRequest(tenantId, "/generate", "POST");
-  if (!result) throw new Error("Proxy request failed");
-  return result.apiKey;
-}
-
-export async function listApiKeys(tenantId: string): Promise<ApiKey[]> {
-  console.log(`[Server Action] Listing API Keys for tenant: ${tenantId}`);
-  const result = await proxyRequest(tenantId, "/list", "GET");
-  if (!result || !result.apiKeys) {
-     return []; // Return empty array to avoid UI crash
+export async function upsertLLMKey(tenantId: string, provider: string, apiKey: string) {
+  try {
+    await pool.query(
+      `INSERT INTO tenant_llm_keys (tenant_id, provider, api_key)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (tenant_id, provider) 
+       DO UPDATE SET api_key = EXCLUDED.api_key, created_at = NOW()`,
+      [tenantId, provider, apiKey]
+    );
+    
+    revalidatePath(`/control-panel/tenants/${tenantId}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error upserting LLM key:", error);
+    return { success: false, error: error.message };
   }
-  return result.apiKeys;
 }
 
-export async function revokeApiKey(tenantId: string, keyId: string): Promise<void> {
-  console.log(`[Server Action] Revoking API Key ${keyId} for tenant: ${tenantId}`);
-  await proxyRequest(tenantId, `/revoke/${keyId}`, "POST");
-}
-
-export async function rotateApiKey(tenantId: string, keyId: string): Promise<ApiKey> {
-  console.log(`[Server Action] Rotating API Key ${keyId} for tenant: ${tenantId}`);
-  const result = await proxyRequest(tenantId, `/rotate/${keyId}`, "POST");
-  if (!result) throw new Error("Proxy request failed");
-  return result.apiKey;
+export async function deleteLLMKey(tenantId: string, id: string) {
+  try {
+    await pool.query(`DELETE FROM tenant_llm_keys WHERE id = $1 AND tenant_id = $2`, [id, tenantId]);
+    revalidatePath(`/control-panel/tenants/${tenantId}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting LLM key:", error);
+    return { success: false, error: error.message };
+  }
 }

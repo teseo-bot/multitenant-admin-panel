@@ -10,6 +10,11 @@ const pool = new Pool({
 export type TenantUser = {
   id: string;
   email: string;
+  fullName: string;
+  jobTitle: string;
+  reportsTo: string;
+  phone: string;
+  securityNotes: string;
   role: string;
   tokenUsage: number;
   lastActive: string | null;
@@ -19,7 +24,7 @@ export type TenantUser = {
 export async function getTenantUsers(tenantId: string): Promise<TenantUser[]> {
   try {
     const { rows } = await pool.query(
-      `SELECT id, email, role, token_usage, last_active, created_at 
+      `SELECT id, email, full_name, job_title, reports_to, phone, security_notes, role, token_usage, last_active, created_at 
        FROM tenant_users 
        WHERE tenant_id = $1 
        ORDER BY created_at ASC`,
@@ -27,8 +32,13 @@ export async function getTenantUsers(tenantId: string): Promise<TenantUser[]> {
     );
     return rows.map((r: any) => ({
       id: r.id,
-      email: r.email,
-      role: r.role,
+      email: r.email || '',
+      fullName: r.full_name || '',
+      jobTitle: r.job_title || '',
+      reportsTo: r.reports_to || '',
+      phone: r.phone || '',
+      securityNotes: r.security_notes || '',
+      role: r.role || 'MEMBER',
       tokenUsage: r.token_usage || 0,
       lastActive: r.last_active ? r.last_active.toISOString() : null,
       createdAt: r.created_at.toISOString(),
@@ -39,12 +49,12 @@ export async function getTenantUsers(tenantId: string): Promise<TenantUser[]> {
   }
 }
 
-export async function createTenantAdmin(tenantId: string, email: string) {
+export async function createTenantAdmin(tenantId: string, data: Partial<TenantUser>) {
   try {
     await pool.query(
-      `INSERT INTO tenant_users (tenant_id, email, role)
-       VALUES ($1, $2, 'admin')`,
-      [tenantId, email]
+      `INSERT INTO tenant_users (tenant_id, email, full_name, job_title, reports_to, phone, security_notes, role)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'ADMIN')`,
+      [tenantId, data.email, data.fullName, data.jobTitle, data.reportsTo, data.phone, data.securityNotes]
     );
     revalidatePath(`/control-panel/tenants/${tenantId}`);
     return { success: true };

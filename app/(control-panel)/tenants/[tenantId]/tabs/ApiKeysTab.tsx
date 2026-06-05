@@ -5,136 +5,141 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { generateApiKey, listApiKeys, revokeApiKey, rotateApiKey } from "../_apiKeysActions";
-import { ApiKey } from "../_apiKeysTypes";
+import { getLLMKeys, upsertLLMKey, deleteLLMKey, TenantLLMKey } from "../_apiKeysActions";
+import { Trash2 } from "lucide-react";
 
 export function ApiKeysTab({ tenantId }: { tenantId: string }) {
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [keys, setKeys] = useState<TenantLLMKey[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Form
+  const [provider, setProvider] = useState("openai");
+  const [apiKey, setApiKey] = useState("");
+
   useEffect(() => {
-    fetchApiKeys();
+    fetchKeys();
   }, [tenantId]);
 
-  const fetchApiKeys = async () => {
+  const fetchKeys = async () => {
     setLoading(true);
-    try {
-      const keys = await listApiKeys(tenantId);
-      setApiKeys(Array.isArray(keys) ? keys : []);
-    } catch (error) {
-      toast.error("Failed to fetch API keys.");
-      console.error("Error fetching API keys:", error);
-    } finally {
-      setLoading(false);
+    const data = await getLLMKeys(tenantId);
+    setKeys(data);
+    setLoading(false);
+  };
+
+  const handleSave = async () => {
+    if (!provider || !apiKey) {
+      toast.error("El proveedor y la API Key son obligatorios.");
+      return;
+    }
+    const res = await upsertLLMKey(tenantId, provider, apiKey);
+    if (res.success) {
+      toast.success("API Key guardada de forma segura.");
+      setApiKey("");
+      fetchKeys();
+    } else {
+      toast.error(res.error || "Error al guardar API Key.");
     }
   };
 
-  const handleGenerateKey = async () => {
-    try {
-      await generateApiKey(tenantId);
-      toast.success("API Key generated successfully.");
-      fetchApiKeys();
-    } catch (error) {
-      toast.error("Failed to generate API Key.");
-      console.error("Error generating API Key:", error);
-    }
-  };
-
-  const handleRevokeKey = async (keyId: string) => {
-    try {
-      await revokeApiKey(tenantId, keyId);
-      toast.success("API Key revoked successfully.");
-      fetchApiKeys();
-    } catch (error) {
-      toast.error("Failed to revoke API Key.");
-      console.error("Error revoking API Key:", error);
-    }
-  };
-
-  const handleRotateKey = async (keyId: string) => {
-    try {
-      await rotateApiKey(tenantId, keyId);
-      toast.success("API Key rotated successfully.");
-      fetchApiKeys();
-    } catch (error) {
-      toast.error("Failed to rotate API Key.");
-      console.error("Error rotating API Key:", error);
+  const handleDelete = async (id: string) => {
+    if (confirm("¿Estás seguro de eliminar esta API Key? Los agentes de este tenant perderán acceso al proveedor.")) {
+      const res = await deleteLLMKey(tenantId, id);
+      if (res.success) {
+        toast.success("API Key eliminada.");
+        fetchKeys();
+      } else {
+        toast.error(res.error || "Error al eliminar.");
+      }
     }
   };
 
   return (
-    <div className="space-y-6 w-full max-w-full">
+    <div className="space-y-6 w-full min-w-0">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>API Key Management</CardTitle>
+          <CardTitle>Inyectar API Keys Externas (LLM Providers)</CardTitle>
           <CardDescription>
-            Delegated secrets proxy. Keys are securely stored in the Tenant&#39;s remote Secret Manager.
+            Registra las API Keys de los proveedores de IA que usarán los agentes de este tenant.
+            Estas claves se inyectarán de manera segura en tiempo de ejecución.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 w-full">
-          <Button onClick={handleGenerateKey}>Generate New API Key</Button>
-          <Separator />
-          <div className="w-full">
-            <h3 className="text-lg font-semibold mb-2">Existing API Keys</h3>
-            {loading ? (
-              <p className="text-sm text-muted-foreground">Loading API keys...</p>
-            ) : apiKeys.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No API keys found for this tenant.</p>
-            ) : (
-              <div className="rounded-md border mt-4 w-full overflow-hidden">
-                <div className="overflow-x-auto w-full">
-                  <Table className="w-full min-w-full">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Prefix</TableHead>
-                        <TableHead>Created At</TableHead>
-                        <TableHead>Last Used</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {apiKeys.map((key) => (
-                        <TableRow key={key.id}>
-                          <TableCell className="font-mono text-xs">{key.prefix}****</TableCell>
-                          <TableCell>{new Date(key.createdAt).toLocaleString()}</TableCell>
-                          <TableCell>{key.lastUsed ? new Date(key.lastUsed).toLocaleString() : "Never"}</TableCell>
-                          <TableCell>{key.status}</TableCell>
-                          <TableCell className="space-x-2 whitespace-nowrap">
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleRevokeKey(key.id)}
-                              disabled={key.status === "revoked"}
-                            >
-                              Revoke
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRotateKey(key.id)}
-                              disabled={key.status === "revoked"}
-                            >
-                              Rotate
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 items-end">
+            <div className="space-y-2">
+              <Label>Proveedor</Label>
+              <Select value={provider} onValueChange={(v) => setProvider(v || "openai")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="openai">OpenAI</SelectItem>
+                  <SelectItem value="anthropic">Anthropic (Claude)</SelectItem>
+                  <SelectItem value="google">Google (Gemini)</SelectItem>
+                  <SelectItem value="deepseek">DeepSeek</SelectItem>
+                  <SelectItem value="together">Together AI</SelectItem>
+                  <SelectItem value="groq">Groq</SelectItem>
+                  <SelectItem value="custom">Custom Endpoint</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>API Key Segura</Label>
+              <Input 
+                type="password"
+                placeholder="sk-..." 
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+              />
+            </div>
+          </div>
+          <Button onClick={handleSave}>Guardar en Secret Manager</Button>
+        </CardContent>
+      </Card>
+
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>API Keys Configuradas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Proveedor</TableHead>
+                  <TableHead>Clave (Enmascarada)</TableHead>
+                  <TableHead>Última Actualización</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center h-24">Cargando llaves...</TableCell>
+                  </TableRow>
+                ) : keys.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground h-24">No hay API Keys configuradas para este tenant.</TableCell>
+                  </TableRow>
+                ) : (
+                  keys.map((k) => (
+                    <TableRow key={k.id}>
+                      <TableCell className="font-medium capitalize">{k.provider}</TableCell>
+                      <TableCell className="font-mono text-xs">{k.apiKeyPrefix}</TableCell>
+                      <TableCell>{new Date(k.createdAt).toLocaleString()}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(k.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>
