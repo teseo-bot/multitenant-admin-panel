@@ -25,10 +25,10 @@ export const brandingFormSchema = z.object({
   accentColor: z.string().regex(/^#([0-9a-fA-F]{3}){1,2}$/i, "Must be a valid hex color"),
   backgroundColor: z.string().regex(/^#([0-9a-fA-F]{3}){1,2}$/i, "Must be a valid hex color"),
   cardBackgroundColor: z.string().regex(/^#([0-9a-fA-F]{3}){1,2}$/i, "Must be a valid hex color"),
-  logoLightUrl: z.string().url("Must be a valid URL").or(z.literal("")),
-  logoDarkUrl: z.string().url("Must be a valid URL").or(z.literal("")),
-  faviconUrl: z.string().url("Must be a valid URL").or(z.literal("")),
-  appIconUrl: z.string().url("Must be a valid URL").or(z.literal("")),
+  logoLightUrl: z.string().optional(),
+  logoDarkUrl: z.string().optional(),
+  faviconUrl: z.string().optional(),
+  appIconUrl: z.string().optional(),
   themeMode: z.enum(["light", "dark", "system"]),
 });
 export type BrandingFormValues = z.infer<typeof brandingFormSchema>;

@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -38,6 +37,29 @@ export function BrandingTab({ tenantId, initialData, onSave }: BrandingTabProps)
       toast.error(error.message || 'Error guardando branding');
     }
   }
+
+  // Handle local file conversion to Base64
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>, 
+    onChange: (value: string) => void
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("El archivo no debe exceder 2MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        onChange(reader.result);
+        toast.success("Imagen cargada (Base64)");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   return (
     <Form {...form}>
@@ -128,37 +150,82 @@ export function BrandingTab({ tenantId, initialData, onSave }: BrandingTabProps)
           )}/>
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium border-b pb-2">Logotipos e Iconos</h3>
+        <div className="space-y-6">
+          <div className="border-b pb-2">
+            <h3 className="text-lg font-medium">Logotipos e Iconos</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Puedes pegar una URL directamente o seleccionar un archivo local (PNG/JPG) para codificarlo e inyectarlo automáticamente en Base64 a la BD.
+            </p>
+          </div>
           
           <FormField control={form.control} name="logoLightUrl" render={({ field }) => (
             <FormItem>
-              <FormLabel>Logo (Light Mode) URL</FormLabel>
-              <FormControl><Input placeholder="https://..." {...field} /></FormControl>
+              <FormLabel>Logo (Light Mode)</FormLabel>
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                <FormControl>
+                  <Input placeholder="https://... o Base64" {...field} className="flex-1" />
+                </FormControl>
+                <Input 
+                  type="file" 
+                  accept="image/png, image/jpeg, image/svg+xml" 
+                  className="w-full sm:w-auto"
+                  onChange={(e) => handleFileChange(e, field.onChange)} 
+                />
+              </div>
               <FormMessage />
             </FormItem>
           )}/>
 
           <FormField control={form.control} name="logoDarkUrl" render={({ field }) => (
             <FormItem>
-              <FormLabel>Logo (Dark Mode) URL</FormLabel>
-              <FormControl><Input placeholder="https://..." {...field} /></FormControl>
+              <FormLabel>Logo (Dark Mode)</FormLabel>
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                <FormControl>
+                  <Input placeholder="https://... o Base64" {...field} className="flex-1" />
+                </FormControl>
+                <Input 
+                  type="file" 
+                  accept="image/png, image/jpeg, image/svg+xml" 
+                  className="w-full sm:w-auto"
+                  onChange={(e) => handleFileChange(e, field.onChange)} 
+                />
+              </div>
               <FormMessage />
             </FormItem>
           )}/>
 
           <FormField control={form.control} name="faviconUrl" render={({ field }) => (
             <FormItem>
-              <FormLabel>Favicon URL</FormLabel>
-              <FormControl><Input placeholder="https://..." {...field} /></FormControl>
+              <FormLabel>Favicon</FormLabel>
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                <FormControl>
+                  <Input placeholder="https://... o Base64" {...field} className="flex-1" />
+                </FormControl>
+                <Input 
+                  type="file" 
+                  accept="image/png, image/jpeg, image/svg+xml" 
+                  className="w-full sm:w-auto"
+                  onChange={(e) => handleFileChange(e, field.onChange)} 
+                />
+              </div>
               <FormMessage />
             </FormItem>
           )}/>
 
           <FormField control={form.control} name="appIconUrl" render={({ field }) => (
             <FormItem>
-              <FormLabel>App Icon (Touch) URL</FormLabel>
-              <FormControl><Input placeholder="https://..." {...field} /></FormControl>
+              <FormLabel>App Icon (Touch)</FormLabel>
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                <FormControl>
+                  <Input placeholder="https://... o Base64" {...field} className="flex-1" />
+                </FormControl>
+                <Input 
+                  type="file" 
+                  accept="image/png, image/jpeg, image/svg+xml" 
+                  className="w-full sm:w-auto"
+                  onChange={(e) => handleFileChange(e, field.onChange)} 
+                />
+              </div>
               <FormMessage />
             </FormItem>
           )}/>

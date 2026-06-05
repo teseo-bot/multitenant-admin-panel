@@ -30,7 +30,7 @@ export async function getTenantBranding(tenantId: string): Promise<BrandingConfi
         logoDarkUrl: row.logo_dark_url || '',
         faviconUrl: row.favicon_url || '',
         appIconUrl: row.app_icon_url || '',
-        themeMode: row.theme_mode || 'system',
+        themeMode: (row.theme_mode || 'system').toLowerCase(),
       };
     } else {
       return {
@@ -73,9 +73,17 @@ export async function updateTenantBranding(tenantId: string, data: BrandingConfi
          theme_mode = EXCLUDED.theme_mode
        RETURNING *`,
       [
-        tenantId, data.primaryColor, data.secondaryColor, data.accentColor, data.backgroundColor, 
-        data.cardBackgroundColor, data.logoLightUrl, data.logoDarkUrl, data.faviconUrl, 
-        data.appIconUrl, data.themeMode
+        tenantId, 
+        data.primaryColor, 
+        data.secondaryColor, 
+        data.accentColor, 
+        data.backgroundColor, 
+        data.cardBackgroundColor, 
+        data.logoLightUrl, 
+        data.logoDarkUrl, 
+        data.faviconUrl, 
+        data.appIconUrl, 
+        data.themeMode.toUpperCase()
       ]
     );
     client.release();
