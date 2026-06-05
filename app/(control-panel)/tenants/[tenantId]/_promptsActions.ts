@@ -10,6 +10,7 @@ const pool = new Pool({
 export type TenantAgent = {
   id: string;
   name: string;
+  objective: string;
   model: string;
   systemPrompt: string;
   moduleAssigned: string;
@@ -20,7 +21,7 @@ export type TenantAgent = {
 export async function getTenantAgents(tenantId: string): Promise<TenantAgent[]> {
   try {
     const { rows } = await pool.query(
-      `SELECT id, name, model, system_prompt, module_assigned, enabled_tools, created_at 
+      `SELECT id, name, objective, model, system_prompt, module_assigned, enabled_tools, created_at 
        FROM tenant_agents 
        WHERE tenant_id = $1 
        ORDER BY created_at DESC`,
@@ -29,6 +30,7 @@ export async function getTenantAgents(tenantId: string): Promise<TenantAgent[]> 
     return rows.map((r: any) => ({
       id: r.id,
       name: r.name,
+      objective: r.objective || '',
       model: r.model,
       systemPrompt: r.system_prompt,
       moduleAssigned: r.module_assigned,
@@ -44,11 +46,12 @@ export async function getTenantAgents(tenantId: string): Promise<TenantAgent[]> 
 export async function createTenantAgent(tenantId: string, data: Partial<TenantAgent>) {
   try {
     await pool.query(
-      `INSERT INTO tenant_agents (tenant_id, name, model, system_prompt, module_assigned, enabled_tools)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+      `INSERT INTO tenant_agents (tenant_id, name, objective, model, system_prompt, module_assigned, enabled_tools)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [
         tenantId, 
         data.name, 
+        data.objective || '',
         data.model || 'gpt-4o', 
         data.systemPrompt || '', 
         data.moduleAssigned || '',

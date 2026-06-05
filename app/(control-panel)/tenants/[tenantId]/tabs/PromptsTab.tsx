@@ -19,9 +19,10 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
 
   // Form states
   const [name, setName] = useState("");
+  const [objective, setObjective] = useState("");
   const [model, setModel] = useState("gpt-4o");
   const [systemPrompt, setSystemPrompt] = useState("");
-  const [moduleAssigned, setModuleAssigned] = useState("sales");
+  const [moduleAssigned, setModuleAssigned] = useState("crm");
   const [enabledToolsInput, setEnabledToolsInput] = useState("");
 
   useEffect(() => {
@@ -36,8 +37,8 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
   }
 
   async function handleCreateAgent() {
-    if (!name || !systemPrompt) {
-      toast.error("El nombre y el prompt son obligatorios.");
+    if (!name || !systemPrompt || !objective) {
+      toast.error("El nombre, objetivo y el prompt son obligatorios.");
       return;
     }
     
@@ -49,6 +50,7 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
 
     const res = await createTenantAgent(tenantId, { 
       name, 
+      objective,
       model, 
       systemPrompt, 
       moduleAssigned,
@@ -58,6 +60,7 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
     if (res.success) {
       toast.success("Agente creado exitosamente.");
       setName("");
+      setObjective("");
       setSystemPrompt("");
       setEnabledToolsInput("");
       loadAgents();
@@ -84,7 +87,7 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
         <CardHeader>
           <CardTitle>Crear Nuevo Agente</CardTitle>
           <CardDescription>
-            Define un agente, su prompt maestro y asígnale capacidades (Tools / MCP).
+            Define un agente, su objetivo, prompt maestro y asígnale capacidades (Tools / MCP).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -94,16 +97,19 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
               <Input placeholder="Ej. Hunter Bot" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Módulo Asignado</Label>
-              <Select value={moduleAssigned} onValueChange={(val) => setModuleAssigned(val || "sales")}>
+              <Label>Objetivo del Agente</Label>
+              <Input placeholder="Ej. Calificación de Leads Outbound" value={objective} onChange={(e) => setObjective(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Módulo Padre</Label>
+              <Select value={moduleAssigned} onValueChange={(val) => setModuleAssigned(val || "crm")}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sales">Ventas & Leads</SelectItem>
-                  <SelectItem value="support">Soporte Técnico</SelectItem>
-                  <SelectItem value="concierge">Conserje (General)</SelectItem>
-                  <SelectItem value="hunter">Hunter (Scraping/Outbound)</SelectItem>
+                  <SelectItem value="crm">CRM (Customer Relationship Management)</SelectItem>
+                  <SelectItem value="assets_studio">Assets Studio (Próximamente)</SelectItem>
+                  <SelectItem value="compliance">Compliance & Legal (Próximamente)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -120,14 +126,17 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 sm:col-span-2">
               <Label>Capacidades (Tools / MCP)</Label>
               <Input 
                 placeholder="Ej. web_scraper, odoo_mcp, gmail_api" 
                 value={enabledToolsInput} 
                 onChange={(e) => setEnabledToolsInput(e.target.value)} 
               />
-              <p className="text-xs text-muted-foreground">Separadas por coma. El orquestador inyectará estas herramientas.</p>
+              <p className="text-xs text-muted-foreground">
+                Lista separada por comas con el ID exacto de la herramienta. El motor orquestador (LangGraph/LangChain) 
+                leerá estos IDs y hará el binding dinámico. No requieres inyectar JSON aquí.
+              </p>
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label>System Prompt Base</Label>
@@ -152,7 +161,7 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nombre</TableHead>
+                  <TableHead>Agente / Objetivo</TableHead>
                   <TableHead>Módulo</TableHead>
                   <TableHead>Modelo / Tools</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
@@ -170,8 +179,15 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
                 ) : (
                   agents.map((agent) => (
                     <TableRow key={agent.id}>
-                      <TableCell className="font-medium">{agent.name}</TableCell>
-                      <TableCell className="capitalize">{agent.moduleAssigned}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{agent.name}</span>
+                          <span className="text-xs text-muted-foreground">{agent.objective}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="capitalize">
+                        {agent.moduleAssigned.replace('_', ' ')}
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1 items-start">
                           <span className="text-sm">{agent.model}</span>
