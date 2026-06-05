@@ -2,7 +2,7 @@
 
 import { Pool } from "pg";
 import { revalidatePath } from "next/cache";
-import { OperationFormValues, ClientFormValues } from "./schemas";
+import { OperationFormValues, ClientFormValues, SuspensionFormValues } from "./schemas";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -10,7 +10,7 @@ const pool = new Pool({
 
 export async function getTenantOperationSettings(tenantId: string) {
   try {
-    const { rows } = await pool.query(`SELECT name, domain, orchestrator_url, telegram_bot_token, telegram_whitelisted_group_ids, status FROM tenants WHERE id = $1`, [tenantId]);
+    const { rows } = await pool.query(`SELECT name, domain, orchestrator_url, telegram_bot_token, telegram_whitelisted_group_ids, status, suspension_status, suspension_reason FROM tenants WHERE id = $1`, [tenantId]);
     if (rows.length === 0) {
       return null;
     }
@@ -22,6 +22,8 @@ export async function getTenantOperationSettings(tenantId: string) {
       telegramBotToken: tenant.telegram_bot_token || "",
       telegramWhitelistedGroupIds: Array.isArray(tenant.telegram_whitelisted_group_ids) ? tenant.telegram_whitelisted_group_ids : [],
       status: tenant.status === 'active',
+      suspensionStatus: tenant.suspension_status || "active",
+      suspensionReason: tenant.suspension_reason || "",
     };
   } catch (error: any) {
     console.error("Error fetching tenant operation settings:", error);
@@ -53,6 +55,22 @@ export async function updateTenantOperationSettings(
     return { success: true };
   } catch (error) {
     console.error("Error updating tenant operation settings:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+export async function updateTenantSuspension(tenantId: string, values: SuspensionFormValues) {
+  try {
+    await pool.query(
+      `UPDATE tenants 
+       SET suspension_status = $1, suspension_reason = $2
+       WHERE id = $3`,
+      [values.suspensionStatus, values.suspensionReason || null, tenantId]
+    );
+    revalidatePath(`/tenants/${tenantId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating tenant suspension:", error);
     return { success: false, error: (error as Error).message };
   }
 }

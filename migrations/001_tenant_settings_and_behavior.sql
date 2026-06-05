@@ -24,3 +24,11 @@ CREATE TABLE IF NOT EXISTS public.tenant_behavior_settings (
     PRIMARY KEY (tenant_id)
 );
 ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS fleetco_plus_enabled boolean DEFAULT false;
+CREATE TABLE IF NOT EXISTS public.tenant_configs (
+    tenant_id uuid REFERENCES public.tenants(id) ON DELETE CASCADE,
+    primary_color text,
+    accent_color text,
+    logo_url text,
+    theme_mode text,
+    PRIMARY KEY (tenant_id)
+);

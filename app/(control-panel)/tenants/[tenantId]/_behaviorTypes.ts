@@ -3,4 +3,8 @@ export type BehaviorSettings = {
   readingSpeedWPM: number;
   streamingChunkSize: number;
   artificialDelayMs: number;
+  humanizerEnabled: boolean;
+  typoRate: number;
+  pauseBeforeReplyMs: number;
+  typingSpeedVariance: number;
 };

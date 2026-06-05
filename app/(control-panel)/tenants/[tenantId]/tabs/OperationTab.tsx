@@ -2,9 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import * as z from 'zod';
 import { useEffect } from "react";
-
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -16,47 +14,27 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { updateTenantOperationSettings } from "../_actions";
-
-// Define the schema for the operation form
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: 'Name must be at least 2 characters.',
-  }),
-  domain: z.string().url({
-    message: 'Domain must be a valid URL.',
-  }),
-  orchestratorUrl: z.string().url({
-    message: 'Orchestrator URL must be a valid URL.',
-  }),
-  telegramBotToken: z.string().min(10, {
-    message: 'Telegram Bot Token must be at least 10 characters.',
-  }),
-  telegramWhitelistedGroupIds: z.string(), // Expect a string input from the form
-  status: z.boolean(), // The Kill Switch
-});
-
-type OperationFormValues = z.infer<typeof formSchema>;
+import { OperationFormValues, operationFormSchema } from "../schemas";
 
 interface OperationTabProps {
   tenantId: string;
-  initialData: OperationFormValues; // Data fetched from Cloud SQL
+  initialData: OperationFormValues & { telegramWhitelistedGroupIds: string };
 }
 
 export function OperationTab({ tenantId, initialData }: OperationTabProps) {
-  const form = useForm<OperationFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: initialData, // Initialize with fetched data
+  const form = useForm<any>({
+    resolver: zodResolver(operationFormSchema) as any,
+    defaultValues: initialData,
   });
 
   useEffect(() => {
     form.reset(initialData);
   }, [initialData, form]);
 
-  async function onSubmit(values: OperationFormValues) {
-    const telegramGroupIdsArray = values.telegramWhitelistedGroupIds.split(',').map(id => id.trim()).filter(Boolean);
+  async function onSubmit(values: any) {
+    const telegramGroupIdsArray = values.telegramWhitelistedGroupIds.split(',').map((id: string) => id.trim()).filter(Boolean);
 
     const response = await updateTenantOperationSettings(tenantId, {
       ...values,
@@ -153,27 +131,6 @@ export function OperationTab({ tenantId, initialData }: OperationTabProps) {
                 Comma-separated Telegram group IDs that are whitelisted.
               </FormDescription>
               <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-              <div className="space-y-0.5">
-                <FormLabel>Kill Switch</FormLabel>
-                <FormDescription>
-                  Enable or disable all operations for this tenant.
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
             </FormItem>
           )}
         />

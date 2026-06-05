@@ -3,7 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BehaviorSettings } from "./_behaviorTypes";
 import { BrandingConfig } from "./_brandingTypes";
-import { OperationFormValues, ClientFormValues } from "./schemas";
+import { OperationFormValues, ClientFormValues, SuspensionFormValues } from "./schemas";
 import { updateTenantBranding } from "./_brandingActions";
 import { saveBehaviorSettings } from "./_behaviorActions";
 import { Button } from "@/components/ui/button";
@@ -17,10 +17,11 @@ import { BehaviorTab } from "./tabs/BehaviorTab";
 import { PromptsTab } from "./tabs/PromptsTab";
 import { AccessRolesTab } from "./tabs/AccessRolesTab";
 import { ApiKeysTab } from "./tabs/ApiKeysTab";
+import { SuspensionTab } from "./tabs/SuspensionTab";
 
 interface TenantDetailsClientProps {
   tenantId: string;
-  initialOperationData: OperationFormValues | null | undefined;
+  initialOperationData: (OperationFormValues & SuspensionFormValues) | null | undefined;
   initialClientData: ClientFormValues | null | undefined;
   initialBrandingData: BrandingConfig | null | undefined;
   initialBehaviorData: BehaviorSettings | null | undefined;
@@ -34,7 +35,6 @@ export function TenantDetailsClient({
   initialBehaviorData 
 }: TenantDetailsClientProps) {
 
-  // For the tab, it expects the array to be a comma-joined string
   const defaultOpData = initialOperationData ? {
     ...initialOperationData,
     telegramWhitelistedGroupIds: initialOperationData.telegramWhitelistedGroupIds.join(', ')
@@ -47,6 +47,11 @@ export function TenantDetailsClient({
     status: true
   };
 
+  const defaultSuspensionData: SuspensionFormValues = {
+    suspensionStatus: initialOperationData?.suspensionStatus || "active",
+    suspensionReason: initialOperationData?.suspensionReason || "",
+  };
+
   const defaultCliData: ClientFormValues = initialClientData || {
     companyName: "",
     contactName: "",
@@ -57,8 +62,14 @@ export function TenantDetailsClient({
 
   const defaultBrandingData: BrandingConfig = initialBrandingData || {
     primaryColor: '#007bff',
+    secondaryColor: '#6c757d',
     accentColor: '#6c757d',
-    logoUrl: '',
+    backgroundColor: '#ffffff',
+    cardBackgroundColor: '#ffffff',
+    logoLightUrl: '',
+    logoDarkUrl: '',
+    faviconUrl: '',
+    appIconUrl: '',
     themeMode: 'system'
   };
 
@@ -67,6 +78,10 @@ export function TenantDetailsClient({
     readingSpeedWPM: 250,
     streamingChunkSize: 64,
     artificialDelayMs: 100,
+    humanizerEnabled: true,
+    typoRate: 0.0,
+    pauseBeforeReplyMs: 1000,
+    typingSpeedVariance: 0.2,
   };
 
   return (
@@ -85,6 +100,7 @@ export function TenantDetailsClient({
       <Tabs defaultValue="operation" className="space-y-4 min-w-0">
         <TabsList className="flex flex-wrap w-full justify-start border-b rounded-none pb-px bg-transparent h-auto p-0 gap-x-1">
           <TabsTrigger value="operation" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">Operación</TabsTrigger>
+          <TabsTrigger value="suspension" className="rounded-none border-b-2 border-transparent flex-none data-active:border-destructive data-active:text-destructive data-active:bg-transparent">Kill Switch</TabsTrigger>
           <TabsTrigger value="client" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">Cliente</TabsTrigger>
           <TabsTrigger value="branding" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">Branding & UI</TabsTrigger>
           <TabsTrigger value="behavior" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">Comportamiento</TabsTrigger>
@@ -95,6 +111,9 @@ export function TenantDetailsClient({
         
         <TabsContent value="operation" className="pt-4 min-w-0">
           <OperationTab tenantId={tenantId} initialData={defaultOpData as any} />
+        </TabsContent>
+        <TabsContent value="suspension" className="pt-4 min-w-0">
+          <SuspensionTab tenantId={tenantId} initialData={defaultSuspensionData} />
         </TabsContent>
         <TabsContent value="client" className="pt-4 min-w-0">
           <ClientTab tenantId={tenantId} initialData={defaultCliData} />
