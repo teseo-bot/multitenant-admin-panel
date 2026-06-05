@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getTenantAgents, createTenantAgent, deleteTenantAgent, TenantAgent } from "../_promptsActions";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export function PromptsTab({ tenantId }: { tenantId: string }) {
   const [agents, setAgents] = useState<TenantAgent[]>([]);
@@ -21,6 +22,7 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
   const [model, setModel] = useState("gpt-4o");
   const [systemPrompt, setSystemPrompt] = useState("");
   const [moduleAssigned, setModuleAssigned] = useState("sales");
+  const [enabledToolsInput, setEnabledToolsInput] = useState("");
 
   useEffect(() => {
     loadAgents();
@@ -38,11 +40,26 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
       toast.error("El nombre y el prompt son obligatorios.");
       return;
     }
-    const res = await createTenantAgent(tenantId, { name, model, systemPrompt, moduleAssigned });
+    
+    // Parse comma separated tools
+    const enabledTools = enabledToolsInput
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
+
+    const res = await createTenantAgent(tenantId, { 
+      name, 
+      model, 
+      systemPrompt, 
+      moduleAssigned,
+      enabledTools 
+    });
+
     if (res.success) {
       toast.success("Agente creado exitosamente.");
       setName("");
       setSystemPrompt("");
+      setEnabledToolsInput("");
       loadAgents();
     } else {
       toast.error(res.error || "Error al crear agente.");
@@ -67,14 +84,14 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
         <CardHeader>
           <CardTitle>Crear Nuevo Agente</CardTitle>
           <CardDescription>
-            Define un agente, configúrale un prompt maestro y asígnalo a un submódulo.
+            Define un agente, su prompt maestro y asígnale capacidades (Tools / MCP).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Nombre del Agente</Label>
-              <Input placeholder="Ej. Ventas Bot" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input placeholder="Ej. Hunter Bot" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Módulo Asignado</Label>
@@ -86,10 +103,11 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
                   <SelectItem value="sales">Ventas & Leads</SelectItem>
                   <SelectItem value="support">Soporte Técnico</SelectItem>
                   <SelectItem value="concierge">Conserje (General)</SelectItem>
+                  <SelectItem value="hunter">Hunter (Scraping/Outbound)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 sm:col-span-2">
+            <div className="space-y-2">
               <Label>Modelo LLM</Label>
               <Select value={model} onValueChange={(val) => setModel(val || "gpt-4o")}>
                 <SelectTrigger>
@@ -101,6 +119,15 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
                   <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (Google)</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Capacidades (Tools / MCP)</Label>
+              <Input 
+                placeholder="Ej. web_scraper, odoo_mcp, gmail_api" 
+                value={enabledToolsInput} 
+                onChange={(e) => setEnabledToolsInput(e.target.value)} 
+              />
+              <p className="text-xs text-muted-foreground">Separadas por coma. El orquestador inyectará estas herramientas.</p>
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label>System Prompt Base</Label>
@@ -127,7 +154,7 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
                 <TableRow>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Módulo</TableHead>
-                  <TableHead>Modelo</TableHead>
+                  <TableHead>Modelo / Tools</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -145,7 +172,16 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
                     <TableRow key={agent.id}>
                       <TableCell className="font-medium">{agent.name}</TableCell>
                       <TableCell className="capitalize">{agent.moduleAssigned}</TableCell>
-                      <TableCell>{agent.model}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="text-sm">{agent.model}</span>
+                          <div className="flex flex-wrap gap-1">
+                            {agent.enabledTools.map(tool => (
+                              <Badge key={tool} variant="secondary" className="text-xs">{tool}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(agent.id)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
