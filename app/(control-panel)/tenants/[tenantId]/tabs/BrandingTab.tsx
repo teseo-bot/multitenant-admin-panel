@@ -23,6 +23,19 @@ interface BrandingTabProps {
   onSave: (tenantId: string, data: BrandingConfig) => Promise<any>;
 }
 
+// Helper to safely extract a 7-char HEX for the native HTML5 color picker.
+// If the DB has HSL ("210 40% 98%"), it falls back to black (#000000) for the picker UI
+// to prevent the React/Browser crash: 'The specified value does not conform to the required format'
+const getSafeHexForPicker = (val: string) => {
+  if (!val) return "#000000";
+  if (val.match(/^#[0-9A-Fa-f]{6}$/)) return val;
+  // If it's a 3-char hex like #abc, HTML5 color picker still crashes, needs 6 chars
+  if (val.match(/^#[0-9A-Fa-f]{3}$/)) {
+    return '#' + val[1] + val[1] + val[2] + val[2] + val[3] + val[3];
+  }
+  return "#000000"; 
+};
+
 export function BrandingTab({ tenantId, initialData, onSave }: BrandingTabProps) {
   const form = useForm<BrandingFormValues>({
     resolver: zodResolver(brandingFormSchema),
@@ -70,7 +83,12 @@ export function BrandingTab({ tenantId, initialData, onSave }: BrandingTabProps)
               <FormLabel>Color Primario</FormLabel>
               <FormControl>
                 <div className="flex items-center gap-2">
-                  <Input type="color" className="w-12 h-10 p-1" {...field} />
+                  <Input 
+                    type="color" 
+                    className="w-12 h-10 p-1" 
+                    value={getSafeHexForPicker(field.value)} 
+                    onChange={field.onChange} 
+                  />
                   <Input type="text" placeholder="#007bff" {...field} />
                 </div>
               </FormControl>
@@ -83,7 +101,12 @@ export function BrandingTab({ tenantId, initialData, onSave }: BrandingTabProps)
               <FormLabel>Color Secundario</FormLabel>
               <FormControl>
                 <div className="flex items-center gap-2">
-                  <Input type="color" className="w-12 h-10 p-1" {...field} />
+                  <Input 
+                    type="color" 
+                    className="w-12 h-10 p-1" 
+                    value={getSafeHexForPicker(field.value)} 
+                    onChange={field.onChange} 
+                  />
                   <Input type="text" placeholder="#6c757d" {...field} />
                 </div>
               </FormControl>
@@ -96,7 +119,12 @@ export function BrandingTab({ tenantId, initialData, onSave }: BrandingTabProps)
               <FormLabel>Color Acento</FormLabel>
               <FormControl>
                 <div className="flex items-center gap-2">
-                  <Input type="color" className="w-12 h-10 p-1" {...field} />
+                  <Input 
+                    type="color" 
+                    className="w-12 h-10 p-1" 
+                    value={getSafeHexForPicker(field.value)} 
+                    onChange={field.onChange} 
+                  />
                   <Input type="text" placeholder="#6c757d" {...field} />
                 </div>
               </FormControl>
@@ -109,7 +137,12 @@ export function BrandingTab({ tenantId, initialData, onSave }: BrandingTabProps)
               <FormLabel>Fondo General</FormLabel>
               <FormControl>
                 <div className="flex items-center gap-2">
-                  <Input type="color" className="w-12 h-10 p-1" {...field} />
+                  <Input 
+                    type="color" 
+                    className="w-12 h-10 p-1" 
+                    value={getSafeHexForPicker(field.value)} 
+                    onChange={field.onChange} 
+                  />
                   <Input type="text" placeholder="#ffffff" {...field} />
                 </div>
               </FormControl>
@@ -122,7 +155,12 @@ export function BrandingTab({ tenantId, initialData, onSave }: BrandingTabProps)
               <FormLabel>Fondo de Tarjetas/Tablas</FormLabel>
               <FormControl>
                 <div className="flex items-center gap-2">
-                  <Input type="color" className="w-12 h-10 p-1" {...field} />
+                  <Input 
+                    type="color" 
+                    className="w-12 h-10 p-1" 
+                    value={getSafeHexForPicker(field.value)} 
+                    onChange={field.onChange} 
+                  />
                   <Input type="text" placeholder="#ffffff" {...field} />
                 </div>
               </FormControl>

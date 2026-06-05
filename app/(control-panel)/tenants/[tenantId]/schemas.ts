@@ -20,11 +20,12 @@ export const clientFormSchema = z.object({
 export type ClientFormValues = z.infer<typeof clientFormSchema>;
 
 export const brandingFormSchema = z.object({
-  primaryColor: z.string().regex(/^#([0-9a-fA-F]{3}){1,2}$/i, "Must be a valid hex color"),
-  secondaryColor: z.string().regex(/^#([0-9a-fA-F]{3}){1,2}$/i, "Must be a valid hex color"),
-  accentColor: z.string().regex(/^#([0-9a-fA-F]{3}){1,2}$/i, "Must be a valid hex color"),
-  backgroundColor: z.string().regex(/^#([0-9a-fA-F]{3}){1,2}$/i, "Must be a valid hex color"),
-  cardBackgroundColor: z.string().regex(/^#([0-9a-fA-F]{3}){1,2}$/i, "Must be a valid hex color"),
+  // Relaxed validations so HSL or variables from DB don't break the form
+  primaryColor: z.string().min(1),
+  secondaryColor: z.string().min(1),
+  accentColor: z.string().min(1),
+  backgroundColor: z.string().min(1),
+  cardBackgroundColor: z.string().min(1),
   logoLightUrl: z.string().optional(),
   logoDarkUrl: z.string().optional(),
   faviconUrl: z.string().optional(),
