@@ -173,7 +173,7 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
             </div>
             <div className="space-y-2">
               <Label>Modelo LLM</Label>
-              <Select value={model} onValueChange={(val) => setModel(val)} disabled={!hasKeys && !model}>
+              <Select value={model} onValueChange={(val) => setModel(val || "")} disabled={!hasKeys && !model}>
                 <SelectTrigger>
                   <SelectValue placeholder={hasKeys ? "Selecciona modelo..." : "Sin proveedores"} />
                 </SelectTrigger>
