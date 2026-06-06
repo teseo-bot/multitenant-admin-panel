@@ -17,8 +17,13 @@ import { Badge } from "@/components/ui/badge";
 const MODEL_OPTIONS: Record<string, { id: string, name: string }[]> = {
   openai: [{ id: "gpt-4o", name: "GPT-4o" }, { id: "gpt-4-turbo", name: "GPT-4 Turbo" }],
   anthropic: [{ id: "claude-3-5-sonnet-latest", name: "Claude 3.5 Sonnet" }, { id: "claude-3-opus-latest", name: "Claude 3 Opus" }],
-  google: [{ id: "gemini-1.5-pro", name: "Gemini 1.5 Pro" }, { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash" }],
-  deepseek: [{ id: "deepseek-chat", name: "DeepSeek Chat" }, { id: "deepseek-coder", name: "DeepSeek Coder" }],
+  google: [
+    { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" }, 
+    { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro" },
+    { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro" },
+    { id: "gemini-3-flash-preview", name: "Gemini 3.1 Flash" }
+  ],
+  deepseek: [{ id: "deepseek-chat", name: "DeepSeek Chat" }, { id: "deepseek-reasoner", name: "DeepSeek Reasoner" }],
   groq: [{ id: "llama3-70b-8192", name: "Llama 3 70B (Groq)" }],
   together: [{ id: "meta-llama/Llama-3-70b-chat-hf", name: "Llama 3 70B (Together)" }],
   custom: [{ id: "custom-model", name: "Custom Model" }]
