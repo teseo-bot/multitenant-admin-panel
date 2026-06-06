@@ -1,28 +1,17 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import Link from "next/link";
 
-function LoginForm() {
+function UpdatePasswordForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/admin/users";
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
 
@@ -31,62 +20,63 @@ function LoginForm() {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
 
-    if (!email || !password) {
-      toast.error("Por favor completa ambos campos");
+    if (password !== confirmPassword) {
+      toast.error("Las contraseñas no coinciden.");
       setIsLoading(false);
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    if (password.length < 6) {
+      toast.error("La contraseña debe tener al menos 6 caracteres.");
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      toast.error(error.message || "Error al iniciar sesión");
+      toast.error(error.message || "Error al actualizar la contraseña.");
       setIsLoading(false);
       return;
     }
 
-    toast.success("Sesión iniciada correctamente");
-    router.push(redirectTo);
+    toast.success("Contraseña actualizada exitosamente.");
+    
+    // Forzamos el signOut para que inicie sesión con la nueva credencial de forma limpia
+    await supabase.auth.signOut();
+    router.push("/auth/login");
     router.refresh();
   }
 
   return (
     <Card className="w-full max-w-md shadow-lg">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold tracking-tight">Iniciar sesión</CardTitle>
+        <CardTitle className="text-2xl font-bold tracking-tight">Crear nueva contraseña</CardTitle>
         <CardDescription>
-          Ingresa tu correo y contraseña para acceder al panel.
+          Ingresa y confirma tu nueva credencial de acceso.
         </CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Correo electrónico</Label>
+            <Label htmlFor="password">Nueva contraseña</Label>
             <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="nombre@ejemplo.com"
+              id="password"
+              name="password"
+              type="password"
+              placeholder="••••••••"
               disabled={isLoading}
               required
             />
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Contraseña</Label>
-              <Link href="/auth/reset-password" className="text-sm font-medium text-primary hover:underline">
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
+            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
             <Input
-              id="password"
-              name="password"
+              id="confirmPassword"
+              name="confirmPassword"
               type="password"
               placeholder="••••••••"
               disabled={isLoading}
@@ -99,10 +89,10 @@ function LoginForm() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Iniciando sesión...
+                Actualizando...
               </>
             ) : (
-              "Ingresar"
+              "Guardar contraseña"
             )}
           </Button>
         </CardFooter>
@@ -111,14 +101,10 @@ function LoginForm() {
   );
 }
 
-export default function LoginPage() {
+export default function UpdatePasswordPage() {
   return (
-    <Suspense fallback={
-      <Card className="w-full max-w-md shadow-lg p-6 flex justify-center">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </Card>
-    }>
-      <LoginForm />
+    <Suspense fallback={<Card className="w-full max-w-md shadow-lg p-6 flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></Card>}>
+      <UpdatePasswordForm />
     </Suspense>
   );
 }
