@@ -6,6 +6,14 @@ export async function middleware(request: NextRequest) {
   if (process.env.NODE_ENV === 'development') {
     return NextResponse.next();
   }
+
+  // Handle root redirect directly in middleware to avoid NEXT_REDIRECT errors in layout/page
+  if (request.nextUrl.pathname === '/') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/admin'
+    return NextResponse.redirect(url)
+  }
+
   return await updateSession(request)
 }
 
