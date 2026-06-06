@@ -137,7 +137,7 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
     <div className="space-y-6 w-full min-w-0">
       {!hasKeys && !isLoading && (
         <div className="bg-destructive/10 text-destructive text-sm p-4 rounded-md border border-destructive/20">
-          <strong>Atención:</strong> No hay API Keys configuradas en este tenant. Registra un proveedor (ej. OpenAI, Anthropic) en la pestaña "API Keys" para habilitar los modelos.
+          <strong>Atención:</strong> No hay API Keys configuradas en este tenant. Registra un proveedor (ej. OpenAI, Anthropic) en la pestaña &quot;API Keys&quot; para habilitar los modelos.
         </div>
       )}
 
