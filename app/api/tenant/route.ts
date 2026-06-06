@@ -14,7 +14,7 @@ export async function GET() {
   }
 
   const currentEmail = session.user.email;
-  const isGlobalAdmin = currentEmail === process.env.PLATFORM_ADMIN_EMAIL || currentEmail === 'admin@teseo.lat';
+  const isGlobalAdmin = currentEmail === process.env.PLATFORM_ADMIN_EMAIL || currentEmail === 'jorge@teseo.lat';
 
   if (!isGlobalAdmin) {
     return NextResponse.json({ error: "Solo Global Admin puede listar tenants" }, { status: 403 });
