@@ -66,6 +66,31 @@ export async function createTenantAgent(tenantId: string, data: Partial<TenantAg
   }
 }
 
+export async function updateTenantAgent(tenantId: string, agentId: string, data: Partial<TenantAgent>) {
+  try {
+    await pool.query(
+      `UPDATE tenant_agents 
+       SET name = $1, objective = $2, model = $3, system_prompt = $4, module_assigned = $5, enabled_tools = $6
+       WHERE id = $7 AND tenant_id = $8`,
+      [
+        data.name, 
+        data.objective || '',
+        data.model || 'gpt-4o', 
+        data.systemPrompt || '', 
+        data.moduleAssigned || '',
+        data.enabledTools || [],
+        agentId,
+        tenantId
+      ]
+    );
+    revalidatePath(`/control-panel/tenants/${tenantId}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating agent:", error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function deleteTenantAgent(tenantId: string, agentId: string) {
   try {
     await pool.query(`DELETE FROM tenant_agents WHERE id = $1 AND tenant_id = $2`, [agentId, tenantId]);
