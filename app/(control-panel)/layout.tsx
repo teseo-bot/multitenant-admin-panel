@@ -3,6 +3,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ControlPanelSidebar } from "@/components/layout/control-panel-sidebar";
 import { createClient } from "@/utils/supabase/server";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function ControlPanelLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();

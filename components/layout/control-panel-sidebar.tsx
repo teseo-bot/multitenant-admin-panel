@@ -108,23 +108,17 @@ export function ControlPanelSidebar({ user }: { user?: any }) {
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem className="cursor-pointer" asChild>
-                  <Link href="/settings/profile">
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    <span>Perfil</span>
-                  </Link>
+                <DropdownMenuItem className="cursor-pointer" render={<Link href="/settings/profile" />}>
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  <span>Perfil</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" asChild>
-                  <Link href="/settings/appearance">
-                    <Palette className="mr-2 h-4 w-4" />
-                    <span>Apariencia</span>
-                  </Link>
+                <DropdownMenuItem className="cursor-pointer" render={<Link href="/settings/appearance" />}>
+                  <Palette className="mr-2 h-4 w-4" />
+                  <span>Apariencia</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer text-red-500 focus:text-red-500" asChild>
-                  <Link href="/settings/security">
-                    <Shield className="mr-2 h-4 w-4" />
-                    <span>Seguridad</span>
-                  </Link>
+                <DropdownMenuItem className="cursor-pointer text-red-500 focus:text-red-500" render={<Link href="/settings/security" />}>
+                  <Shield className="mr-2 h-4 w-4" />
+                  <span>Seguridad</span>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
