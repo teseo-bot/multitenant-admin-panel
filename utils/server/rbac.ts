@@ -27,7 +27,7 @@ export async function enforceRoleAccess(allowedRoles: UserRole[]): Promise<void>
   }
 
   // Bypass for global admins
-  const isGlobalAdmin = user.email === process.env.PLATFORM_ADMIN_EMAIL || user.email === 'admin@teseo.lat';
+  const isGlobalAdmin = user.email === process.env.PLATFORM_ADMIN_EMAIL || user.email === 'jorge@teseo.lat';
   if (isGlobalAdmin) {
     return;
   }
