@@ -75,6 +75,7 @@ jobs:
             NEXT_PUBLIC_SUPABASE_URL=SUPABASE_URL:latest
             SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest
             DATABASE_URL=DATABASE_URL:latest
+            M2M_API_KEY=M2M_API_KEY:latest
 
       - name: Print Production URL
         run: echo "🚀 Producción desplegada en ${{ steps.deploy.outputs.url }}"
