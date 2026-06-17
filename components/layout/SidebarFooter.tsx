@@ -15,6 +15,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import pkg from "../../package.json";
 
+const VERSION = pkg.version;
+
 interface SidebarFooterProps {
   expanded: boolean;
   user: {
@@ -96,7 +98,7 @@ export function SidebarFooter({ expanded, user, onLogout }: SidebarFooterProps) 
       {expanded && (
         <div className="text-center">
           <span className="text-[10px] font-mono text-muted-foreground/50 select-none">
-            v{pkg.version}
+            v{VERSION}
           </span>
         </div>
       )}
