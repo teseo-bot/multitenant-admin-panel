@@ -16,11 +16,6 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  // BYPASS DEV: Simular handoff exitoso sin base de datos
-  if (process.env.NODE_ENV === 'development') {
-    return NextResponse.json({ success: true, new_status: 'human' });
-  }
-
   try {
     const supabase = await createClient();
     const parsedParams = ParamsSchema.safeParse(params);
@@ -79,20 +74,23 @@ export async function POST(
     }
 
     // Call LangGraph internal webhook to inject is_human_handled state
-    if (updatedLead?.thread_id && action === 'take_over') {
+    if (updatedLead?.thread_id && (action === 'take_over' || action === 'return_to_agent')) {
       const COMPILER_URL = process.env.COMPILER_INTERNAL_URL || 'http://localhost:8000';
-      fetch(`${COMPILER_URL}/api/internal/graph/interrupt`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ thread_id: updatedLead.thread_id, is_human_handled: true })
-      }).catch(err => console.error(err));
-    } else if (updatedLead?.thread_id && action === 'return_to_agent') {
-      const COMPILER_URL = process.env.COMPILER_INTERNAL_URL || 'http://localhost:8000';
-      fetch(`${COMPILER_URL}/api/internal/graph/interrupt`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ thread_id: updatedLead.thread_id, is_human_handled: false })
-      }).catch(err => console.error(err));
+      try {
+        const response = await fetch(`${COMPILER_URL}/api/internal/graph/interrupt`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            thread_id: updatedLead.thread_id, 
+            is_human_handled: action === 'take_over' 
+          })
+        });
+        if (!response.ok) {
+          console.error(`[Handoff] graph/interrupt returned ${response.status}`);
+        }
+      } catch (err) {
+        console.error('[Handoff] Error notifying orchestrator:', err);
+      }
     }
 
     return NextResponse.json(updatedLead, { status: 200 });
