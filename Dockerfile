@@ -29,8 +29,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 
-ENV NEXT_PUBLIC_SUPABASE_URL="https://jpmxqzrdeclkgpfuedjf.supabase.co"
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwbXhxenJkZWNsa2dwZnVlZGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTExNDAsImV4cCI6MjA5NTQ4NzE0MH0.F9qM_RVoo3MBeYGrhRicXLZ0gVM2uk2iukbO1tkQZ3I"
+# Credenciales inyectadas vía build-args desde GHA (Secret Manager)
+# No hardcodear aquí. El proyecto de destino (cárgalo.mx) requerirá sus propios valores.
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 RUN npm run build
 
