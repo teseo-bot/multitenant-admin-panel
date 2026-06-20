@@ -29,8 +29,14 @@ function UpdatePasswordForm() {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error("La contraseña debe tener al menos 6 caracteres.");
+    if (password.length < 8) {
+      toast.error("La contraseña debe tener al menos 8 caracteres.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      toast.error("La contraseña debe incluir mayúsculas, minúsculas y números.");
       setIsLoading(false);
       return;
     }

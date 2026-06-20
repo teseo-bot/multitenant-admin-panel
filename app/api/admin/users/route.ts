@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { UserRole } from "@/lib/validators/user";
 import { pool } from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,7 @@ export async function GET() {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   
   if (userError || !user) {
+    logger.warn('api.admin.users.unauthorized', { hasUser: !!user, error: userError?.message });
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
@@ -34,6 +36,7 @@ export async function GET() {
   const isGlobalAdmin = currentEmail === process.env.PLATFORM_ADMIN_EMAIL || currentEmail === 'jorge@teseo.lat';
 
   if (!isGlobalAdmin) {
+    logger.warn('api.admin.users.forbidden', { email: currentEmail });
     return NextResponse.json({ error: "Solo Global Admin puede acceder al panel multitenant" }, { status: 403 });
   }
 
@@ -57,8 +60,7 @@ export async function GET() {
      tenantUsers = res.rows;
      client.release();
   } catch (err) {
-     console.error("Error fetching tenant_users from Cloud SQL:", err);
-     // Si falla la BD, al menos devolvemos los authUsers con tenant_id nulo
+     logger.error('api.admin.users.cloud_sql_error', { error: String(err) });
   }
 
   // 6. Mapear cruce de datos

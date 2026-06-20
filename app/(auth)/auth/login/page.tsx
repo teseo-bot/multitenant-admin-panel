@@ -53,7 +53,6 @@ function LoginForm() {
 
     toast.success("Sesión iniciada correctamente");
     router.push(redirectTo);
-    router.refresh();
   }
 
   return (
