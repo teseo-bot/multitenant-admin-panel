@@ -23,14 +23,14 @@ const getAdminClient = () => {
 export async function GET() {
   const supabase = await createClient();
 
-  // 1. Obtener sesión actual
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  // 1. Obtener usuario actual (validación server-side)
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   
-  if (sessionError || !session) {
+  if (userError || !user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const currentEmail = session.user.email;
+  const currentEmail = user.email;
   const isGlobalAdmin = currentEmail === process.env.PLATFORM_ADMIN_EMAIL || currentEmail === 'jorge@teseo.lat';
 
   if (!isGlobalAdmin) {

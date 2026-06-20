@@ -8,13 +8,13 @@ export const revalidate = 0;
 export async function GET() {
   const supabase = await createClient();
 
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   
-  if (sessionError || !session) {
+  if (userError || !user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const currentEmail = session.user.email;
+  const currentEmail = user.email;
   const isGlobalAdmin = currentEmail === process.env.PLATFORM_ADMIN_EMAIL || currentEmail === 'jorge@teseo.lat';
 
   if (!isGlobalAdmin) {
