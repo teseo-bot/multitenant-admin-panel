@@ -31,7 +31,7 @@ function ResetPasswordForm() {
 
     // El RedirectTo debe apuntar a la ruta de actualización de contraseña que crearemos a continuación
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/update-password`,
+      redirectTo: `${window.location.origin}/auth/callback?next=/auth/update-password`,
     });
 
     if (error) {
