@@ -6,22 +6,35 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/admin'
 
-  // En Cloud Run, Next.js behind el GFE a veces recibe origin como http://0.0.0.0:3000
-  // Para redirigir correctamente usamos x-forwarded-host con HTTPS
+  // Construir baseUrl robusto para Cloud Run:
+  // 1. En dev local, usar origin directamente
+  // 2. En prod, priorizar x-forwarded-host (inyectado por GFE de Cloud Run)
+  // 3. Fallback: usar origin si no hay forwardedHost (puede ser 0.0.0.0 pero es último recurso)
   const forwardedHost = request.headers.get('x-forwarded-host')
   const isLocalEnv = process.env.NODE_ENV === 'development'
-  const baseUrl = isLocalEnv ? origin : (forwardedHost ? `https://${forwardedHost}` : origin)
+  const baseUrl = isLocalEnv
+    ? origin
+    : forwardedHost
+      ? `https://${forwardedHost}`
+      : origin
 
+  // Si hay código PKCE, intentar canjear por sesión
   if (code) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      // Éxito: redirigir al destino solicitado
       return NextResponse.redirect(`${baseUrl}${next}`)
-    } else {
-      console.error('Callback error:', error.message)
     }
+    // Fallo en el exchange: redirigir a error con detalle
+    console.error('[auth/callback] exchangeCodeForSession failed:', error.message)
+    const errorUrl = new URL('/auth/auth-code-error', baseUrl)
+    errorUrl.searchParams.set('error', error.message)
+    return NextResponse.redirect(errorUrl)
   }
 
-  // return the user to an error page with instructions
-  return NextResponse.redirect(`${baseUrl}/auth/auth-code-error`)
+  // No hay código: redirigir a error
+  const errorUrl = new URL('/auth/auth-code-error', baseUrl)
+  errorUrl.searchParams.set('error', 'No se recibió código de autenticación')
+  return NextResponse.redirect(errorUrl)
 }
