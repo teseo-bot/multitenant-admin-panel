@@ -1,6 +1,6 @@
 "use client"
 
-import { LayoutDashboard, Users, Building2, LogOut, Palette, Shield, User as UserIcon } from "lucide-react"
+import { LayoutDashboard, Users, Building2, LogOut, Palette, Shield, User as UserIcon, ScrollText } from "lucide-react"
 
 import {
   Sidebar,
@@ -76,6 +76,13 @@ export function ControlPanelSidebar({ user }: { user?: any }) {
                 <SidebarMenuButton render={<Link href="/admin/users" />}>
                   <Users />
                   <span>Users</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton render={<Link href="/admin/audit" />}>
+                  <ScrollText />
+                  <span>Auditoría</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
