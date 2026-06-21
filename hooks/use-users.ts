@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getUsers, getUser, createUser, updateUser, deleteUser, getUserActivity } from "@/lib/api/users";
+import { getUsers, getUser, createUser, updateUser, deleteUser, getUserActivity, type Membership, type UsersFilter } from "@/lib/api/users";
 import { UserProfile } from "@/lib/validators/user";
 
-export function useUsers() {
-  return useQuery<UserProfile[]>({
-    queryKey: ["users"],
-    queryFn: getUsers,
+export function useUsers(filters?: UsersFilter) {
+  return useQuery<Membership[]>({
+    queryKey: ["users", filters ?? {}],
+    queryFn: () => getUsers(filters),
   });
 }
 
