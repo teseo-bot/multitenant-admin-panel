@@ -5,6 +5,6 @@ export default async function FinOpsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await enforceRoleAccess(["owner", "admin"]);
+  await enforceRoleAccess(["OWNER", "ADMIN"]);
   return <>{children}</>;
 }

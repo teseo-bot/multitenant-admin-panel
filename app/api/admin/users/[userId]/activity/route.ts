@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { requirePlatformAdmin } from "@/lib/auth/guards";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request, { params }: { params: { userId: string } }) {
+  const auth = await requirePlatformAdmin();
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
   const supabase = await createClient();
   const { userId } = await params;
 

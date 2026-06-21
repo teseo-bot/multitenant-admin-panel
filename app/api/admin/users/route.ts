@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { UserRole } from "@/lib/validators/user";
 import { pool } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { requirePlatformAdmin } from "@/lib/auth/guards";
 
 export const dynamic = 'force-dynamic';
 
@@ -22,25 +21,13 @@ const getAdminClient = () => {
 };
 
 export async function GET() {
-  const supabase = await createClient();
-
-  // 1. Obtener usuario actual (validación server-side)
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
-  if (userError || !user) {
-    logger.warn('api.admin.users.unauthorized', { hasUser: !!user, error: userError?.message });
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  // Autorización centralizada: requiere Platform Admin (flag app_metadata, no email).
+  const auth = await requirePlatformAdmin();
+  if (!auth.ok) {
+    logger.warn('api.admin.users.denied', { status: auth.status });
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const currentEmail = user.email;
-  const isGlobalAdmin = currentEmail === process.env.PLATFORM_ADMIN_EMAIL || currentEmail === 'jorge@teseo.lat';
-
-  if (!isGlobalAdmin) {
-    logger.warn('api.admin.users.forbidden', { email: currentEmail });
-    return NextResponse.json({ error: "Solo Global Admin puede acceder al panel multitenant" }, { status: 403 });
-  }
-
-  // 3. Instanciar cliente Admin
   const adminClient = getAdminClient();
 
   // 4. Obtener todos los auth.users
@@ -69,7 +56,10 @@ export async function GET() {
     return {
       id: au.id,
       tenant_id: tu ? tu.tenant_id : null,
-      role: tu ? tu.role : 'GLOBAL_ADMIN',
+      // Sin membresía => sin rol de tenant. NUNCA elevar a admin por ausencia de fila.
+      role: tu ? tu.role : null,
+      // El privilegio de plataforma es explícito (flag), no un fallback ni email.
+      is_platform_admin: au.app_metadata?.platform_admin === true,
       created_at: au.created_at,
       email: au.email || "Sin email",
       full_name: au.user_metadata?.full_name || null,

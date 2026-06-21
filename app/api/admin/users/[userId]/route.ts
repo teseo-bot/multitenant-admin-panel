@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { UserRole } from "@/lib/validators/user";
 import { pool } from "@/lib/db";
+import { requirePlatformAdmin } from "@/lib/auth/guards";
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +19,9 @@ const getAdminClient = () => {
 };
 
 export async function GET(request: Request, context: { params: Promise<{ userId: string }> }) {
+  const auth = await requirePlatformAdmin();
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
   const { userId } = await context.params;
   const adminClient = getAdminClient();
 
@@ -45,7 +47,9 @@ export async function GET(request: Request, context: { params: Promise<{ userId:
   const userProfile = {
     id: authUser.user.id,
     tenant_id: tu ? tu.tenant_id : null,
-    role: tu ? tu.role : 'GLOBAL_ADMIN',
+    // Sin membresía => sin rol de tenant. NUNCA elevar a admin por ausencia de fila.
+    role: tu ? tu.role : null,
+    is_platform_admin: authUser.user.app_metadata?.platform_admin === true,
     created_at: authUser.user.created_at,
     email: authUser.user.email || "Sin email",
     full_name: authUser.user.user_metadata?.full_name || null,
@@ -56,9 +60,8 @@ export async function GET(request: Request, context: { params: Promise<{ userId:
 }
 
 export async function PATCH(request: Request, context: { params: Promise<{ userId: string }> }) {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const auth = await requirePlatformAdmin();
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   const { userId } = await context.params;
   const body = await request.json();
@@ -87,9 +90,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ userI
 }
 
 export async function DELETE(request: Request, context: { params: Promise<{ userId: string }> }) {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const auth = await requirePlatformAdmin();
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   const { userId } = await context.params;
   const adminClient = getAdminClient();

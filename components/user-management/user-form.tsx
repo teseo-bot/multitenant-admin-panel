@@ -35,7 +35,7 @@ export function UserForm({ initialData, onSubmit, isLoading }: UserFormProps) {
     defaultValues: {
       name: initialData?.name || (initialData as any)?.full_name || "",
       email: initialData?.email || "",
-      role: (initialData?.role as any) === 'GLOBAL_ADMIN' ? 'admin' : (initialData?.role || "member"),
+      role: (initialData?.role as any) === 'GLOBAL_ADMIN' ? 'ADMIN' : (initialData?.role || "MEMBER"),
       isActive: initialData?.isActive ?? true,
     },
   })
@@ -82,9 +82,10 @@ export function UserForm({ initialData, onSubmit, isLoading }: UserFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="owner">Owner</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="member">Member</SelectItem>
+                  <SelectItem value="OWNER">Owner</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="MEMBER">Member</SelectItem>
+                  <SelectItem value="VIEWER">Viewer</SelectItem>
                 </SelectContent>
               </Select>
               <FormDescription>

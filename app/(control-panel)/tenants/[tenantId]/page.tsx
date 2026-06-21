@@ -7,7 +7,7 @@ import { getTenantBranding } from "./_brandingActions";
 export const dynamic = 'force-dynamic';
 
 export default async function TenantDetailsPage({ params }: { params: { tenantId: string } }) {
-  await enforceRoleAccess(["owner", "admin"]);
+  await enforceRoleAccess(["OWNER", "ADMIN"]);
   
   const [opData, cliData, brandingData, behaviorData] = await Promise.all([
     getTenantOperationSettings(params.tenantId),

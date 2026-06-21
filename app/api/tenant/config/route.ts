@@ -65,7 +65,7 @@ export async function GET() {
     console.error("Error fetching tenant config:", err);
     return NextResponse.json({
       organization: null,
-      role: 'member',
+      role: 'MEMBER',
       branding: {
         primaryColor: 'oklch(0.556 0.2 250)',
         accentColor: 'oklch(0.97 0 0)',

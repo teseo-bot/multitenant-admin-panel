@@ -11,14 +11,14 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   let user = null;
-  let role = "member";
+  let role = "MEMBER";
 
   try {
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
     user = data?.user;
     if (user) {
-      role = await getTenantRole(user.id) || "member";
+      role = await getTenantRole(user.id) || "MEMBER";
     }
   } catch (err: any) {
     if (err?.digest === 'DYNAMIC_SERVER_USAGE') {
@@ -37,7 +37,7 @@ export default async function DashboardLayout({
     email: user.email || "",
     name: user.user_metadata?.name || user.email?.split("@")[0] || "User",
     avatar_url: user.user_metadata?.avatar_url || "",
-    role: role || "member", // Defaulting to member if not found
+    role: role || "MEMBER", // Defaulting to member if not found
   };
 
   return (

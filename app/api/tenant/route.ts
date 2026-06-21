@@ -17,7 +17,7 @@ export async function GET() {
   }
 
   const currentEmail = user.email;
-  const isGlobalAdmin = currentEmail === process.env.PLATFORM_ADMIN_EMAIL || currentEmail === 'jorge@teseo.lat';
+  const isGlobalAdmin = currentEmail === process.env.PLATFORM_ADMIN_EMAIL;
 
   if (!isGlobalAdmin) {
     logger.warn('api.tenant.forbidden', { email: currentEmail });
