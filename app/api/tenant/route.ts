@@ -1,27 +1,17 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
 import { pool } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { requirePlatformAdmin } from "@/lib/auth/guards";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
-  const supabase = await createClient();
-
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
-  if (userError || !user) {
-    logger.warn('api.tenant.unauthorized', { hasUser: !!user, error: userError?.message });
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  }
-
-  const currentEmail = user.email;
-  const isGlobalAdmin = currentEmail === process.env.PLATFORM_ADMIN_EMAIL;
-
-  if (!isGlobalAdmin) {
-    logger.warn('api.tenant.forbidden', { email: currentEmail });
-    return NextResponse.json({ error: "Solo Global Admin puede listar tenants" }, { status: 403 });
+  // Listar todos los tenants es operación de plataforma (flag, no email).
+  const auth = await requirePlatformAdmin();
+  if (!auth.ok) {
+    logger.warn('api.tenant.denied', { status: auth.status });
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
   try {
