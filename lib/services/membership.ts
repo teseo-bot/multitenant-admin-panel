@@ -174,6 +174,16 @@ export async function listMemberships(filter: MembershipFilter = {}): Promise<Me
   return rows.map(mapMembership);
 }
 
+/** Grants de módulo explícitos de una membresía (para editar en la UI). */
+export async function getMembershipGrants(id: string): Promise<ModuleGrant[]> {
+  const { rows } = await pool.query(
+    `SELECT module_id, access_level FROM public.tenant_user_modules
+     WHERE tenant_user_id = $1 AND access_level <> 'NONE'`,
+    [id]
+  );
+  return rows.map((r: any) => ({ moduleId: r.module_id, level: r.access_level as AccessLevel }));
+}
+
 export async function getMembership(id: string): Promise<Membership | null> {
   const { rows } = await pool.query(
     `SELECT tu.id, tu.tenant_id, tu.user_id, tu.email, tu.full_name, tu.role,

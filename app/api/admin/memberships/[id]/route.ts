@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireTenantAdmin } from "@/lib/auth/guards";
 import {
   getMembership,
+  getMembershipGrants,
   setRole,
   setModuleAccess,
   suspend,
@@ -14,6 +15,19 @@ import {
 export const dynamic = "force-dynamic";
 
 const VALID_ROLES: Role[] = ["OWNER", "ADMIN", "MEMBER", "VIEWER"];
+
+/** Detalle de membresía + sus grants de módulo (para el modal de edición). */
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  const membership = await getMembership(id);
+  if (!membership) return NextResponse.json({ error: "Membresía no encontrada" }, { status: 404 });
+
+  const auth = await requireTenantAdmin(membership.tenantId);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
+  const grants = await getMembershipGrants(id);
+  return NextResponse.json({ membership, grants });
+}
 
 /**
  * Mutaciones de membresía (WU-11/E4). Acciones: suspend | reactivate | setRole | setModules.
