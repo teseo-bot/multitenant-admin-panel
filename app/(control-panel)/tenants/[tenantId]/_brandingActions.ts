@@ -1,11 +1,7 @@
 "use server";
 
 import { BrandingConfig } from "./_brandingTypes";
-import { Pool } from 'pg';
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { pool } from "@/lib/db";
 
 export async function getTenantBranding(tenantId: string): Promise<BrandingConfig | null> {
   try {

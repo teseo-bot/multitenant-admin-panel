@@ -1,7 +1,41 @@
 import { UserProfile } from "@/lib/validators/user";
 
-export async function getUsers(): Promise<UserProfile[]> {
-  const res = await fetch("/api/admin/users");
+// Membership type mirroring lib/services/membership.ts (local copy — do NOT edit membership.ts)
+export type Role = "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
+export type MembershipStatus = "active" | "suspended";
+
+export interface Membership {
+  id: string;
+  tenantId: string;
+  tenantName: string | null;
+  userId: string | null;
+  email: string | null;
+  fullName: string | null;
+  role: Role;
+  status: MembershipStatus;
+  lastActive: string | null;
+  tokenUsage: number;
+  createdAt: string;
+}
+
+export interface UsersFilter {
+  tenantId?: string;
+  role?: Role;
+  moduleId?: string;
+  status?: MembershipStatus;
+  q?: string;
+}
+
+export async function getUsers(filters?: UsersFilter): Promise<Membership[]> {
+  const params = new URLSearchParams();
+  if (filters?.tenantId) params.set("tenantId", filters.tenantId);
+  if (filters?.role) params.set("role", filters.role);
+  if (filters?.moduleId) params.set("moduleId", filters.moduleId);
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.q) params.set("q", filters.q);
+
+  const qs = params.toString();
+  const res = await fetch(`/api/admin/users${qs ? `?${qs}` : ""}`);
   if (!res.ok) throw new Error("Failed to fetch users");
   return res.json();
 }

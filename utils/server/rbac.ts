@@ -26,9 +26,9 @@ export async function enforceRoleAccess(allowedRoles: UserRole[]): Promise<void>
     redirect("/auth/login");
   }
 
-  // Bypass for global admins
-  const isGlobalAdmin = user.email === process.env.PLATFORM_ADMIN_EMAIL || user.email === 'jorge@teseo.lat';
-  if (isGlobalAdmin) {
+  // Bypass para Platform Admin (flag explícito en app_metadata, no email).
+  const isPlatformAdmin = user.app_metadata?.platform_admin === true;
+  if (isPlatformAdmin) {
     return;
   }
 

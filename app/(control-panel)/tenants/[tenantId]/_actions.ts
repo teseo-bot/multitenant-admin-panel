@@ -1,12 +1,8 @@
 "use server";
 
-import { Pool } from "pg";
+import { pool } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { OperationFormValues, ClientFormValues, SuspensionFormValues } from "./schemas";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 export async function getTenantOperationSettings(tenantId: string) {
   try {

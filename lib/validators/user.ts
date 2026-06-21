@@ -1,9 +1,11 @@
 import { z } from "zod";
 
+// Alineado con el ENUM public.user_role de la base de datos (MAYÚSCULAS).
 export const UserRole = {
-  OWNER: 'owner',
-  ADMIN: 'admin',
-  MEMBER: 'member',
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  MEMBER: 'MEMBER',
+  VIEWER: 'VIEWER',
 } as const;
 
 export type UserRoleType = typeof UserRole[keyof typeof UserRole];
@@ -24,7 +26,10 @@ export interface UserProfile extends TenantUser {
 export const userFormSchema = z.object({
   name: z.string().min(2, "Nombre requerido"),
   email: z.string().email("Email inválido"),
-  role: z.enum([UserRole.OWNER, UserRole.ADMIN, UserRole.MEMBER]),
+  // Los 4 roles son representables en el contrato compartido. La restricción a
+  // ADMIN/MEMBER/VIEWER (excluir OWNER) se aplica en la UI de invitación (WU-13),
+  // no aquí, para no perder la capacidad de representar usuarios OWNER existentes.
+  role: z.enum([UserRole.OWNER, UserRole.ADMIN, UserRole.MEMBER, UserRole.VIEWER]),
   isActive: z.boolean(),
 });
 

@@ -1,20 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { requirePlatformAdmin } from '@/lib/auth/guards';
 
 export async function GET() {
   try {
+    const auth = await requirePlatformAdmin();
+    if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
     const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require admin or specific role logic here (simplified for ADR)
 
     const { data: outbox, error } = await supabase
       .from('lead_assignment_outbox')
