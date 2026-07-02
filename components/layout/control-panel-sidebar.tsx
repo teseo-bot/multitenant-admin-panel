@@ -1,6 +1,6 @@
 "use client"
 
-import { LayoutDashboard, Users, Building2, LogOut, Palette, Shield, User as UserIcon, ScrollText } from "lucide-react"
+import { LayoutDashboard, Users, Building2, LogOut, Palette, Shield, User as UserIcon, ScrollText, BrainCircuit } from "lucide-react"
 
 import {
   Sidebar,
@@ -32,6 +32,10 @@ import pkg from "../../package.json"
 import { logoutAction } from "@/app/(auth)/actions"
 
 export function ControlPanelSidebar({ user }: { user?: any }) {
+  // UXUI-OKF-Knowledge-Ops.md §0: entrada "Knowledge Ops" visible SOLO platform_admin.
+  // Mismo flag explícito que lib/auth/guards.ts (isPlatformAdmin): NUNCA por email.
+  const isPlatformAdmin = user?.app_metadata?.platform_admin === true;
+
   const getInitials = () => {
     if (user?.user_metadata?.name) {
       return user.user_metadata.name.substring(0, 2).toUpperCase();
@@ -85,6 +89,15 @@ export function ControlPanelSidebar({ user }: { user?: any }) {
                   <span>Auditoría</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              {isPlatformAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton render={<Link href="/knowledge-ops" />}>
+                    <BrainCircuit />
+                    <span>Knowledge Ops</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
