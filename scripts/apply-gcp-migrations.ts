@@ -3,12 +3,13 @@
 // USO:
 //   CONTROL_DB_URL=postgres://... node_modules/.bin/tsx scripts/apply-gcp-migrations.ts
 //
-// Aplica en orden estricto 001 -> 002 -> ... -> 007. Cada archivo se ejecuta en su propia
+// Aplica en orden estricto 001 -> 002 -> ... -> 008. Cada archivo se ejecuta en su propia
 // transacción. Las migraciones son idempotentes por diseño (CREATE TABLE IF NOT EXISTS /
 // ON CONFLICT DO NOTHING) o manejan duplicados en capas de error.
 //
-// Sólo escribe en este script; NO se ejecuta contra BD viva hasta que sea integrado en
-// los pipelines de aplicación de control-plane GCP (pendiente ADR-206 fase H1+).
+// Estado (ADR-206 H0, 2026-07-06/07): ya aplicado contra el control-plane vivo
+// (micontexto-control:us-central1:control-plane, vía Cloud SQL Auth Proxy). Re-ejecutable
+// por idempotencia. La 008 restauró las columnas de expansión de tenant_users.
 
 import fs from 'node:fs';
 import path from 'node:path';

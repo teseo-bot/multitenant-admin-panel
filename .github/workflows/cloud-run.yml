@@ -74,13 +74,13 @@ jobs:
           env_vars: |
             COMPILER_INTERNAL_URL=https://context-kdb-orchestrator-psnwfqyhla-uc.a.run.app
             NODE_ENV=production
-            PLATFORM_ADMIN_EMAIL=teseo@teseo.lat
           secrets: |
             NEXT_PUBLIC_SUPABASE_URL=SUPABASE_URL:latest
             NEXT_PUBLIC_SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest
             SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest
             DATABASE_URL=DATABASE_URL:latest
             M2M_API_KEY=M2M_API_KEY:latest
+            COLD_TIER_URL=COLD_TIER_URL:latest
 
       - name: Print Production URL
         run: echo "🚀 Producción desplegada en ${{ steps.deploy.outputs.url }}"
