@@ -1,4 +1,4 @@
-// G0-W3: aplica las migraciones GCP-Native (001..007) contra el plano de control (CONTROL_DB_URL).
+// G0-W3: aplica las migraciones GCP-Native (001..008) contra el plano de control (CONTROL_DB_URL).
 //
 // USO:
 //   CONTROL_DB_URL=postgres://... node_modules/.bin/tsx scripts/apply-gcp-migrations.ts
@@ -24,6 +24,7 @@ const MIGRATION_FILES = [
   '005_kdb_modules_seed.sql',
   '006_partners.sql',
   '007_partner_contracts.sql',
+  '008_tenant_users_expansion.sql',
 ] as const;
 
 // Códigos de error Postgres que indican "esto ya existía" (re-run seguro).
