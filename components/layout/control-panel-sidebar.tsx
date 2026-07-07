@@ -34,13 +34,13 @@ import { logoutAction } from "@/app/(auth)/actions"
 export function ControlPanelSidebar({ user }: { user?: any }) {
   // UXUI-OKF-Knowledge-Ops.md §0: entrada "Knowledge Ops" visible SOLO platform_admin.
   // Mismo flag explícito que lib/auth/guards.ts (isPlatformAdmin): NUNCA por email.
-  const isPlatformAdmin = user?.app_metadata?.platform_admin === true;
+  const isPlatformAdmin = user?.platformAdmin === true;
 
   const getInitials = () => {
-    if (user?.user_metadata?.name) {
-      return user.user_metadata.name.substring(0, 2).toUpperCase();
+    if (user?.email) {
+      return user.email.substring(0, 2).toUpperCase();
     }
-    return user?.email?.substring(0, 2).toUpperCase() || "US";
+    return "US";
   };
 
   return (
@@ -108,11 +108,11 @@ export function ControlPanelSidebar({ user }: { user?: any }) {
             <DropdownMenuTrigger className="outline-none focus:ring-0 border-0 bg-transparent p-0 w-full">
               <div className="flex items-center gap-3 cursor-pointer rounded-md p-1 hover:bg-muted transition-colors text-left">
                 <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
+                  <AvatarImage src={undefined} alt={user.email} />
                   <AvatarFallback>{getInitials()}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col overflow-hidden flex-1 text-left">
-                  <span className="truncate text-sm font-medium">{user.user_metadata?.name || "User"}</span>
+                  <span className="truncate text-sm font-medium">{user.email || "User"}</span>
                   <span className="truncate text-xs text-muted-foreground">{user.email}</span>
                 </div>
               </div>
@@ -120,9 +120,9 @@ export function ControlPanelSidebar({ user }: { user?: any }) {
             <DropdownMenuContent className="w-56" align="start">
               <div className="font-normal px-2 py-1.5 text-sm">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user.user_metadata?.name || "User"}</p>
+                  <p className="text-sm font-medium leading-none">{user.email || "User"}</p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user.email}
+                    {user.id}
                   </p>
                 </div>
               </div>

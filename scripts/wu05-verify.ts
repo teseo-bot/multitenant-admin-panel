@@ -1,10 +1,12 @@
 // WU-05 verificación (zero-trust) ejecutable con tsx contra la DB LOCAL.
 // Importa el servicio REAL y valida los 4 criterios de aceptación.
+// Migrado a GCP: utiliza uid sintético (no existe auth.users).
 //   node_modules/.bin/tsx scripts/wu05-verify.ts
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
 const ACTOR = "00000000-0000-0000-0000-000000000000";
+const uid = "uid_wu05_owner"; // Uid sintético constante para este verify
 let pass = 0, fail = 0;
 function assert(name: string, cond: boolean, extra?: unknown) {
   if (cond) { pass++; console.log("  ✓", name); }
@@ -28,9 +30,7 @@ function assert(name: string, cond: boolean, extra?: unknown) {
     (await pool.query(`INSERT INTO public.tenant_users (tenant_id, user_id, role, status, email)
                        VALUES ($1,$2,$3,'active','test@local') RETURNING id`, [t, u, role])).rows[0].id as string;
 
-  const u = await pool.query(`SELECT id FROM auth.users ORDER BY created_at LIMIT 1`);
-  const userId = u.rows[0]?.id;
-  if (!userId) { console.error("ABORT: no hay auth.users en local"); process.exit(1); }
+  const userId = uid;
 
   let tOwner = "", tMember = "";
   try {

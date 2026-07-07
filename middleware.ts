@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { updateSession } from './utils/supabase/middleware'
 
-export async function middleware(request: NextRequest) {
+const PROTECTED_PREFIXES = ['/admin', '/tenants', '/settings', '/knowledge-ops']
+const AUTH_ROUTES = ['/auth/login', '/auth/callback', '/auth/auth-code-error']
+const SESSION_COOKIE = '__session'
+
+export function middleware(request: NextRequest) {
   // Handle root redirect directly in middleware to avoid NEXT_REDIRECT errors in layout/page
   if (request.nextUrl.pathname === '/') {
     const url = request.nextUrl.clone()
@@ -9,7 +12,25 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  return await updateSession(request)
+  const pathname = request.nextUrl.pathname
+  const sessionCookie = request.cookies.get(SESSION_COOKIE)?.value
+
+  // If authenticated and trying to access auth routes, redirect to dashboard
+  if (sessionCookie && AUTH_ROUTES.some(r => pathname.startsWith(r))) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/admin/users'
+    return NextResponse.redirect(url)
+  }
+
+  // If NOT authenticated and trying to access protected routes, redirect to login with reason
+  if (!sessionCookie && PROTECTED_PREFIXES.some(p => pathname.startsWith(p))) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    url.searchParams.set('reason', 'expired')
+    return NextResponse.redirect(url)
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {

@@ -1,27 +1,36 @@
 // lib/auth/guards.ts
-// WU-08 (E0/E3): Autorización centralizada. Reemplaza los checks por email literal.
-// El privilegio de plataforma es EXPLÍCITO: auth.users.app_metadata.platform_admin === true.
+// WU-08 (E0/E3) · G1-W3: Autorización centralizada sobre Identity Platform.
+// El privilegio de plataforma es EXPLÍCITO: custom claim platform_admin === true.
 // Nunca se decide acceso por email ni por ausencia de membresía.
 
-import type { User } from "@supabase/supabase-js";
-import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
+import { verifySession, SESSION_COOKIE } from "@/lib/gcp-auth/session";
 import { resolveAccess, type Role } from "@/lib/services/membership";
 
-export type GuardOk = { ok: true; user: User };
+/** Usuario autenticado (forma mínima que consumen los guards y callers). */
+export type AuthUser = { id: string; email: string | null; platformAdmin: boolean };
+
+export type GuardOk = { ok: true; user: AuthUser };
 export type GuardFail = { ok: false; status: 401 | 403; error: string };
 export type GuardResult = GuardOk | GuardFail;
 
-/** Usuario autenticado actual (server-side), o null. */
-export async function getCurrentUser(): Promise<User | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data?.user) return null;
-  return data.user;
+/** Usuario autenticado actual (server-side) desde la cookie de sesión, o null. */
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get(SESSION_COOKIE)?.value;
+  if (!sessionCookie) return null;
+  const decoded = await verifySession(sessionCookie);
+  if (!decoded) return null;
+  return {
+    id: decoded.uid,
+    email: decoded.email ?? null,
+    platformAdmin: decoded.platform_admin === true,
+  };
 }
 
-/** Platform admin = flag explícito en app_metadata. NUNCA por email. */
-export function isPlatformAdmin(user: User | null): boolean {
-  return user?.app_metadata?.platform_admin === true;
+/** Platform admin = custom claim explícito. NUNCA por email. */
+export function isPlatformAdmin(user: AuthUser | null): boolean {
+  return user?.platformAdmin === true;
 }
 
 /** Exige Platform Admin (operador de plataforma / Teseo). */

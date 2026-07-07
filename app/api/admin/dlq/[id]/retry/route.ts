@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
 import { requirePlatformAdmin } from '@/lib/auth/guards';
+import { pool } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export async function POST(
   request: Request,
@@ -13,29 +14,30 @@ export async function POST(
     const params = await context.params;
     const { id } = params;
 
-    const supabase = await createClient();
+    const client = await pool.connect();
+    try {
+      // Set back to pending manually bypassing the dead state
+      const res = await client.query(
+        `UPDATE lead_assignment_outbox
+         SET status = $1, attempts = 0, next_retry_at = $2
+         WHERE id = $3
+         RETURNING *`,
+        ['pending', new Date().toISOString(), id]
+      );
 
-    // Set back to pending manually bypassing the dead state
-    const { data, error } = await supabase
-      .from('lead_assignment_outbox')
-      .update({
-        status: 'pending',
-        attempts: 0,
-        next_retry_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single();
+      if (res.rows.length === 0) {
+        return NextResponse.json({ error: 'Record not found' }, { status: 404 });
+      }
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      // Trigger explicit webhook dispatch logic could go here
+      // ...
+
+      return NextResponse.json({ success: true, data: res.rows[0] }, { status: 200 });
+    } finally {
+      client.release();
     }
-
-    // Trigger explicit webhook dispatch logic could go here
-    // ...
-
-    return NextResponse.json({ success: true, data }, { status: 200 });
-  } catch {
+  } catch (err) {
+    logger.error('api.admin.dlq.retry.error', { error: String(err) });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

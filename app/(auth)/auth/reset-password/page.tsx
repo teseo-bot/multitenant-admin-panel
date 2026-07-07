@@ -2,7 +2,8 @@
 
 import { useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
+import { getAuth } from "@/lib/gcp-auth/client";
+import { sendPasswordResetEmail } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,6 @@ import Link from "next/link";
 function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const supabase = createClient();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,18 +29,25 @@ function ResetPasswordForm() {
       return;
     }
 
-    // El RedirectTo debe apuntar a la ruta de actualización de contraseña que crearemos a continuación
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/auth/update-password`,
-    });
-
-    if (error) {
-      toast.error(error.message || "Error al solicitar la recuperación.");
-    } else {
+    try {
+      // Identity Platform envía el correo con el enlace de recuperación (oobCode).
+      await sendPasswordResetEmail(getAuth(), email);
       toast.success("Correo de recuperación enviado.");
       setIsSubmitted(true);
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code;
+      if (code === "auth/user-not-found") {
+        // No revelar si la cuenta existe: mismo estado de éxito.
+        setIsSubmitted(true);
+      } else if (code === "auth/network-request-failed") {
+        toast.error("No se pudo conectar. Intenta de nuevo.");
+      } else if (code === "auth/too-many-requests") {
+        toast.error("Demasiados intentos. Espera unos minutos.");
+      } else {
+        toast.error("Error al solicitar la recuperación.");
+      }
     }
-    
+
     setIsLoading(false);
   }
 

@@ -1,6 +1,6 @@
 // lib/services/invitations.ts
 // WU-10 (E4): Flujo de invitación con consistencia entre DOS sistemas
-// (Supabase Auth + Cloud SQL). Orden: Auth primero (crea/recupera identidad),
+// (Firebase Identity Platform + Cloud SQL). Orden: Auth primero (crea/recupera identidad),
 // luego membresía+invitación en UNA transacción DB. Si la DB falla, se hace
 // ROLLBACK => NO queda membresía huérfana (la identidad Auth puede quedar sin
 // membresía, lo cual es inocuo: sin membresía = sin acceso, ver WU-00).
@@ -8,7 +8,8 @@
 import { randomUUID } from "crypto";
 import { pool } from "@/lib/db";
 import { logger } from "@/lib/logger";
-import { getSupabaseAdmin, findUserByEmail } from "@/lib/supabase/admin";
+import { adminAuth } from "@/lib/gcp-auth/admin";
+import { sendMail } from "@/lib/mailer";
 import type { Role } from "@/lib/services/membership";
 
 export interface InviteResult {
@@ -21,8 +22,10 @@ export interface InviteResult {
 const ALREADY_EXISTS = /already.*regist|already.*exist|exists/i;
 
 /**
- * Invita y aprovisiona: asegura la identidad en Supabase y crea la membresía.
+ * Invita y aprovisiona: asegura la identidad en Firebase Identity Platform y crea la membresía.
  * Idempotente respecto a una identidad ya existente (la reutiliza).
+ *
+ * Invariante INV-G2: si DB falla y userWasCreated=true, se ejecuta deleteUser(uid) en compensación.
  */
 export async function inviteAndProvision(input: {
   tenantId: string;
@@ -31,28 +34,97 @@ export async function inviteAndProvision(input: {
   invitedBy: string;
   fullName?: string;
 }): Promise<InviteResult> {
-  const admin = getSupabaseAdmin();
-
-  // 1) Identidad (Auth primero). inviteUserByEmail crea el usuario y envía email.
+  // 1) Identidad (Auth primero): createUser o reutiliza si ya existe.
   let userId: string;
   let reusedIdentity = false;
-  const { data, error } = await admin.auth.admin.inviteUserByEmail(input.email, {
-    data: input.fullName ? { full_name: input.fullName } : undefined,
-  });
-  if (error) {
-    if (ALREADY_EXISTS.test(error.message)) {
-      const existing = await findUserByEmail(input.email);
-      if (!existing) throw error;
-      userId = existing.id;
+  let userWasCreated = false;
+
+  try {
+    const user = await adminAuth().createUser({
+      email: input.email,
+      ...(input.fullName && { displayName: input.fullName }),
+    });
+    userId = user.uid;
+    userWasCreated = true;
+  } catch (err: any) {
+    if (err.code === 'auth/email-already-exists') {
+      const existing = await adminAuth().getUserByEmail(input.email);
+      userId = existing.uid;
       reusedIdentity = true;
     } else {
-      throw error;
+      throw err;
     }
-  } else {
-    userId = data.user.id;
   }
 
-  // 2) Membresía + invitación + auditoría, atómico en DB.
+  // 2) Generar password reset link y enviar correo.
+  const continueUrl = `${process.env.APP_URL || 'http://localhost:3000'}/auth/login`;
+  let passwordResetLink: string;
+  try {
+    passwordResetLink = await adminAuth().generatePasswordResetLink(input.email, {
+      url: continueUrl,
+    });
+  } catch (err) {
+    logger.error("invitations.generatePasswordResetLink.failed", {
+      error: String(err),
+      email: input.email,
+    });
+    // Si falla generar el link pero el usuario acaba de ser creado, compensar.
+    if (userWasCreated) {
+      try {
+        await adminAuth().deleteUser(userId);
+      } catch (delErr) {
+        logger.error("invitations.deleteUser.failed_after_link_error", { error: String(delErr), userId });
+      }
+    }
+    throw err;
+  }
+
+  // Envía correo de invitación (P-G2).
+  const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+  <p>¡Hola!</p>
+  <p>Has sido invitado por <strong>${input.invitedBy}</strong> a unirte con el rol <strong>${input.role}</strong>.</p>
+  <p>
+    <a href="${passwordResetLink}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;">
+      Crear contraseña
+    </a>
+  </p>
+  <p style="font-size: 0.9em; color: #666;">
+    Este enlace vence en 7 días. Si no esperabas este correo, ignóralo.
+  </p>
+</body>
+</html>
+`;
+
+  try {
+    await sendMail({
+      to: input.email,
+      subject: `Tu acceso a ${process.env.PANEL_NAME || 'nuestro panel'}`,
+      html: htmlBody,
+    });
+  } catch (err) {
+    logger.error("invitations.sendMail.failed", {
+      error: String(err),
+      email: input.email,
+    });
+    // Si falla enviar el correo pero el usuario acaba de ser creado, compensar.
+    if (userWasCreated) {
+      try {
+        await adminAuth().deleteUser(userId);
+      } catch (delErr) {
+        logger.error("invitations.deleteUser.failed_after_mail_error", { error: String(delErr), userId });
+      }
+    }
+    throw err;
+  }
+
+  // 3) Membresía + invitación + auditoría, atómico en DB.
   const token = randomUUID().replace(/-/g, "");
   const client = await pool.connect();
   try {
@@ -83,7 +155,19 @@ export async function inviteAndProvision(input: {
     return { invitationId: inv.rows[0].id, userId, membershipId: mem.rows[0].id, reusedIdentity };
   } catch (err) {
     await client.query("ROLLBACK");
-    // Compensación: la identidad Auth queda, pero SIN membresía. No hay membresía huérfana.
+    // Compensación INV-G2.1/G2.2: eliminar el usuario SOLO si acaba de ser creado.
+    if (userWasCreated) {
+      try {
+        await adminAuth().deleteUser(userId);
+        logger.info("invitations.deleteUser.compensated", { userId, email: input.email });
+      } catch (delErr) {
+        logger.error("invitations.deleteUser.failed_after_db_error", {
+          error: String(delErr),
+          userId,
+          email: input.email,
+        });
+      }
+    }
     logger.error("invitations.inviteAndProvision.db_failed", {
       error: String(err),
       email: input.email,
@@ -153,9 +237,39 @@ export async function resendInvitation(invitationId: string, actor: string): Pro
   const inv = rows[0];
   if (!inv) throw new Error("Invitación no encontrada");
 
-  const admin = getSupabaseAdmin();
-  const { error } = await admin.auth.admin.inviteUserByEmail(inv.email);
-  if (error && !ALREADY_EXISTS.test(error.message)) throw error;
+  // Generar nuevo link de password reset y reenviar correo.
+  const continueUrl = `${process.env.APP_URL || 'http://localhost:3000'}/auth/login`;
+  const passwordResetLink = await adminAuth().generatePasswordResetLink(inv.email, {
+    url: continueUrl,
+  });
+
+  const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+  <p>¡Hola!</p>
+  <p>Te reenviamos tu invitación para unirte con el rol <strong>${inv.role}</strong>.</p>
+  <p>
+    <a href="${passwordResetLink}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;">
+      Crear contraseña
+    </a>
+  </p>
+  <p style="font-size: 0.9em; color: #666;">
+    Este enlace vence en 7 días. Si no esperabas este correo, ignóralo.
+  </p>
+</body>
+</html>
+`;
+
+  await sendMail({
+    to: inv.email,
+    subject: `Tu acceso a ${process.env.PANEL_NAME || 'nuestro panel'} (reenvío)`,
+    html: htmlBody,
+  });
 
   await pool.query(
     `UPDATE public.tenant_invitations

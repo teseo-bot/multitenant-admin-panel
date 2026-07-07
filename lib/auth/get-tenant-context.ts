@@ -1,50 +1,57 @@
-import { createServerClient } from '@supabase/ssr';
+// lib/auth/get-tenant-context.ts · G2-W1: contexto de tenant sobre Identity Platform.
+// Identidad desde Bearer idToken (SSE/API) o cookie de sesión __session. Sin Supabase.
 import { cookies } from 'next/headers';
-import { User, SupabaseClient } from '@supabase/supabase-js';
+import { adminAuth } from '@/lib/gcp-auth/admin';
+import { verifySession, SESSION_COOKIE } from '@/lib/gcp-auth/session';
+import { pool } from '@/lib/db';
 
 export type TenantContextResult =
-  | { ok: true; ctx: { user: User; tenantId: string; supabase: SupabaseClient } }
+  | { ok: true; ctx: { user: { id: string; email: string | null }; tenantId: string } }
   | { ok: false; err: { error: string; status: number } };
 
 export async function getTenantContext(request: Request): Promise<TenantContextResult> {
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.MISSION_CONTROL_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.MISSION_CONTROL_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) { return cookieStore.get(name)?.value; }
+  const bearer = request.headers.get('Authorization')?.replace('Bearer ', '');
+  let uid: string | null = null;
+  let email: string | null = null;
+  let claimTenantId: string | undefined;
+
+  try {
+    if (bearer) {
+      const decoded = await adminAuth().verifyIdToken(bearer);
+      uid = decoded.uid;
+      email = decoded.email ?? null;
+      claimTenantId = decoded.tenant_id as string | undefined;
+    } else {
+      const cookieStore = await cookies();
+      const sessionCookie = cookieStore.get(SESSION_COOKIE)?.value;
+      const decoded = sessionCookie ? await verifySession(sessionCookie) : null;
+      if (decoded) {
+        uid = decoded.uid;
+        email = decoded.email ?? null;
+        claimTenantId = decoded.tenant_id as string | undefined;
       }
     }
-  );
+  } catch (err) {
+    console.error('SSE/API Auth error:', err);
+  }
 
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-  const { data: { user }, error } = token 
-    ? await supabase.auth.getUser(token) 
-    : await supabase.auth.getUser();
-
-  if (!user || error) {
-    console.error('SSE/API Auth error:', error);
+  if (!uid) {
     return { ok: false, err: { error: 'Unauthorized', status: 401 } };
   }
 
-  let tenantId = user.app_metadata?.tenant_id || user.user_metadata?.tenant_id;
-  
+  let tenantId = claimTenantId;
   if (!tenantId) {
-    // Fallback: Check tenant_users if not present in metadata
-    const { data: tenantUser } = await supabase
-      .from('tenant_users')
-      .select('tenant_id')
-      .eq('user_id', user.id)
-      .single();
-    if (tenantUser) {
-      tenantId = tenantUser.tenant_id;
-    }
+    // Fallback: tenant_users (uid TEXT).
+    const res = await pool.query(
+      'SELECT tenant_id FROM tenant_users WHERE user_id = $1 LIMIT 1',
+      [uid]
+    );
+    if (res.rows[0]) tenantId = res.rows[0].tenant_id as string;
   }
 
   if (!tenantId) {
     return { ok: false, err: { error: 'Tenant ID missing', status: 400 } };
   }
 
-  return { ok: true, ctx: { user, tenantId, supabase } };
+  return { ok: true, ctx: { user: { id: uid, email }, tenantId } };
 }

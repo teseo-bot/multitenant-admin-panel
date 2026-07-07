@@ -1,27 +1,29 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
 import { requirePlatformAdmin } from '@/lib/auth/guards';
+import { pool } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
   try {
     const auth = await requirePlatformAdmin();
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
-    const supabase = await createClient();
+    const client = await pool.connect();
+    try {
+      const res = await client.query(
+        `SELECT * FROM lead_assignment_outbox
+         WHERE status IN ($1, $2, $3)
+         ORDER BY created_at DESC
+         LIMIT 100`,
+        ['failed', 'dead', 'pending']
+      );
 
-    const { data: outbox, error } = await supabase
-      .from('lead_assignment_outbox')
-      .select('*')
-      .in('status', ['failed', 'dead', 'pending'])
-      .order('created_at', { ascending: false })
-      .limit(100);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json(res.rows, { status: 200 });
+    } finally {
+      client.release();
     }
-
-    return NextResponse.json(outbox, { status: 200 });
-  } catch {
+  } catch (err) {
+    logger.error('api.admin.dlq.error', { error: String(err) });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createClient } from "@/utils/supabase/client"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -24,10 +23,6 @@ export default function TenantsPage() {
   useEffect(() => {
     async function fetchTenants() {
       try {
-        const supabase = createClient()
-        // Here we just fetch the tenants via Supabase REST or an API route.
-        // Wait, the tenants table is in Cloud SQL and we moved everything there.
-        // We should create a GET /api/tenant endpoint.
         const res = await fetch('/api/tenant')
         if (!res.ok) throw new Error("Failed to load tenants")
         const data = await res.json()

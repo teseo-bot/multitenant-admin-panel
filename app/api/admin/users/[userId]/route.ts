@@ -1,33 +1,21 @@
 import { NextResponse } from "next/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { adminAuth } from "@/lib/gcp-auth/admin";
 import { pool } from "@/lib/db";
 import { requirePlatformAdmin } from "@/lib/auth/guards";
 
 export const dynamic = 'force-dynamic';
-
-const getAdminClient = () => {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
-};
 
 export async function GET(request: Request, context: { params: Promise<{ userId: string }> }) {
   const auth = await requirePlatformAdmin();
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   const { userId } = await context.params;
-  const adminClient = getAdminClient();
 
-  // Obtener usuario de Auth
-  const { data: authUser, error: authError } = await adminClient.auth.admin.getUserById(userId);
-  if (authError || !authUser.user) {
+  // Obtener usuario de Firebase Auth
+  let authUser;
+  try {
+    authUser = await adminAuth().getUser(userId);
+  } catch (err) {
     return NextResponse.json({ error: "Usuario no encontrado en Auth" }, { status: 404 });
   }
 
@@ -45,15 +33,15 @@ export async function GET(request: Request, context: { params: Promise<{ userId:
   }
 
   const userProfile = {
-    id: authUser.user.id,
+    id: authUser.uid,
     tenant_id: tu ? tu.tenant_id : null,
     // Sin membresía => sin rol de tenant. NUNCA elevar a admin por ausencia de fila.
     role: tu ? tu.role : null,
-    is_platform_admin: authUser.user.app_metadata?.platform_admin === true,
-    created_at: authUser.user.created_at,
-    email: authUser.user.email || "Sin email",
-    full_name: authUser.user.user_metadata?.full_name || null,
-    avatar_url: authUser.user.user_metadata?.avatar_url || null,
+    is_platform_admin: authUser.customClaims?.platform_admin === true,
+    created_at: authUser.metadata?.creationTime || null,
+    email: authUser.email || "Sin email",
+    full_name: authUser.displayName || null,
+    avatar_url: null,
   };
 
   return NextResponse.json(userProfile);
@@ -65,13 +53,17 @@ export async function PATCH(request: Request, context: { params: Promise<{ userI
 
   const { userId } = await context.params;
   const body = await request.json();
-  const adminClient = getAdminClient();
 
-  // Actualizar metadatos en Auth (ej: nombre) si se enviaron
+  // Actualizar displayName en Firebase Auth (equivalente a full_name) si se envió
   if (body.full_name || body.name) {
-    await adminClient.auth.admin.updateUserById(userId, {
-      user_metadata: { full_name: body.full_name || body.name }
-    });
+    try {
+      await adminAuth().updateUser(userId, {
+        displayName: body.full_name || body.name
+      });
+    } catch (err) {
+      console.error("Error updating displayName in Firebase:", err);
+      return NextResponse.json({ error: "Error al actualizar nombre en Auth" }, { status: 500 });
+    }
   }
 
   // Actualizar el rol en Cloud SQL
@@ -94,11 +86,12 @@ export async function DELETE(request: Request, context: { params: Promise<{ user
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   const { userId } = await context.params;
-  const adminClient = getAdminClient();
 
-  // Eliminar de Auth
-  const { error } = await adminClient.auth.admin.deleteUser(userId);
-  if (error) {
+  // Eliminar de Firebase Auth
+  try {
+    await adminAuth().deleteUser(userId);
+  } catch (err) {
+    console.error("Error deleting user from Firebase:", err);
     return NextResponse.json({ error: "No se pudo eliminar el usuario de Auth" }, { status: 500 });
   }
 
