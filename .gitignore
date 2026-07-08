@@ -41,3 +41,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# --- higiene G3-W3: env, artefactos y deps fuera de git ---
+.env.*
+!.env.example
+/playwright-report/
+node_modules/
