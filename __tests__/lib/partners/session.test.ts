@@ -155,6 +155,7 @@ describe("requirePartnerMember", () => {
           slug: "otro-aliado",
           legal_name: "Otro Aliado SA",
           status: "verified",
+          onboarded_at: "2026-07-08T10:00:00Z",
         },
       ],
     });
@@ -164,5 +165,54 @@ describe("requirePartnerMember", () => {
     assert.strictEqual(result.ok, true);
     assert.strictEqual(queryCalls[0].params.length, 1);
     assert.deepStrictEqual(queryCalls[0].params, ["uid-5"]);
+  });
+
+  it("partner con status='offboarded' => rechazo 403", async () => {
+    const { deps } = fakeDeps({
+      cookie: "valid-cookie",
+      decoded: { uid: "uid-6", partner_id: "partner-1" },
+      rows: [
+        {
+          partner_id: "partner-1",
+          member_role: "curator",
+          slug: "bufete-demo",
+          legal_name: "Bufete Demo SC",
+          status: "offboarded",
+          onboarded_at: "2026-07-01T10:00:00Z",
+        },
+      ],
+    });
+
+    const result = await requirePartnerMember(undefined, deps);
+
+    assert.strictEqual(result.ok, false);
+    if (!result.ok) {
+      assert.strictEqual(result.status, 403);
+      assert.strictEqual(result.error, "Aliado dado de baja");
+    }
+  });
+
+  it("partner con status='suspended' => ok (puede ver contratos)", async () => {
+    const { deps } = fakeDeps({
+      cookie: "valid-cookie",
+      decoded: { uid: "uid-7", partner_id: "partner-1" },
+      rows: [
+        {
+          partner_id: "partner-1",
+          member_role: "member",
+          slug: "bufete-demo",
+          legal_name: "Bufete Demo SC",
+          status: "suspended",
+          onboarded_at: "2026-07-01T10:00:00Z",
+        },
+      ],
+    });
+
+    const result = await requirePartnerMember(undefined, deps);
+
+    assert.strictEqual(result.ok, true);
+    if (result.ok) {
+      assert.strictEqual(result.partner.status, "suspended");
+    }
   });
 });

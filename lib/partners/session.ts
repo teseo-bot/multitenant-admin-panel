@@ -31,6 +31,7 @@ export type PartnerGuardOk = {
   partner: PartnerSummary;
   member_role: PartnerMemberRole;
   uid: string;
+  onboarded_at?: string | null;
 };
 
 export type PartnerGuardFail = {
@@ -94,7 +95,7 @@ export async function requirePartnerMember(
   // uid solo. En ambos casos la fila real de partner_members es la que decide.
   const { rows } = claimPartnerId
     ? await query(
-        `SELECT pm.partner_id, pm.member_role, p.slug, p.legal_name, p.status
+        `SELECT pm.partner_id, pm.member_role, pm.onboarded_at, p.slug, p.legal_name, p.status
            FROM partner_members pm
            JOIN partners p ON p.id = pm.partner_id
           WHERE pm.partner_id = $1 AND pm.user_id = $2
@@ -102,7 +103,7 @@ export async function requirePartnerMember(
         [claimPartnerId, uid]
       )
     : await query(
-        `SELECT pm.partner_id, pm.member_role, p.slug, p.legal_name, p.status
+        `SELECT pm.partner_id, pm.member_role, pm.onboarded_at, p.slug, p.legal_name, p.status
            FROM partner_members pm
            JOIN partners p ON p.id = pm.partner_id
           WHERE pm.user_id = $1
@@ -115,6 +116,12 @@ export async function requirePartnerMember(
     return { ok: false, status: 403, error: "No pertenece a ningún aliado" };
   }
 
+  // Aliado offboarded no entra al Lab (suspended SÍ entra para ver sus contratos)
+  const partnerStatus = row.status;
+  if (partnerStatus === "offboarded") {
+    return { ok: false, status: 403, error: "Aliado dado de baja" };
+  }
+
   const memberRole = row.member_role as PartnerMemberRole;
   if (minRole === "curator" && memberRole !== "curator") {
     return { ok: false, status: 403, error: "Requiere rol curator" };
@@ -124,11 +131,12 @@ export async function requirePartnerMember(
     ok: true,
     uid,
     member_role: memberRole,
+    onboarded_at: row.onboarded_at ?? null,
     partner: {
       id: row.partner_id,
       slug: row.slug,
       legal_name: row.legal_name,
-      status: row.status,
+      status: partnerStatus,
     },
   };
 }

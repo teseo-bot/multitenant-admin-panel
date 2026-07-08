@@ -30,6 +30,12 @@ export default async function LabLayout({
     redirect("/unauthorized");
   }
 
+  // Si onboarded_at IS NULL, redirige al wizard de onboarding
+  // (solo la primera vez que accede al Lab)
+  if (guard.onboarded_at === null) {
+    redirect("/lab/onboarding");
+  }
+
   return (
     <TooltipProvider>
       <SidebarProvider>
