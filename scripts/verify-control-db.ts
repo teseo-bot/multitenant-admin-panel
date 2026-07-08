@@ -37,7 +37,7 @@ function assert(name: string, cond: boolean, extra?: unknown) {
   }
 
   try {
-    // (1) Verificar que existen ≥12 tablas esperadas del set de migraciones
+    // (1) Verificar que existen ≥13 tablas esperadas del set de migraciones
     const tableCheck = await pool.query(`
       SELECT array_agg(table_name) as tables
       FROM information_schema.tables
@@ -47,11 +47,11 @@ function assert(name: string, cond: boolean, extra?: unknown) {
           'modules', 'tenant_modules', 'tenant_user_modules', 'tenant_invitations',
           'user_management_audit', 'kdb_agent_acls', 'partners', 'partner_members',
           'partner_packages', 'partner_package_versions', 'partner_contracts',
-          'partner_contract_events', 'partner_referrals'
+          'partner_contract_events', 'partner_referrals', 'partner_sources'
         )
     `);
     const tables = tableCheck.rows[0]?.tables || [];
-    assert(">=12 tablas base existen", tables.length >= 12, { count: tables.length, tables });
+    assert(">=13 tablas base existen", tables.length >= 13, { count: tables.length, tables });
 
     // (2) Verificar que modules tiene exactamente 8 filas y una es 'Onboarding Academy' (lms)
     const modulesCheck = await pool.query(`
@@ -125,6 +125,28 @@ function assert(name: string, cond: boolean, extra?: unknown) {
     `);
     const hasCheckConstraint = roleConstraintCheck.rows.length > 0;
     assert("tenant_users.role usa CHECK (no ENUM)", hasCheckConstraint, { constraints: roleConstraintCheck.rows });
+
+    // (7) Verificar que partner_sources tiene las columnas esperadas para Knowledge Lab
+    const partnerSourcesColumnsCheck = await pool.query(`
+      SELECT array_agg(column_name) as columns
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'partner_sources'
+        AND column_name IN ('id', 'partner_id', 'kind', 'title', 'source_ref', 'gcs_object', 'ingest_status', 'created_by', 'created_at')
+    `);
+    const psColumns = partnerSourcesColumnsCheck.rows[0]?.columns || [];
+    assert("partner_sources tiene las 9 columnas esperadas", psColumns.length === 9, { count: psColumns.length, columns: psColumns });
+
+    // (8) Verificar que partner_members tiene onboarded_at (KL1-W2)
+    const partnerMembersOnboardedCheck = await pool.query(`
+      SELECT data_type FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'partner_members'
+        AND column_name = 'onboarded_at'
+    `);
+    const hasOnboardedAt = partnerMembersOnboardedCheck.rows.length > 0;
+    const onboardedType = partnerMembersOnboardedCheck.rows[0]?.data_type || "";
+    assert("partner_members.onboarded_at existe y es TIMESTAMPTZ", hasOnboardedAt && onboardedType === 'timestamp with time zone', { type: onboardedType });
 
   } finally {
     await pool.end();

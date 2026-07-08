@@ -1,15 +1,16 @@
-// G0-W3: aplica las migraciones GCP-Native (001..008) contra el plano de control (CONTROL_DB_URL).
+// G0-W3: aplica las migraciones GCP-Native (001..009) contra el plano de control (CONTROL_DB_URL).
 //
 // USO:
 //   CONTROL_DB_URL=postgres://... node_modules/.bin/tsx scripts/apply-gcp-migrations.ts
 //
-// Aplica en orden estricto 001 -> 002 -> ... -> 008. Cada archivo se ejecuta en su propia
+// Aplica en orden estricto 001 -> 002 -> ... -> 009. Cada archivo se ejecuta en su propia
 // transacción. Las migraciones son idempotentes por diseño (CREATE TABLE IF NOT EXISTS /
 // ON CONFLICT DO NOTHING) o manejan duplicados en capas de error.
 //
 // Estado (ADR-206 H0, 2026-07-06/07): ya aplicado contra el control-plane vivo
 // (micontexto-control:us-central1:control-plane, vía Cloud SQL Auth Proxy). Re-ejecutable
-// por idempotencia. La 008 restauró las columnas de expansión de tenant_users.
+// por idempotencia. La 008 restauró las columnas de expansión de tenant_users. La 009 añade
+// partner_sources y onboarded_at para Knowledge Lab.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -26,6 +27,7 @@ const MIGRATION_FILES = [
   '006_partners.sql',
   '007_partner_contracts.sql',
   '008_tenant_users_expansion.sql',
+  '009_partner_sources.sql',
 ] as const;
 
 // Códigos de error Postgres que indican "esto ya existía" (re-run seguro).
@@ -99,6 +101,12 @@ async function checkAlreadyApplied(client: Client, file: string): Promise<string
         `SELECT to_regclass('public.partners') IS NOT NULL AS exists`
       );
       return r.rows[0]?.exists ? 'tabla public.partners ya existe' : null;
+    }
+    if (file === '009_partner_sources.sql') {
+      const r = await client.query(
+        `SELECT to_regclass('public.partner_sources') IS NOT NULL AS exists`
+      );
+      return r.rows[0]?.exists ? 'tabla public.partner_sources ya existe' : null;
     }
   } catch {
     // Si el pre-chequeo falla (ej. tabla aún no existe), no es "ya aplicada".
