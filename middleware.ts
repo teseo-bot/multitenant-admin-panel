@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PROTECTED_PREFIXES = ['/admin', '/tenants', '/settings', '/knowledge-ops']
+const PROTECTED_PREFIXES = ['/admin', '/tenants', '/settings', '/knowledge-ops', '/lab']
 const AUTH_ROUTES = ['/auth/login', '/auth/callback', '/auth/auth-code-error']
 const SESSION_COOKIE = '__session'
 
