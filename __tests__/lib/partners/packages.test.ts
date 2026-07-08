@@ -71,9 +71,22 @@ describe("CreatePackageBodySchema", () => {
     }
   });
 
-  it("inválido: slug muy corto (< 4 chars)", () => {
+  // El regex del TRD `^[a-z0-9][a-z0-9-]{2,59}$` admite mínimo 3 caracteres.
+  it("válido: slug de 3 chars (mínimo del regex TRD)", () => {
     const data = {
       slug: "abc",
+      title: "Procesos de Selección",
+      systems: ["h-talento-humano"],
+    };
+
+    const result = CreatePackageBodySchema.safeParse(data);
+
+    assert.strictEqual(result.success, true);
+  });
+
+  it("inválido: slug de 2 chars (bajo el mínimo)", () => {
+    const data = {
+      slug: "ab",
       title: "Procesos de Selección",
       systems: ["h-talento-humano"],
     };
