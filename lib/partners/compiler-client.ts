@@ -263,6 +263,15 @@ export interface PartnerLicenseInput {
   valid_from: string;
   valid_until: string;
   status: "active" | "suspended" | "terminated" | "expired";
+  // PA5-W2-followup: 4 campos de presentación (nombres reales) del plano de control
+  // (partners.slug/legal_name, partner_packages.slug/title, migrations-gcp/006_partners.sql)
+  // — el compiler YA los acepta y persiste (kdb_partner_licenses), para que el browse
+  // `_aliados/` del orquestador no dependa de la semilla. Opcionales: el caller
+  // (license-sync.ts::projectContractToAction) los reenvía si el contrato los trae.
+  partner_slug?: string | null;
+  partner_legal_name?: string | null;
+  package_slug?: string | null;
+  package_title?: string | null;
 }
 
 export type PartnerLicenseSyncInput =

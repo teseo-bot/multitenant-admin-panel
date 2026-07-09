@@ -229,10 +229,21 @@ async function verifyChallenge(
         // delegada a applyTransitionWithSync. `version` viene de
         // partner_package_versions (no hay columna `version` en partner_contracts/
         // partner_packages, ver nota en license-sync.ts).
+        // PA5-W2-followup: se resuelven en el mismo viaje los 4 campos de presentación
+        // (partner_slug/partner_legal_name/package_slug/package_title) vía subqueries
+        // escalares sin FROM (válido en Postgres), consultando partners/partner_packages
+        // por PK — no hace falta JOIN con partner_contracts porque ya tenemos
+        // partner_id/package_id en finalContract.
         const { rows: versionRows } = await client.query(
-          `SELECT version FROM partner_package_versions WHERE package_id = $1
-             ORDER BY version DESC LIMIT 1`,
-          [finalContract.package_id]
+          `SELECT
+              (SELECT ppv.version FROM partner_package_versions ppv
+                 WHERE ppv.package_id = $1
+                 ORDER BY ppv.version DESC LIMIT 1) AS version,
+              (SELECT pk.slug FROM partner_packages pk WHERE pk.id = $1) AS package_slug,
+              (SELECT pk.title FROM partner_packages pk WHERE pk.id = $1) AS package_title,
+              (SELECT p.slug FROM partners p WHERE p.id = $2) AS partner_slug,
+              (SELECT p.legal_name FROM partners p WHERE p.id = $2) AS partner_legal_name`,
+          [finalContract.package_id, finalContract.partner_id]
         );
         const contractForSync: ContractForLicenseProjection = {
           id: finalContract.id,
@@ -244,6 +255,10 @@ async function verifyChallenge(
           valid_from: new Date(finalContract.valid_from).toISOString(),
           valid_until: new Date(finalContract.valid_until).toISOString(),
           status: "pending_signature",
+          partner_slug: versionRows[0]?.partner_slug,
+          partner_legal_name: versionRows[0]?.partner_legal_name,
+          package_slug: versionRows[0]?.package_slug,
+          package_title: versionRows[0]?.package_title,
         };
 
         try {

@@ -51,6 +51,14 @@ export interface ContractForLicenseProjection {
   valid_from: string;
   valid_until: string;
   status: ContractStatus;
+  // PA5-W2-followup: 4 campos de presentación resueltos por el caller vía JOIN/subquery
+  // contra partners/partner_packages (migrations-gcp/006_partners.sql). Opcionales
+  // porque scripts/expire-contracts.ts (única transición que NO produce upsert) no los
+  // necesita — su destino 'expired' siempre proyecta a 'delete'.
+  partner_slug?: string | null;
+  partner_legal_name?: string | null;
+  package_slug?: string | null;
+  package_title?: string | null;
 }
 
 /**
@@ -84,6 +92,10 @@ export function projectContractToAction(
         valid_from: contract.valid_from,
         valid_until: contract.valid_until,
         status: contract.status,
+        partner_slug: contract.partner_slug,
+        partner_legal_name: contract.partner_legal_name,
+        package_slug: contract.package_slug,
+        package_title: contract.package_title,
       };
       return { action: "upsert", contract_id: contract.id, license };
     }

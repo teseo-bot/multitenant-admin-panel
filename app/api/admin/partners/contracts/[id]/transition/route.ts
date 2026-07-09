@@ -79,11 +79,19 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       // (migrations-gcp/006_partners.sql, 007_partner_contracts.sql). Se resuelve aquí,
       // ANTES de la transacción, para que applyTransitionWithSync reciba un contrato ya
       // completo y su flujo interno se limite a UPDATE+INSERT (sin tocar más tablas).
+      // PA5-W2-followup: partner_slug/partner_legal_name/package_slug/package_title vía
+      // subqueries correlacionadas (mismo estilo que `version`, arriba) — evita el JOIN
+      // directo con partners/partner_packages, que ambiguaría columnas compartidas con
+      // CONTRACT_COLUMNS (id/partner_id/status/created_at existen en las 3 tablas).
       const { rows } = await client.query(
         `SELECT ${CONTRACT_COLUMNS},
                 (SELECT ppv.version FROM partner_package_versions ppv
                    WHERE ppv.package_id = partner_contracts.package_id
-                   ORDER BY ppv.version DESC LIMIT 1) AS version
+                   ORDER BY ppv.version DESC LIMIT 1) AS version,
+                (SELECT p.slug FROM partners p WHERE p.id = partner_contracts.partner_id) AS partner_slug,
+                (SELECT p.legal_name FROM partners p WHERE p.id = partner_contracts.partner_id) AS partner_legal_name,
+                (SELECT pk.slug FROM partner_packages pk WHERE pk.id = partner_contracts.package_id) AS package_slug,
+                (SELECT pk.title FROM partner_packages pk WHERE pk.id = partner_contracts.package_id) AS package_title
            FROM partner_contracts WHERE id = $1`,
         [id]
       );
@@ -124,6 +132,10 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
         valid_from: new Date(row.valid_from).toISOString(),
         valid_until: new Date(row.valid_until).toISOString(),
         status: from,
+        partner_slug: row.partner_slug,
+        partner_legal_name: row.partner_legal_name,
+        package_slug: row.package_slug,
+        package_title: row.package_title,
       };
 
       try {

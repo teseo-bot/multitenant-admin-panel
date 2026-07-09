@@ -48,6 +48,27 @@ describe("projectContractToAction", () => {
     }
   });
 
+  // PA5-W2-followup: los 4 campos de presentación (partner_slug/partner_legal_name/
+  // package_slug/package_title) resueltos por el caller (JOIN/subquery contra
+  // partners/partner_packages) deben reenviarse tal cual en el `license` proyectado.
+  it("status='active' con campos de presentación => se reenvían en license", () => {
+    const result = projectContractToAction({
+      ...BASE_CONTRACT,
+      status: "active",
+      partner_slug: "aliado-legal-1",
+      partner_legal_name: "Aliado Legal Uno S.A. de C.V.",
+      package_slug: "paquete-fiscal",
+      package_title: "Paquete Fiscal Corporativo",
+    });
+    assert.strictEqual(result.action, "upsert");
+    if (result.action === "upsert") {
+      assert.strictEqual(result.license.partner_slug, "aliado-legal-1");
+      assert.strictEqual(result.license.partner_legal_name, "Aliado Legal Uno S.A. de C.V.");
+      assert.strictEqual(result.license.package_slug, "paquete-fiscal");
+      assert.strictEqual(result.license.package_title, "Paquete Fiscal Corporativo");
+    }
+  });
+
   it("status='suspended' => upsert con license.status='suspended'", () => {
     const result = projectContractToAction({ ...BASE_CONTRACT, status: "suspended" });
     assert.strictEqual(result.action, "upsert");
