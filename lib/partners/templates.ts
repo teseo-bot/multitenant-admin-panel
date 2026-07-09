@@ -278,3 +278,96 @@ export function readFrontmatterHints(markdown: string): {
 
   return { system, altitude };
 }
+
+/**
+ * KL3-W3: Inserta una cita desde la biblioteca en el markdown.
+ *
+ * (1) Añade `source_ref` al array `sources:` del frontmatter (sin duplicar).
+ *     Si no existe la clave, la crea como `sources: ["source_ref"]`.
+ * (2) Añade una línea numerada bajo la sección `# Citations` del body:
+ *     `[N] {title} — {source_ref}` (N = siguiente número).
+ *     Crea la sección al final si no existe.
+ *
+ * Si el markdown no tiene frontmatter reconocible, devuelve intacto (no inventa).
+ * Si `source_ref` ya existe en `sources:`, no duplica la entrada pero SÍ añade la línea de cita
+ * (permitir múltiples referencias a la misma fuente en el body).
+ */
+export function insertCitation(
+  markdown: string,
+  opts: { source_ref: string; title: string }
+): string {
+  // --- Paso 1: Añadir source_ref al array sources: del frontmatter ---
+  let withSourceRef = withinFrontmatterBlock(markdown, (block) => {
+    const lines = block.split(/\r?\n/);
+
+    // Buscar la línea `sources: [...]`
+    const idx = lines.findIndex((l) => /^sources:\s*\[/.test(l));
+    if (idx === -1) {
+      // La clave no existe — crearla. Insertarla antes de la línea de cierre del frontmatter
+      // (simplemente añadir al final del bloque, el cierre se completa fuera)
+      lines.push(`sources: ["${opts.source_ref}"]`);
+      return lines.join("\n");
+    }
+
+    // Parsear la línea existente: extraer items
+    const arrMatch = lines[idx].match(/^sources:\s*\[([^\]]*)\]\s*$/);
+    if (!arrMatch) return block; // Línea malformada — no tocar
+
+    let items = arrMatch[1]
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
+    // Comprobar si ya existe el source_ref
+    const quoted = `"${opts.source_ref}"`;
+    if (!items.includes(quoted)) {
+      items.push(quoted);
+    }
+
+    lines[idx] = `sources: [${items.join(", ")}]`;
+    return lines.join("\n");
+  });
+
+  // --- Paso 2: Añadir línea numerada bajo # Citations ---
+  const frontmatterMatch = withSourceRef.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!frontmatterMatch) return withSourceRef; // Sin frontmatter reconocible
+
+  const bodyStart = frontmatterMatch[0].length;
+  const body = withSourceRef.slice(bodyStart);
+
+  // Buscar la sección "# Citations"
+  const citationsMatch = body.match(/^# Citations\r?\n/m);
+  if (!citationsMatch) {
+    // No existe — crearla al final del body
+    const newCitationsSection = `# Citations\n[1] ${opts.title} — ${opts.source_ref}\n`;
+    return withSourceRef + newCitationsSection;
+  }
+
+  // Extraer el cuerpo de la sección Citations (desde "# Citations" al siguiente heading o fin)
+  const citationsStartIdx = body.indexOf(citationsMatch[0]) + citationsMatch[0].length;
+  const restOfBody = body.slice(citationsStartIdx);
+
+  // Buscar el siguiente heading de nivel 1 o 2 (^## o ^#[^#])
+  const nextHeadingMatch = restOfBody.match(/^##? /m);
+  let citationsEndIdx = citationsStartIdx + restOfBody.length;
+  if (nextHeadingMatch) {
+    citationsEndIdx = citationsStartIdx + (nextHeadingMatch.index ?? 0);
+  }
+
+  // Extraer el contenido actual de la sección
+  const citationsContent = withSourceRef.slice(
+    frontmatterMatch[0].length + citationsMatch[0].length,
+    citationsEndIdx
+  );
+
+  // Contar las líneas de cita existentes ([1], [2], etc.)
+  const existingCitations = (citationsContent.match(/^\[\d+\]/gm) ?? []).length;
+  const nextNumber = existingCitations + 1;
+
+  // Insertar la nueva línea
+  const newCitationLine = `[${nextNumber}] ${opts.title} — ${opts.source_ref}\n`;
+  const beforeCitations = withSourceRef.slice(0, frontmatterMatch[0].length + citationsMatch[0].length);
+  const afterCitations = withSourceRef.slice(citationsEndIdx);
+
+  return beforeCitations + newCitationLine + citationsContent + afterCitations;
+}

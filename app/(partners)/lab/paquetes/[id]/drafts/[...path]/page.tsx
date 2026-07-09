@@ -47,11 +47,13 @@ import {
   setFrontmatterSystem,
   setFrontmatterAltitude,
   readFrontmatterHints,
+  insertCitation,
   type ConceptType,
   type HocflitSystem,
 } from "@/lib/partners/templates";
 import { HOCFLIT_SYSTEMS } from "@/lib/kdb/schemas";
 import { ValidationPanel } from "./validation-panel";
+import { Input } from "@/components/ui/input";
 
 const SYSTEM_LABELS: Record<HocflitSystem, string> = {
   "h-talento-humano": "Talento Humano",
@@ -64,6 +66,13 @@ const SYSTEM_LABELS: Record<HocflitSystem, string> = {
 };
 
 const ALTITUDE_OPTIONS = [1, 2, 3, 4, 5];
+
+interface PartnerSource {
+  id: string;
+  title: string;
+  kind: "doc" | "url";
+  source_ref: string;
+}
 
 function useDraft(draftPath: string) {
   return useQuery<{ markdown: string }>({
@@ -80,6 +89,20 @@ function useDraft(draftPath: string) {
   });
 }
 
+function useSources() {
+  return useQuery<{ sources: PartnerSource[] }>({
+    queryKey: ["partners", "me", "sources"],
+    queryFn: async () => {
+      const res = await fetch("/api/partners/me/sources");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || "Error al obtener fuentes");
+      }
+      return res.json();
+    },
+  });
+}
+
 /** Recorta el bloque `---...---` para la vista previa (solo se previsualiza el cuerpo). */
 function stripFrontmatterForPreview(markdown: string): string {
   const match = markdown.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
@@ -92,6 +115,7 @@ export default function DraftEditorPage() {
   const draftPath = useMemo(() => (params.path ?? []).join("/"), [params.path]);
 
   const { data, isLoading, error } = useDraft(draftPath);
+  const { data: sourcesData, isLoading: sourcesLoading } = useSources();
   const queryClient = useQueryClient();
 
   const [markdown, setMarkdown] = useState<string>("");
@@ -102,6 +126,8 @@ export default function DraftEditorPage() {
   const [confirmOverwriteOpen, setConfirmOverwriteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number>(0);
+  const [citationPickerOpen, setCitationPickerOpen] = useState(false);
+  const [sourcesSearch, setSourcesSearch] = useState("");
 
   // Precarga: solo la primera vez que llega el contenido del draft (no pisar ediciones en
   // curso si react-query revalida en segundo plano).
@@ -140,6 +166,18 @@ export default function DraftEditorPage() {
     const altitude = Number(value);
     setSelectedAltitude(altitude);
     setMarkdown((prev) => setFrontmatterAltitude(prev, altitude));
+  }
+
+  function handleInsertCitation(source: PartnerSource) {
+    setMarkdown((prev) =>
+      insertCitation(prev, {
+        source_ref: source.source_ref,
+        title: source.title,
+      })
+    );
+    setCitationPickerOpen(false);
+    setSourcesSearch("");
+    toast.success(`Cita insertada: ${source.title}`);
   }
 
   async function handleSave() {
@@ -251,6 +289,31 @@ export default function DraftEditorPage() {
           </div>
 
           <div className="space-y-2 border-t pt-4">
+            <Label>Citar fuente</Label>
+            {sourcesData && sourcesData.sources.length > 0 ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => setCitationPickerOpen(true)}
+                disabled={sourcesLoading}
+              >
+                {sourcesLoading ? "Cargando…" : "Elegir de biblioteca"}
+              </Button>
+            ) : sourcesLoading ? (
+              <Button variant="outline" size="sm" className="w-full" disabled>
+                Cargando…
+              </Button>
+            ) : (
+              <div className="text-xs text-center">
+                <a href="/lab/fuentes" className="text-primary underline hover:no-underline">
+                  Registra tu primera fuente
+                </a>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2 border-t pt-4">
             <Label>Guía sugerida — {CONCEPT_TEMPLATES[selectedType].label}</Label>
             <pre className="whitespace-pre-wrap rounded-md bg-muted p-2 text-xs text-muted-foreground">
               {CONCEPT_TEMPLATES[selectedType].body}
@@ -280,6 +343,52 @@ export default function DraftEditorPage() {
           savedAt={lastSavedAt}
         />
       </div>
+
+      <Dialog open={citationPickerOpen} onOpenChange={setCitationPickerOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Citar fuente</DialogTitle>
+            <DialogDescription>
+              Elige una fuente de tu biblioteca para insertarla como cita en el concepto.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="Buscar fuente…"
+              value={sourcesSearch}
+              onChange={(e) => setSourcesSearch(e.target.value)}
+              autoFocus
+            />
+            <div className="max-h-64 overflow-y-auto space-y-2 border rounded-md p-2">
+              {sourcesData?.sources
+                .filter(
+                  (s) =>
+                    s.title.toLowerCase().includes(sourcesSearch.toLowerCase()) ||
+                    s.source_ref.toLowerCase().includes(sourcesSearch.toLowerCase())
+                )
+                .map((source) => (
+                  <button
+                    key={source.id}
+                    onClick={() => handleInsertCitation(source)}
+                    className="w-full text-left px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm border"
+                  >
+                    <div className="font-medium">{source.title}</div>
+                    <div className="text-xs text-muted-foreground truncate">{source.source_ref}</div>
+                  </button>
+                ))}
+              {!sourcesData?.sources.some(
+                (s) =>
+                  s.title.toLowerCase().includes(sourcesSearch.toLowerCase()) ||
+                  s.source_ref.toLowerCase().includes(sourcesSearch.toLowerCase())
+              ) && (
+                <div className="text-center py-4 text-xs text-muted-foreground">
+                  No hay fuentes que coincidan
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={confirmOverwriteOpen} onOpenChange={setConfirmOverwriteOpen}>
         <DialogContent>
