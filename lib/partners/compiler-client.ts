@@ -58,6 +58,22 @@ async function callCompiler<T>(path: string, payload: unknown): Promise<T> {
   return data as T;
 }
 
+// PA4-W1: proxy al alta de aliado (crea bucket + layout + genesis del log, TRD §7.3).
+
+export interface PartnerBundleCreateResult {
+  partner_id: string;
+  bucket_name: string;
+  files_created: number;
+  verified: boolean;
+}
+
+/** Proxy a `POST /internal/partner-bundle-create` (PA2-W1, context-kdb-compiler). */
+export async function createPartnerBundleViaCompiler(input: {
+  partner_id: string;
+}): Promise<PartnerBundleCreateResult> {
+  return callCompiler<PartnerBundleCreateResult>("/internal/partner-bundle-create", input);
+}
+
 export interface PartnerSourceUploadResult {
   sha256: string;
   gcs_object: string;
