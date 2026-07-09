@@ -93,3 +93,58 @@ export async function ingestPartnerSourceViaCompiler(input: {
 }): Promise<PartnerIngestResult> {
   return callCompiler<PartnerIngestResult>("/internal/partner-ingest", input);
 }
+
+// KL3-W1: plomería de drafts para el editor guiado (P-KL3). Los tres proxies siguientes
+// llaman a las rutas M2M que agrega context-kdb-compiler en la misma WU
+// (src/partners/partner-drafts-list.ts + src/partners/partner-draft-update.ts).
+
+export interface PartnerDraftListItem {
+  path: string;
+  title: string;
+  type: string;
+  system: string;
+  altitude: number;
+  pii: string;
+  confidence: string;
+  updated?: string;
+}
+
+export interface PartnerDraftsListResult {
+  drafts: PartnerDraftListItem[];
+}
+
+/** Proxy a `POST /internal/partner-drafts-list` (KL3-W1). Lista drafts pendientes bajo
+ * `_staging/` (ya excluye los publicados — filtro as-built PA2-W4, resuelto en el compiler). */
+export async function listPartnerDraftsViaCompiler(input: {
+  partner_id: string;
+  package_slug?: string;
+}): Promise<PartnerDraftsListResult> {
+  return callCompiler<PartnerDraftsListResult>("/internal/partner-drafts-list", input);
+}
+
+export interface PartnerDraftGetResult {
+  markdown: string;
+}
+
+/** Proxy a `POST /internal/partner-draft-get` (KL3-W1). 422 si `draft_path` no está bajo
+ * `_staging/` (mismo guard anti-traversal que `partner-draft-update`). */
+export async function getPartnerDraftViaCompiler(input: {
+  partner_id: string;
+  draft_path: string;
+}): Promise<PartnerDraftGetResult> {
+  return callCompiler<PartnerDraftGetResult>("/internal/partner-draft-get", input);
+}
+
+export interface PartnerDraftUpdateResult {
+  path: string;
+  updated: boolean;
+}
+
+/** Proxy a `POST /internal/partner-draft-update` (PA2-W3, ya existente en el compiler). */
+export async function updatePartnerDraftViaCompiler(input: {
+  partner_id: string;
+  draft_path: string;
+  markdown: string;
+}): Promise<PartnerDraftUpdateResult> {
+  return callCompiler<PartnerDraftUpdateResult>("/internal/partner-draft-update", input);
+}
