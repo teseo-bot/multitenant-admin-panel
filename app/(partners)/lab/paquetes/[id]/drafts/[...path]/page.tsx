@@ -51,6 +51,7 @@ import {
   type HocflitSystem,
 } from "@/lib/partners/templates";
 import { HOCFLIT_SYSTEMS } from "@/lib/kdb/schemas";
+import { ValidationPanel } from "./validation-panel";
 
 const SYSTEM_LABELS: Record<HocflitSystem, string> = {
   "h-talento-humano": "Talento Humano",
@@ -100,6 +101,7 @@ export default function DraftEditorPage() {
   const [selectedAltitude, setSelectedAltitude] = useState<number>(3);
   const [confirmOverwriteOpen, setConfirmOverwriteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<number>(0);
 
   // Precarga: solo la primera vez que llega el contenido del draft (no pisar ediciones en
   // curso si react-query revalida en segundo plano).
@@ -155,6 +157,7 @@ export default function DraftEditorPage() {
       }
       toast.success("Borrador guardado");
       queryClient.invalidateQueries({ queryKey: ["partners", "me", "packages", packageId, "drafts"] });
+      setLastSavedAt(Date.now()); // Trigger validación en el panel
     } catch {
       toast.error("Error de conexión al guardar el borrador");
     } finally {
@@ -268,13 +271,14 @@ export default function DraftEditorPage() {
           </div>
         </div>
 
-        {/* Panel derecho: validador en vivo — KL4-W1, placeholder */}
-        <div className="flex flex-col items-center justify-center gap-2 border-l border-dashed p-4 text-center text-sm text-muted-foreground">
-          <p className="font-medium">Validación (KL4)</p>
-          <p className="text-xs">
-            El checklist N1/N2/N3 y los quick-fixes llegan con el panel validador del editor.
-          </p>
-        </div>
+        {/* Panel derecho: validador en vivo — KL4-W1 */}
+        <ValidationPanel
+          draftPath={draftPath}
+          packageId={packageId}
+          markdown={markdown}
+          onMarkdownChange={setMarkdown}
+          savedAt={lastSavedAt}
+        />
       </div>
 
       <Dialog open={confirmOverwriteOpen} onOpenChange={setConfirmOverwriteOpen}>

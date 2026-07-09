@@ -148,3 +148,36 @@ export async function updatePartnerDraftViaCompiler(input: {
 }): Promise<PartnerDraftUpdateResult> {
   return callCompiler<PartnerDraftUpdateResult>("/internal/partner-draft-update", input);
 }
+
+// KL4-W1: validación en vivo del editor guiado (panel validador P-KL3).
+
+export interface ValidationReport {
+  path: string;
+  findings: ValidationFinding[];
+  valid: boolean;
+}
+
+export interface ValidationFinding {
+  rule_id: string;
+  level: "n1" | "n2" | "n3";
+  severity: "error" | "warn";
+  message_es: string;
+  line?: number;
+  fix?: {
+    kind: "set_field" | "replace_text";
+    description_es: string;
+    value?: string;
+    from?: string;
+    to?: string;
+  };
+}
+
+/** Proxy a `POST /internal/partner-validate` (KL4-W1, context-kdb-compiler). */
+export async function validatePartnerDraftViaCompiler(input: {
+  partner_id: string;
+  markdown: string;
+  package_paths?: string[];
+  for_publish?: boolean;
+}): Promise<ValidationReport> {
+  return callCompiler<ValidationReport>("/internal/partner-validate", input);
+}
