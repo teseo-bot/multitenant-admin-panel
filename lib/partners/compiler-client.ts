@@ -172,6 +172,22 @@ export interface ValidationFinding {
   };
 }
 
+export interface PackageManifestConcept {
+  path: string;
+  sha256: string;
+}
+
+export interface PackageManifest {
+  package_id: string;
+  package_slug: string;
+  version: number;
+  published_at: string;
+  concepts: PackageManifestConcept[];
+  manifest_sha256: string;
+  signature_b64: string;
+  kms_key_version: string;
+}
+
 /** Proxy a `POST /internal/partner-validate` (KL4-W1, context-kdb-compiler). */
 export async function validatePartnerDraftViaCompiler(input: {
   partner_id: string;
