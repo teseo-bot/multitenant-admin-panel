@@ -236,3 +236,47 @@ export async function runPartnerAssistViaCompiler(input: {
 }): Promise<PartnerAssistResult> {
   return callCompiler<PartnerAssistResult>("/internal/partner-assist", input);
 }
+
+// PA4-W3b: sync síncrono de licencias (panel → compiler). El panel proyecta un contrato
+// de aliado a una fila de `kdb_partner_licenses` (lib/partners/license-sync.ts::
+// projectContractToAction) y llama aquí para reflejarla. Espejo del lado compiler:
+// context-kdb-compiler/src/partners/license-sync.ts + src/server.ts
+// (POST /internal/partner-license-sync, PA4-W3a).
+//
+// DESVIACIÓN reportada: la WU describe `syncLicenseToCompiler(input) —
+// callCompiler('/internal/partner-license-sync', input)` como si lib/partners/
+// license-sync.ts pudiera invocar `callCompiler` directamente, pero esa función es
+// privada a este archivo (no exportada, igual que para todos los demás proxies de
+// arriba). Resolución: se agrega aquí el proxy exportado que la WU pide ("Añade aquí el
+// proxy nuevo"), y `syncLicenseToCompiler` en license-sync.ts lo invoca a él, no a
+// `callCompiler` — mismo patrón que el resto del archivo, sin romper el encapsulamiento.
+
+export interface PartnerLicenseInput {
+  contract_id: string;
+  tenant_id: string;
+  partner_id: string;
+  package_id: string;
+  version: number;
+  systems: string[];
+  altitude_max: number;
+  modules: string[];
+  valid_from: string;
+  valid_until: string;
+  status: "active" | "suspended" | "terminated" | "expired";
+}
+
+export type PartnerLicenseSyncInput =
+  | { action: "upsert"; contract_id: string; license: PartnerLicenseInput }
+  | { action: "delete"; contract_id: string };
+
+export interface PartnerLicenseSyncResult {
+  ok: boolean;
+  action: "upsert" | "delete";
+}
+
+/** Proxy a `POST /internal/partner-license-sync` (PA4-W3a, context-kdb-compiler). */
+export async function syncPartnerLicenseViaCompiler(
+  input: PartnerLicenseSyncInput
+): Promise<PartnerLicenseSyncResult> {
+  return callCompiler<PartnerLicenseSyncResult>("/internal/partner-license-sync", input);
+}

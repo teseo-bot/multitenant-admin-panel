@@ -9,9 +9,15 @@
 //     MAILER_DRY_RUN). Responde 202.
 //   - Con `{code}`: carga el challenge y delega la decisión a verifyOtp (lógica pura,
 //     lib/partners/contract-otp.ts). 'locked'→423, 'wrong'→401 (con intentos restantes),
-//     'expired'→410, 'ok'→ set signed_by_partner y, si aplica, auto-activación
-//     (classifyTransition + UPDATE status + INSERT evento, MISMA transacción — patrón de
-//     PA4-W1 en app/api/admin/partners/contracts/[id]/transition/route.ts).
+//     'expired'→410, 'ok'→ set signed_by_partner (transacción propia: UPDATE + DELETE
+//     otp + INSERT evento 'signed') y, si aplica, auto-activación DELEGADA a
+//     `applyTransitionWithSync` (lib/partners/license-sync.ts, PA4-W3b) — transacción
+//     SEPARADA de la captura de firma: si el sync de licencia falla, la activación (y
+//     SOLO la activación) se revierte [INV-7.1]; la firma ya capturada permanece válida
+//     y el contrato queda 'pending_signature' con signed_by_partner set, listo para
+//     reintentar la activación. Mismo patrón en app/api/admin/partners/contracts/[id]/
+//     sign/route.ts (espejo, signed_by_teseo) y app/api/admin/partners/contracts/[id]/
+//     transition/route.ts (PA4-W1).
 //
 // Antes de cualquiera de los dos modos: si terms_sha256 del contrato es NULL → 422 (no
 // se puede firmar sin términos).
@@ -34,6 +40,13 @@ import {
   canActivate,
   type ContractSignatureState,
 } from "@/lib/partners/contract-state-machine";
+import {
+  applyTransitionWithSync,
+  createPoolClientTx,
+  syncLicenseToCompiler,
+  LicenseSyncError,
+  type ContractForLicenseProjection,
+} from "@/lib/partners/license-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -178,6 +191,9 @@ async function verifyChallenge(
   // outcome.result === 'ok'
   const client = await pool.connect();
   try {
+    // Transacción 1: captura de la firma. Independiente de la auto-activación de abajo
+    // — si el sync de licencia de la activación falla, la firma YA capturada aquí no se
+    // pierde (queda pending_signature + signed_by_partner set, reintentable).
     await client.query("BEGIN");
 
     const signature = { user_id: signerUid, at: new Date().toISOString() };
@@ -198,6 +214,8 @@ async function verifyChallenge(
       [contractId, signerUid, JSON.stringify({ signer_role: SIGNER_ROLE })]
     );
 
+    await client.query("COMMIT");
+
     const signatures: ContractSignatureState = {
       signed_by_partner: finalContract.signed_by_partner,
       signed_by_teseo: finalContract.signed_by_teseo,
@@ -207,23 +225,50 @@ async function verifyChallenge(
     if (finalContract.status === "pending_signature" && canActivate(signatures)) {
       const classification = classifyTransition("pending_signature", "active", "system", signatures);
       if (classification === "ok") {
-        const { rows: activated } = await client.query(
-          `UPDATE partner_contracts SET status = 'active' WHERE id = $1 AND status = 'pending_signature'
-           RETURNING ${CONTRACT_COLUMNS}`,
-          [contractId]
+        // Transacción 2 (separada): activación + sync síncrono de licencia [INV-7.1],
+        // delegada a applyTransitionWithSync. `version` viene de
+        // partner_package_versions (no hay columna `version` en partner_contracts/
+        // partner_packages, ver nota en license-sync.ts).
+        const { rows: versionRows } = await client.query(
+          `SELECT version FROM partner_package_versions WHERE package_id = $1
+             ORDER BY version DESC LIMIT 1`,
+          [finalContract.package_id]
         );
-        if (activated.length > 0) {
-          finalContract = activated[0];
-          await client.query(
-            `INSERT INTO partner_contract_events (contract_id, event, actor, detail)
-             VALUES ($1, 'status_changed', 'system', $2)`,
-            [contractId, JSON.stringify({ from: "pending_signature", to: "active", action: "auto_activate" })]
-          );
+        const contractForSync: ContractForLicenseProjection = {
+          id: finalContract.id,
+          tenant_id: finalContract.tenant_id,
+          partner_id: finalContract.partner_id,
+          package_id: finalContract.package_id,
+          version: versionRows[0]?.version,
+          scope: finalContract.scope,
+          valid_from: new Date(finalContract.valid_from).toISOString(),
+          valid_until: new Date(finalContract.valid_until).toISOString(),
+          status: "pending_signature",
+        };
+
+        try {
+          await applyTransitionWithSync({
+            tx: createPoolClientTx(client),
+            syncFn: syncLicenseToCompiler,
+            contract: contractForSync,
+            to: "active",
+            actor: "system",
+            eventDetail: { from: "pending_signature", to: "active", action: "auto_activate" },
+          });
+          finalContract = { ...finalContract, status: "active" };
+        } catch (err) {
+          // La firma (transacción 1) YA quedó persistida — solo la auto-activación se
+          // revierte. El contrato queda pending_signature+firmado, reintentable (por el
+          // admin firmando su lado, o por una futura activación manual).
+          logger.error("api.partners.me.contracts.id.sign.auto_activate_failed", {
+            error: String(err),
+            contract_id: contractId,
+            is_license_sync_error: err instanceof LicenseSyncError,
+          });
         }
       }
     }
 
-    await client.query("COMMIT");
     return NextResponse.json(finalContract);
   } catch (txErr) {
     await client.query("ROLLBACK");

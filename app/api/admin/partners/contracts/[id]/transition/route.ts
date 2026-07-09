@@ -5,14 +5,18 @@
 // Acciones expuestas: activate|suspend|terminate (TransitionContractBodySchema). El actor
 // SIEMPRE es humano (el admin autenticado) — `active→expired` es exclusiva del actor
 // 'system' (TRD §4) y por tanto NO se expone como acción aquí; esa transición corresponde
-// a un job de sistema fuera del alcance de esta WU.
+// a un job de sistema fuera del alcance de esta WU (ver scripts/expire-contracts.ts, PA4-W3b).
 //
 // Toda la decisión (409 vs 422 vs proceder) vive en classifyTransition
-// (lib/partners/contract-state-machine.ts, lógica pura). Esta ruta solo:
+// (lib/partners/contract-state-machine.ts, lógica pura). Esta ruta:
 //   1. resuelve `to` desde la acción,
-//   2. lee el contrato actual,
+//   2. lee el contrato actual (+ `version` del paquete publicado, para la licencia),
 //   3. clasifica la transición,
-//   4. si 'ok': UPDATE + INSERT en partner_contract_events en LA MISMA transacción [INV-4.4].
+//   4. si 'ok': delega el UPDATE + INSERT en partner_contract_events + sync síncrono de
+//      licencia [INV-4.4]/[INV-7.1] al orquestador `applyTransitionWithSync`
+//      (lib/partners/license-sync.ts, PA4-W3b). Un fallo de sync (LicenseSyncError) NO
+//      persiste la transición → 502. Una carrera concurrente (ConcurrentTransitionError)
+//      → 409, mismo comportamiento que la implementación manual previa.
 
 import { NextRequest, NextResponse } from "next/server";
 import { requirePlatformAdmin } from "@/lib/auth/guards";
@@ -24,6 +28,14 @@ import {
   type ContractStatus,
   type ContractSignatureState,
 } from "@/lib/partners/contract-state-machine";
+import {
+  applyTransitionWithSync,
+  createPoolClientTx,
+  syncLicenseToCompiler,
+  LicenseSyncError,
+  ConcurrentTransitionError,
+  type ContractForLicenseProjection,
+} from "@/lib/partners/license-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -62,8 +74,16 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
     const client = await pool.connect();
     try {
+      // `version` viene de partner_package_versions (la última publicada del package_id
+      // del contrato) — NO existe columna `version` en partner_contracts/partner_packages
+      // (migrations-gcp/006_partners.sql, 007_partner_contracts.sql). Se resuelve aquí,
+      // ANTES de la transacción, para que applyTransitionWithSync reciba un contrato ya
+      // completo y su flujo interno se limite a UPDATE+INSERT (sin tocar más tablas).
       const { rows } = await client.query(
-        `SELECT status, signed_by_partner, signed_by_teseo, terms_sha256
+        `SELECT ${CONTRACT_COLUMNS},
+                (SELECT ppv.version FROM partner_package_versions ppv
+                   WHERE ppv.package_id = partner_contracts.package_id
+                   ORDER BY ppv.version DESC LIMIT 1) AS version
            FROM partner_contracts WHERE id = $1`,
         [id]
       );
@@ -71,11 +91,12 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
         return NextResponse.json({ error: "Contrato no encontrado" }, { status: 404 });
       }
 
-      const from = rows[0].status as ContractStatus;
+      const row = rows[0];
+      const from = row.status as ContractStatus;
       const signatures: ContractSignatureState = {
-        signed_by_partner: rows[0].signed_by_partner,
-        signed_by_teseo: rows[0].signed_by_teseo,
-        terms_sha256: rows[0].terms_sha256,
+        signed_by_partner: row.signed_by_partner,
+        signed_by_teseo: row.signed_by_teseo,
+        terms_sha256: row.terms_sha256,
       };
 
       const classification = classifyTransition(from, to, auth.user.id, signatures);
@@ -93,36 +114,48 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
         );
       }
 
-      await client.query("BEGIN");
-      try {
-        const updateResult = await client.query(
-          `UPDATE partner_contracts SET status = $1 WHERE id = $2 AND status = $3
-           RETURNING ${CONTRACT_COLUMNS}`,
-          [to, id, from]
-        );
+      const contract: ContractForLicenseProjection = {
+        id: row.id,
+        tenant_id: row.tenant_id,
+        partner_id: row.partner_id,
+        package_id: row.package_id,
+        version: row.version,
+        scope: row.scope,
+        valid_from: new Date(row.valid_from).toISOString(),
+        valid_until: new Date(row.valid_until).toISOString(),
+        status: from,
+      };
 
-        if (updateResult.rows.length === 0) {
-          // El estado cambió entre el SELECT y el UPDATE (carrera concurrente).
-          await client.query("ROLLBACK");
+      try {
+        await applyTransitionWithSync({
+          tx: createPoolClientTx(client),
+          syncFn: syncLicenseToCompiler,
+          contract,
+          to,
+          actor: auth.user.id,
+          eventDetail: { from, to, action },
+        });
+      } catch (err) {
+        if (err instanceof ConcurrentTransitionError) {
           return NextResponse.json(
             { error: "El contrato cambió de estado concurrentemente, reintenta" },
             { status: 409 }
           );
         }
-
-        // [INV-4.4]: evento en la MISMA transacción que el UPDATE de status.
-        await client.query(
-          `INSERT INTO partner_contract_events (contract_id, event, actor, detail)
-           VALUES ($1, 'status_changed', $2, $3)`,
-          [id, auth.user.id, JSON.stringify({ from, to, action })]
-        );
-
-        await client.query("COMMIT");
-        return NextResponse.json(updateResult.rows[0]);
-      } catch (txErr) {
-        await client.query("ROLLBACK");
-        throw txErr;
+        if (err instanceof LicenseSyncError) {
+          logger.error("api.admin.partners.contracts.id.transition.license_sync_error", {
+            error: String(err),
+            id,
+          });
+          return NextResponse.json(
+            { error: "No se pudo sincronizar la licencia con el compiler, la transición no se aplicó" },
+            { status: 502 }
+          );
+        }
+        throw err;
       }
+
+      return NextResponse.json({ ...row, status: to, version: undefined });
     } finally {
       client.release();
     }
