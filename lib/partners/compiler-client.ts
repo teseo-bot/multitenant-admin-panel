@@ -197,3 +197,26 @@ export async function validatePartnerDraftViaCompiler(input: {
 }): Promise<ValidationReport> {
   return callCompiler<ValidationReport>("/internal/partner-validate", input);
 }
+
+// KL3-W2: asistente IA del editor guiado (draft_from_source/reorganize/fix_findings).
+
+export interface PartnerAssistResult {
+  markdown: string;
+  report: ValidationReport;
+  stripped_refs: string[];
+}
+
+/** Proxy a `POST /internal/partner-assist` (KL3-W2, context-kdb-compiler). El panel reenvía
+ * `partner_id` DE SESIÓN (nunca el que venga del cliente) y devuelve la respuesta tal cual —
+ * no persiste nada ([INV-KL3]). */
+export async function runPartnerAssistViaCompiler(input: {
+  mode: "draft_from_source" | "reorganize" | "fix_findings";
+  partner_id: string;
+  markdown?: string;
+  source_gcs_objects?: string[];
+  findings?: ValidationFinding[];
+  concept_type?: string;
+  system?: string;
+}): Promise<PartnerAssistResult> {
+  return callCompiler<PartnerAssistResult>("/internal/partner-assist", input);
+}
