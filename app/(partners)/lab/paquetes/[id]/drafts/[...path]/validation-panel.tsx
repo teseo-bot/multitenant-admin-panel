@@ -13,10 +13,14 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, AlertTriangle, Loader } from "lucide-react";
+import { toast } from "sonner";
 import { applyQuickFixLocal } from "@/lib/partners/quickfix";
+import { decidAssistMode } from "@/lib/partners/assist-mode";
+import { AssistReviewModal } from "./assist-review-modal";
 import type {
   ValidationReport,
   ValidationFinding,
+  PartnerAssistResult,
 } from "@/lib/partners/compiler-client";
 
 interface ValidationPanelProps {
@@ -37,6 +41,9 @@ export function ValidationPanel({
   const [report, setReport] = useState<ValidationReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assistLoading, setAssistLoading] = useState(false);
+  const [assistResult, setAssistResult] = useState<PartnerAssistResult | null>(null);
+  const [assistReviewOpen, setAssistReviewOpen] = useState(false);
 
   // Validar al abrir y al guardar
   useEffect(() => {
@@ -78,6 +85,56 @@ export function ValidationPanel({
       // Re-validar después de aplicar el fix
       setTimeout(() => validateNow(), 100);
     }
+  }
+
+  async function handleReorganizeWithAI() {
+    if (!report) return;
+
+    setAssistLoading(true);
+    try {
+      // Decidir mode según el estado de validación
+      const mode = decidAssistMode(report);
+
+      // Preparar findings si modo fix_findings
+      const findings = mode === "fix_findings" ? report.findings : undefined;
+
+      const res = await fetch("/api/partners/me/assist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode,
+          markdown,
+          findings,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const errorMsg = body?.error || `Error ${res.status}`;
+        toast.error(`El asistente no está disponible — ${errorMsg}`);
+        return;
+      }
+
+      const result = (await res.json()) as PartnerAssistResult;
+      setAssistResult(result);
+      setAssistReviewOpen(true);
+    } catch (err) {
+      toast.error("El asistente no está disponible — el editor sigue funcionando");
+    } finally {
+      setAssistLoading(false);
+    }
+  }
+
+  function handleAcceptAssistProposal(proposedMarkdown: string) {
+    onMarkdownChange(proposedMarkdown);
+    toast.success("Propuesta aceptada. Validando…");
+    // Re-validar después de aceptar
+    setTimeout(() => validateNow(), 100);
+  }
+
+  function handleDiscardAssistProposal() {
+    setAssistResult(null);
+    toast.info("Propuesta descartada");
   }
 
   if (error && !report) {
@@ -130,17 +187,7 @@ export function ValidationPanel({
   return (
     <div className="flex flex-col gap-4 border-l border-dashed p-4 overflow-y-auto">
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold text-muted-foreground">Validación</p>
-          <Button
-            variant="outline"
-            size="xs"
-            onClick={validateNow}
-            disabled={loading}
-          >
-            {loading ? "…" : "Validar ahora"}
-          </Button>
-        </div>
+        <p className="text-xs font-semibold text-muted-foreground">Validación</p>
 
         {/* Resumen por nivel */}
         <div className="space-y-1">
@@ -166,6 +213,28 @@ export function ValidationPanel({
               </div>
             );
           })}
+        </div>
+
+        {/* Botones de acción */}
+        <div className="flex gap-2 pt-2 border-t">
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={validateNow}
+            disabled={loading || assistLoading}
+            className="flex-1"
+          >
+            {loading ? "…" : "Validar ahora"}
+          </Button>
+          <Button
+            variant="default"
+            size="xs"
+            onClick={handleReorganizeWithAI}
+            disabled={assistLoading || !report}
+            className="flex-1"
+          >
+            {assistLoading ? "…" : "Reorganizar IA"}
+          </Button>
         </div>
       </div>
 
@@ -222,6 +291,17 @@ export function ValidationPanel({
           <p className="text-xs font-medium">Sin issues</p>
         </div>
       )}
+
+      {/* Modal de revisión del asistente */}
+      <AssistReviewModal
+        open={assistReviewOpen}
+        onOpenChange={setAssistReviewOpen}
+        originalMarkdown={markdown}
+        assistResult={assistResult}
+        loading={assistLoading}
+        onAccept={handleAcceptAssistProposal}
+        onDiscard={handleDiscardAssistProposal}
+      />
     </div>
   );
 }
