@@ -145,11 +145,11 @@ describe("insertCitation", () => {
     // Debe aparecer una sola vez en sources[] (quirúrgicamente)
     assert.strictEqual(docRefCount, 1, "source_ref debe aparecer una vez en el frontmatter");
 
-    // Pero SÍ añade una línea numerada nueva en # Citations
-    const citationCount = (withSecondCite.match(/\[1\]/g) ?? []).length;
-    assert.strictEqual(citationCount, 1, "debe haber [1]");
+    // Y el markdown queda INTACTO: doble clic en "Citar" no duplica la línea de cita
+    // (corrección de evaluación 2026-07-08 — spec KL3-W3).
+    assert.strictEqual(withSecondCite, withFirstCite, "ref duplicado => markdown intacto");
     const citationCount2 = (withSecondCite.match(/\[2\]/g) ?? []).length;
-    assert.strictEqual(citationCount2, 1, "debe haber [2]");
+    assert.strictEqual(citationCount2, 0, "no debe haber [2]");
   });
 
   it("crea la sección # Citations si no existe", () => {

@@ -289,13 +289,20 @@ export function readFrontmatterHints(markdown: string): {
  *     Crea la sección al final si no existe.
  *
  * Si el markdown no tiene frontmatter reconocible, devuelve intacto (no inventa).
- * Si `source_ref` ya existe en `sources:`, no duplica la entrada pero SÍ añade la línea de cita
- * (permitir múltiples referencias a la misma fuente en el body).
+ * Si `source_ref` ya existe en `sources:`, devuelve el markdown INTACTO (spec KL3-W3:
+ * un doble clic en "Citar" no duplica nada).
  */
 export function insertCitation(
   markdown: string,
   opts: { source_ref: string; title: string }
 ): string {
+  // Ref ya citada → markdown intacto (corrección de evaluación 2026-07-08: un doble clic
+  // en "Citar" no debe duplicar la línea en # Citations; el spec KL3-W3 pide intacto).
+  const fmMatch = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (fmMatch && fmMatch[1].includes(`"${opts.source_ref}"`)) {
+    return markdown;
+  }
+
   // --- Paso 1: Añadir source_ref al array sources: del frontmatter ---
   let withSourceRef = withinFrontmatterBlock(markdown, (block) => {
     const lines = block.split(/\r?\n/);
