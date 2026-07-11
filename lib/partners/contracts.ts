@@ -58,8 +58,25 @@ export type CreateContractBody = z.infer<typeof CreateContractBodySchema>;
 export const ContractTransitionActionSchema = z.enum(["activate", "suspend", "terminate"]);
 export type ContractTransitionAction = z.infer<typeof ContractTransitionActionSchema>;
 
-/** Input de POST /api/admin/partners/contracts/{id}/transition. */
-export const TransitionContractBodySchema = z.object({
-  action: ContractTransitionActionSchema,
-});
+/** Input de POST /api/admin/partners/contracts/{id}/transition.
+ *
+ * PA7-W2: `override_eval`/`override_reason` — override manual de Knowledge Ops del gate de
+ * eval de paquete (lib/partners/eval-gate.ts). Ambos opcionales (no rompe payloads
+ * existentes de suspend/terminate/activate sin override); si `override_eval` es true,
+ * `override_reason` es obligatorio y de al menos 10 caracteres (auditoría legible). */
+export const TransitionContractBodySchema = z
+  .object({
+    action: ContractTransitionActionSchema,
+    override_eval: z.boolean().optional(),
+    override_reason: z.string().min(10).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.override_eval && !data.override_reason) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "override_reason es requerido (>= 10 caracteres) cuando override_eval=true",
+        path: ["override_reason"],
+      });
+    }
+  });
 export type TransitionContractBody = z.infer<typeof TransitionContractBodySchema>;

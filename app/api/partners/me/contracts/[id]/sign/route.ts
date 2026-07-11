@@ -47,6 +47,8 @@ import {
   LicenseSyncError,
   type ContractForLicenseProjection,
 } from "@/lib/partners/license-sync";
+import { decideActivationGate } from "@/lib/partners/eval-gate";
+import { getPackageEvalStatus, CompilerCallError } from "@/lib/partners/compiler-client";
 
 export const dynamic = "force-dynamic";
 
@@ -225,6 +227,62 @@ async function verifyChallenge(
     if (finalContract.status === "pending_signature" && canActivate(signatures)) {
       const classification = classifyTransition("pending_signature", "active", "system", signatures);
       if (classification === "ok") {
+        // PA7-W2: gate de eval de paquete ANTES de auto-activar [espíritu PA4-W3b: el gate
+        // NUNCA rompe la firma — la firma (transacción 1) ya quedó persistida arriba]. Si es
+        // la PRIMERA activación del paquete (ningún otro contrato del mismo package_id con
+        // status NOT IN ('draft','pending_signature')) y la eval no pasa (o el compiler no
+        // responde — fail-closed), la auto-activación se bloquea: el contrato QUEDA en
+        // pending_signature, se inserta un evento 'activation_blocked_eval' (después de la
+        // transacción de firma, mismo INSERT que los demás eventos de esta ruta) y se
+        // responde {signed:true, activation:'blocked_eval_gate', eval_status}. La activación
+        // luego se hace por la ruta transition (con override de Knowledge Ops si aplica —
+        // aquí NO hay override: la firma no es el lugar para decidirlo).
+        const { rows: otherActivationRows } = await client.query(
+          `SELECT 1 FROM partner_contracts
+             WHERE package_id = $1 AND id != $2 AND status NOT IN ('draft','pending_signature')
+             LIMIT 1`,
+          [finalContract.package_id, contractId]
+        );
+        const isFirstActivation = otherActivationRows.length === 0;
+
+        if (isFirstActivation) {
+          let evalStatus: { passed: boolean } | "unavailable";
+          try {
+            const status = await getPackageEvalStatus(finalContract.package_id, finalContract.partner_id);
+            evalStatus = { passed: status.passed };
+          } catch (err) {
+            // CompilerCallError (y cualquier fallo inesperado del cliente M2M): fail-closed
+            // SIN romper la firma — se trata como veredicto no disponible.
+            logger.error("api.partners.me.contracts.id.sign.eval_status_unavailable", {
+              error: String(err),
+              contract_id: contractId,
+              is_compiler_call_error: err instanceof CompilerCallError,
+            });
+            evalStatus = "unavailable";
+          }
+
+          const gate = decideActivationGate({
+            isFirstActivation: true,
+            from: "pending_signature",
+            action: "activate",
+            evalStatus,
+            override: null,
+          });
+
+          if (!gate.allow) {
+            await client.query(
+              `INSERT INTO partner_contract_events (contract_id, event, actor, detail)
+               VALUES ($1, 'activation_blocked_eval', $2, $3)`,
+              [contractId, "system", JSON.stringify({ eval_status: evalStatus, reason: gate.blockReason })]
+            );
+            return NextResponse.json({
+              signed: true,
+              activation: "blocked_eval_gate",
+              eval_status: evalStatus,
+            });
+          }
+        }
+
         // Transacción 2 (separada): activación + sync síncrono de licencia [INV-7.1],
         // delegada a applyTransitionWithSync. `version` viene de
         // partner_package_versions (no hay columna `version` en partner_contracts/

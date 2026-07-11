@@ -237,6 +237,59 @@ export async function runPartnerAssistViaCompiler(input: {
   return callCompiler<PartnerAssistResult>("/internal/partner-assist", input);
 }
 
+// PA7-W2: variante GET de callCompiler (mismo auth/manejo de errores) — la ruta de estado de
+// eval de paquete es un GET con query params (idempotente, sin body), a diferencia de todos los
+// proxies anteriores que son POST.
+async function callCompilerGet<T>(path: string, query: Record<string, string>): Promise<T> {
+  const apiKey = process.env.M2M_API_KEY;
+  if (!apiKey) {
+    throw new Error("M2M_API_KEY no está configurado en el panel.");
+  }
+
+  const qs = new URLSearchParams(query).toString();
+  const res = await fetch(`${KDB_COMPILER_URL}${path}?${qs}`, {
+    method: "GET",
+    headers: {
+      "x-api-key": apiKey,
+    },
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    logger.error("lib.partners.compiler_client.error", { path, status: res.status, data });
+    throw new CompilerCallError(
+      (data as { error?: string })?.error || `Error ${res.status} al llamar a ${path}`,
+      res.status,
+      data
+    );
+  }
+
+  return data as T;
+}
+
+// PA7-W2: gate de eval de paquete — el panel la consulta antes de activar el PRIMER contrato
+// de un paquete de aliado (nunca toca el Cold-Tier directo). Espejo del lado compiler:
+// context-kdb-compiler/src/partners/partner-eval-status.ts + src/server.ts
+// (GET /internal/partner-package-eval-status).
+
+export interface PartnerPackageEvalStatus {
+  question_count: number;
+  latest: { score: number; run_at: string; id: string } | null;
+  passed: boolean;
+}
+
+/** Proxy a `GET /internal/partner-package-eval-status` (PA7-W2, context-kdb-compiler). */
+export async function getPackageEvalStatus(
+  packageId: string,
+  partnerId: string
+): Promise<PartnerPackageEvalStatus> {
+  return callCompilerGet<PartnerPackageEvalStatus>("/internal/partner-package-eval-status", {
+    package_id: packageId,
+    partner_id: partnerId,
+  });
+}
+
 // PA4-W3b: sync síncrono de licencias (panel → compiler). El panel proyecta un contrato
 // de aliado a una fila de `kdb_partner_licenses` (lib/partners/license-sync.ts::
 // projectContractToAction) y llama aquí para reflejarla. Espejo del lado compiler:

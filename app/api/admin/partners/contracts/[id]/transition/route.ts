@@ -17,6 +17,16 @@
 //      (lib/partners/license-sync.ts, PA4-W3b). Un fallo de sync (LicenseSyncError) NO
 //      persiste la transición → 502. Una carrera concurrente (ConcurrentTransitionError)
 //      → 409, mismo comportamiento que la implementación manual previa.
+//
+// PA7-W2: gate de eval de paquete ANTES de la PRIMERA activación de un contrato del
+// paquete (lib/partners/eval-gate.ts::decideActivationGate, lógica pura). Esta ruta SOLO
+// orquesta I/O: resuelve `isFirstActivation` (query SQL) y `evalStatus` (llamada M2M al
+// compiler vía lib/partners/compiler-client.ts::getPackageEvalStatus — el panel NUNCA
+// consulta el Cold-Tier directo). Bloqueo → 409 (`eval_gate_failed`) o 503
+// (`eval_status_unavailable`, fail-closed si el compiler no responde), salvo override
+// manual de Knowledge Ops (`override_eval`+`override_reason` en el body), que se audita en
+// `eventDetail` de partner_contract_events. La re-activación suspended→active NO pasa por
+// el gate (decideActivationGate lo resuelve sin siquiera consultar eval).
 
 import { NextRequest, NextResponse } from "next/server";
 import { requirePlatformAdmin } from "@/lib/auth/guards";
@@ -36,6 +46,8 @@ import {
   ConcurrentTransitionError,
   type ContractForLicenseProjection,
 } from "@/lib/partners/license-sync";
+import { decideActivationGate } from "@/lib/partners/eval-gate";
+import { getPackageEvalStatus, CompilerCallError } from "@/lib/partners/compiler-client";
 
 export const dynamic = "force-dynamic";
 
@@ -122,6 +134,64 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
         );
       }
 
+      // PA7-W2: gate de eval de paquete, SOLO para action='activate' con from='pending_signature'
+      // (la re-activación suspended→active NO pasa por el gate, ver decideActivationGate).
+      // Se determina "primera activación del paquete" (¿existe OTRO contrato del mismo
+      // package_id que ya haya pasado por 'active' alguna vez, i.e. status NOT IN
+      // ('draft','pending_signature')?) y, si aplica, se consulta el estado de eval al
+      // compiler (NUNCA se toca el Cold-Tier directo — lib/partners/compiler-client.ts).
+      // Toda la decisión de bloquear/permitir vive en decideActivationGate (lógica pura).
+      let evalGateAuditDetail: Record<string, unknown> | undefined;
+
+      if (action === "activate" && from === "pending_signature") {
+        const { rows: otherActivationRows } = await client.query(
+          `SELECT 1 FROM partner_contracts
+             WHERE package_id = $1 AND id != $2 AND status NOT IN ('draft','pending_signature')
+             LIMIT 1`,
+          [row.package_id, id]
+        );
+        const isFirstActivation = otherActivationRows.length === 0;
+
+        if (isFirstActivation) {
+          let evalStatus: { passed: boolean } | "unavailable";
+          try {
+            const status = await getPackageEvalStatus(row.package_id, row.partner_id);
+            evalStatus = { passed: status.passed };
+          } catch (err) {
+            if (err instanceof CompilerCallError) {
+              evalStatus = "unavailable";
+            } else {
+              throw err;
+            }
+          }
+
+          const override =
+            parsed.data.override_eval && parsed.data.override_reason
+              ? { reason: parsed.data.override_reason }
+              : null;
+
+          const gate = decideActivationGate({
+            isFirstActivation: true,
+            from,
+            action,
+            evalStatus,
+            override,
+          });
+
+          if (!gate.allow) {
+            const httpStatus = gate.blockReason === "eval_status_unavailable" ? 503 : 409;
+            return NextResponse.json(
+              { error: gate.blockReason, eval_status: evalStatus },
+              { status: httpStatus }
+            );
+          }
+
+          if (gate.auditDetail) {
+            evalGateAuditDetail = gate.auditDetail;
+          }
+        }
+      }
+
       const contract: ContractForLicenseProjection = {
         id: row.id,
         tenant_id: row.tenant_id,
@@ -145,7 +215,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
           contract,
           to,
           actor: auth.user.id,
-          eventDetail: { from, to, action },
+          eventDetail: { from, to, action, ...evalGateAuditDetail },
         });
       } catch (err) {
         if (err instanceof ConcurrentTransitionError) {
