@@ -15,6 +15,7 @@ export const crmMenuItems: MenuItem[] = [
       { name: "Users", href: "/admin/users" },
       { name: "Tenants", href: "/tenants" },
       { name: "Auditoría", href: "/admin/audit" },
+      { name: "Catálogo aliados", href: "/admin/catalogo-aliados" },
     ],
   },
   {
