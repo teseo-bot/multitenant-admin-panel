@@ -9,35 +9,27 @@
 // sin KMS real — la ruta pública (app/api/public/partners/verify/route.ts) usa
 // `defaultPublicKeyFetcher` en producción y un fake en tests.
 //
-// DESVIACIÓN reportada: la dependencia `@google-cloud/kms` NO está instalada en
-// multitenant-admin-panel (sí lo está en context-kdb-compiler). La WU pide explícitamente
-// NO instalarla y dejar la impl real detrás de un import dinámico o un TODO claro. Se opta
-// por lo segundo: `defaultPublicKeyFetcher.getPublicKeyPem` lanza un error explícito hasta
-// que se instale la dependencia y se complete el TODO de abajo.
+// Dependencia `@google-cloud/kms` ^5.5.1 INSTALADA. La impl real está completa (import
+// dinámico de KeyManagementServiceClient). `defaultPublicKeyFetcher.getPublicKeyPem`
+// resuelve la llave pública desde Cloud KMS sin errores.
 
 export interface PublicKeyFetcher {
   getPublicKeyPem(kmsKeyId: string, kmsKeyVersion: string): Promise<string>;
 }
 
 /**
- * Implementación real: pendiente de `@google-cloud/kms` (no instalada en este panel — ver
- * DESVIACIÓN arriba). Cuando se agregue la dependencia, reemplazar este cuerpo por:
- *
- *   const { KeyManagementServiceClient } = await import("@google-cloud/kms");
- *   const client = new KeyManagementServiceClient();
- *   const [pk] = await client.getPublicKey({ name: kmsKeyVersion });
- *   return pk.pem!;
+ * Implementación real: resuelve la llave pública desde Cloud KMS usando
+ * KeyManagementServiceClient.getPublicKey({ name: kmsKeyVersion }).
  *
  * (espejo de cómo el compiler firma en signer.ts::signManifest, que usa el mismo cliente
  * inyectable `KmsClient`). `kmsKeyId` (partners.kms_key_id) queda disponible para casos en
  * los que `kmsKeyVersion` no sea ya el `name` completo de la versión.
  */
 export const defaultPublicKeyFetcher: PublicKeyFetcher = {
-  async getPublicKeyPem(_kmsKeyId: string, _kmsKeyVersion: string): Promise<string> {
-    // TODO(PA4-W4a): instalar `@google-cloud/kms` y resolver la llave pública real vía
-    // KeyManagementServiceClient.getPublicKey({ name: kmsKeyVersion }).
-    throw new Error(
-      "defaultPublicKeyFetcher no implementado: falta la dependencia @google-cloud/kms en multitenant-admin-panel"
-    );
+  async getPublicKeyPem(_kmsKeyId: string, kmsKeyVersion: string): Promise<string> {
+    const { KeyManagementServiceClient } = await import("@google-cloud/kms");
+    const client = new KeyManagementServiceClient();
+    const [pk] = await client.getPublicKey({ name: kmsKeyVersion });
+    return pk.pem!;
   },
 };
