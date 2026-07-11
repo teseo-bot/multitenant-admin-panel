@@ -1,9 +1,9 @@
-// G0-W3: aplica las migraciones GCP-Native (001..010) contra el plano de control (CONTROL_DB_URL).
+// G0-W3: aplica las migraciones GCP-Native (001..011) contra el plano de control (CONTROL_DB_URL).
 //
 // USO:
 //   CONTROL_DB_URL=postgres://... node_modules/.bin/tsx scripts/apply-gcp-migrations.ts
 //
-// Aplica en orden estricto 001 -> 002 -> ... -> 010. Cada archivo se ejecuta en su propia
+// Aplica en orden estricto 001 -> 002 -> ... -> 011. Cada archivo se ejecuta en su propia
 // transacción. Las migraciones son idempotentes por diseño (CREATE TABLE IF NOT EXISTS /
 // ON CONFLICT DO NOTHING) o manejan duplicados en capas de error.
 //
@@ -11,7 +11,8 @@
 // (micontexto-control:us-central1:control-plane, vía Cloud SQL Auth Proxy). Re-ejecutable
 // por idempotencia. La 008 restauró las columnas de expansión de tenant_users. La 009 añade
 // partner_sources y onboarded_at para Knowledge Lab. La 010 (PA4-W2) añade
-// partner_contract_otp para la firma simple por OTP de contratos de aliado.
+// partner_contract_otp para la firma simple por OTP de contratos de aliado. La 011 (PA7-W3) añade
+// partner_citation_stats para el metering de citas de conocimiento certificado [INV-5.4].
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -30,6 +31,7 @@ const MIGRATION_FILES = [
   '008_tenant_users_expansion.sql',
   '009_partner_sources.sql',
   '010_partner_contract_otp.sql',
+  '011_partner_citation_stats.sql',
 ] as const;
 
 // Códigos de error Postgres que indican "esto ya existía" (re-run seguro).
@@ -115,6 +117,12 @@ async function checkAlreadyApplied(client: Client, file: string): Promise<string
         `SELECT to_regclass('public.partner_contract_otp') IS NOT NULL AS exists`
       );
       return r.rows[0]?.exists ? 'tabla public.partner_contract_otp ya existe' : null;
+    }
+    if (file === '011_partner_citation_stats.sql') {
+      const r = await client.query(
+        `SELECT to_regclass('public.partner_citation_stats') IS NOT NULL AS exists`
+      );
+      return r.rows[0]?.exists ? 'tabla public.partner_citation_stats ya existe' : null;
     }
   } catch {
     // Si el pre-chequeo falla (ej. tabla aún no existe), no es "ya aplicada".
