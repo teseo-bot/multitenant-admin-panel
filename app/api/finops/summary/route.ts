@@ -19,7 +19,7 @@ export async function GET() {
     const data = await fetchFinancialSummary();
     return NextResponse.json(data);
   } catch (error) {
-    logger.error("[finops/summary] error:", error);
+    logger.error("[finops/summary] error:", { error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json({ error: "Error al obtener el resumen FinOps" }, { status: 500 });
   }
 }
