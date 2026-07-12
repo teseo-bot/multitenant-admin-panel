@@ -33,6 +33,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # No hardcodear aquí. El proyecto de destino (cárgalo.mx) requerirá sus propios valores.
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_FIREBASE_CONFIG
+ENV NEXT_PUBLIC_FIREBASE_CONFIG=${NEXT_PUBLIC_FIREBASE_CONFIG}
+
+# El type-check de Next agota el heap por defecto (~2GB) en este monorepo → OOM.
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 RUN npm run build
 

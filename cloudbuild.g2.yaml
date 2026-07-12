@@ -1,0 +1,19 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_CONFIG=${_FIREBASE_CONFIG}'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/micontexto-control/panel-repo/multitenant-admin-panel:g2-cutover'
+      - '.'
+
+images:
+  - 'us-central1-docker.pkg.dev/micontexto-control/panel-repo/multitenant-admin-panel:g2-cutover'
+
+substitutions:
+  _FIREBASE_CONFIG: ''
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
