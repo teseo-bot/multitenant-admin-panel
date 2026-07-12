@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { getAuth } from "@/lib/gcp-auth/client";
+import { resolveAuthenticatedRedirect, sanitizeRedirectTo } from "@/lib/host-routing";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -62,7 +63,9 @@ function LoginForm() {
       }
 
       toast.success("Sesión iniciada correctamente");
-      router.push("/admin/users");
+      const host = typeof window !== "undefined" ? window.location.host : null;
+      const redirectTo = sanitizeRedirectTo(searchParams.get("redirectTo"), host);
+      router.push(redirectTo ?? resolveAuthenticatedRedirect(host));
     } catch (err: any) {
       const code = err.code || "";
       let errorMsg = "Error al iniciar sesión";
