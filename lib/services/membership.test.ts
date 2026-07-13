@@ -13,7 +13,20 @@ import {
 } from "@/lib/services/membership";
 
 const isLocal = /127\.0\.0\.1|localhost/.test(process.env.DATABASE_URL || "");
-const d = isLocal ? describe : describe.skip;
+
+// El guard documentado arriba era "la URL es local"; pero una URL local con la BD
+// apagada tiraba la suite entera con ECONNREFUSED en el beforeAll. Se sondea una
+// vez: sin BD viva la suite se salta (skip), con BD corre completa.
+let dbUp = false;
+if (isLocal) {
+  try {
+    await pool.query("SELECT 1");
+    dbUp = true;
+  } catch {
+    await pool.end().catch(() => {});
+  }
+}
+const d = isLocal && dbUp ? describe : describe.skip;
 
 async function newTenant(name: string): Promise<string> {
   const { rows } = await pool.query(
