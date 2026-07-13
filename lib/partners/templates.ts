@@ -304,7 +304,7 @@ export function insertCitation(
   }
 
   // --- Paso 1: Añadir source_ref al array sources: del frontmatter ---
-  let withSourceRef = withinFrontmatterBlock(markdown, (block) => {
+  const withSourceRef = withinFrontmatterBlock(markdown, (block) => {
     const lines = block.split(/\r?\n/);
 
     // Buscar la línea `sources: [...]`
@@ -320,7 +320,7 @@ export function insertCitation(
     const arrMatch = lines[idx].match(/^sources:\s*\[([^\]]*)\]\s*$/);
     if (!arrMatch) return block; // Línea malformada — no tocar
 
-    let items = arrMatch[1]
+    const items = arrMatch[1]
       .split(",")
       .map((s) => s.trim())
       .filter((s) => s.length > 0);

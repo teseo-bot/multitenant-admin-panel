@@ -1,11 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  // El lint no debe gatear el deploy (cutover G2). ESLint corre aparte en CI.
-  // Deuda anotada: react-hooks/rules-of-hooks en app/(partners)/lab/paquetes/[id]/drafts/[...path]/page.tsx
-  // (useMemo condicional) — bug real a corregir en WU separada.
+  // Lint reactivado como gate del build: la deuda de rules-of-hooks (useMemo condicional en
+  // assist-review-modal.tsx) y los prefer-const quedaron resueltos. Solo restan warnings.
   eslint: {
-    ignoreDuringBuilds: true
+    ignoreDuringBuilds: false
   },
   experimental: {
     serverComponentsExternalPackages: ["playwright-core"]

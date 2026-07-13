@@ -10,7 +10,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  let user = await getCurrentUser();
+  const user = await getCurrentUser();
   let role = "MEMBER";
 
   if (user) {

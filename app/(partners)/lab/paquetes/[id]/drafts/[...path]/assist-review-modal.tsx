@@ -40,17 +40,23 @@ export function AssistReviewModal({
   onAccept,
   onDiscard,
 }: AssistReviewModalProps) {
-  if (!assistResult) return null;
+  // Los hooks van SIEMPRE arriba de cualquier return temprano (rules-of-hooks):
+  // se llaman incondicionalmente y en el mismo orden en cada render. El caso
+  // `assistResult === null` se maneja dentro del memo y con el return de abajo.
 
   // Computar diff entre original y propuesta
   const diffLines_ = useMemo(() => {
+    if (!assistResult) return [];
     return diffLines(originalMarkdown, assistResult.markdown);
-  }, [originalMarkdown, assistResult.markdown]);
+  }, [originalMarkdown, assistResult]);
 
   // Contar errores en el report de la propuesta
   const errorCount = useMemo(() => {
+    if (!assistResult) return 0;
     return assistResult.report.findings.filter((f) => f.severity === "error").length;
-  }, [assistResult.report.findings]);
+  }, [assistResult]);
+
+  if (!assistResult) return null;
 
   const handleAccept = () => {
     onAccept(assistResult.markdown);
