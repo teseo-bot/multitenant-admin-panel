@@ -29,10 +29,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Credenciales inyectadas vía build-args desde GHA (Secret Manager)
-# No hardcodear aquí. El proyecto de destino (cárgalo.mx) requerirá sus propios valores.
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+# Config de Identity Platform (Firebase) inyectada como build-arg desde el CD (Secret Manager).
+# Es NEXT_PUBLIC_* → debe estar presente durante el build para hornearse en el bundle cliente.
+# (ADR-206: se retiró Supabase; el auth del panel es Identity Platform de micontexto-control.)
 ARG NEXT_PUBLIC_FIREBASE_CONFIG
 ENV NEXT_PUBLIC_FIREBASE_CONFIG=${NEXT_PUBLIC_FIREBASE_CONFIG}
 
