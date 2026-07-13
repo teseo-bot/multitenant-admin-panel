@@ -1,4 +1,16 @@
-name: Deploy Mission Control → Production
+name: Deploy Mission Control → Production (micontexto-control)
+
+# ADR-206 (GCP-Native): despliega el panel de control a Cloud Run en el proyecto
+# `micontexto-control`. Reemplaza al workflow previo que apuntaba al proyecto muerto
+# `teseocontextkdb` con secretos de Supabase. Auth del panel = Identity Platform.
+#
+# ⚠️ REQUISITOS DE INFRA (provisionar UNA vez con la cuenta con acceso, ver
+# docs/gcp-migracion/CI-CD-SETUP.md). Hasta entonces el paso `auth` falla:
+#   - Workload Identity pool+provider en micontexto-control ligado a este repo.
+#   - SA `github-deployer@micontexto-control.iam.gserviceaccount.com` con roles
+#     run.admin + artifactregistry.writer + iam.serviceAccountUser sobre panel-runtime.
+#   - Variable de repo `NEXT_PUBLIC_FIREBASE_CONFIG` (config web de Identity Platform;
+#     no es secreta — Google la publica en el cliente).
 
 on:
   push:
@@ -7,11 +19,14 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_ID: teseocontextkdb
+  PROJECT_ID: micontexto-control
+  PROJECT_NUMBER: '1025015138700'
   REGION: us-central1
   SERVICE_NAME: multitenant-admin-panel
   GAR_LOCATION: us-central1-docker.pkg.dev
-  REPOSITORY: teseo-context-repo
+  REPOSITORY: panel-repo
+  RUNTIME_SA: panel-runtime@micontexto-control.iam.gserviceaccount.com
+  CLOUDSQL_INSTANCES: micontexto-control:us-central1:control-plane,micontexto-coldtier:us-central1:context-kdb-db
 
 permissions:
   contents: read
@@ -30,19 +45,8 @@ jobs:
         id: auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: 'projects/137810875111/locations/global/workloadIdentityPools/github-actions/providers/github-actions-provider'
-          service_account: 'github-deployer@teseocontextkdb.iam.gserviceaccount.com'
-
-      - name: Fetch Secrets from GCP for NextJS Build
-        id: fetch-secrets
-        uses: google-github-actions/get-secretmanager-secrets@v2
-        with:
-          secrets: |-
-            SUPABASE_URL:teseocontextkdb/SUPABASE_URL/latest
-            SUPABASE_ANON_KEY:teseocontextkdb/SUPABASE_ANON_KEY/latest
-            SUPABASE_SERVICE_ROLE_KEY:teseocontextkdb/SUPABASE_SERVICE_ROLE_KEY/latest
-            DATABASE_URL:teseocontextkdb/DATABASE_URL/latest
-            M2M_API_KEY:teseocontextkdb/M2M_API_KEY/latest
+          workload_identity_provider: 'projects/1025015138700/locations/global/workloadIdentityPools/github-actions/providers/github-provider'
+          service_account: 'github-deployer@micontexto-control.iam.gserviceaccount.com'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -56,9 +60,11 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
+          # Firebase (Identity Platform) es NEXT_PUBLIC_* → se hornea en el build del cliente.
           build-args: |
-            NEXT_PUBLIC_SUPABASE_URL=${{ steps.fetch-secrets.outputs.SUPABASE_URL }}
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ steps.fetch-secrets.outputs.SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_FIREBASE_CONFIG=${{ vars.NEXT_PUBLIC_FIREBASE_CONFIG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: |
             ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
             ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:latest
@@ -70,17 +76,19 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
           image: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          flags: '--cpu-boost --set-cloudsql-instances=teseocontextkdb:us-central1:context-kdb-db'
+          flags: '--service-account=${{ env.RUNTIME_SA }} --add-cloudsql-instances=${{ env.CLOUDSQL_INSTANCES }}'
           env_vars: |
-            COMPILER_INTERNAL_URL=https://context-kdb-orchestrator-psnwfqyhla-uc.a.run.app
             NODE_ENV=production
+            APP_URL=https://control.micontexto.com
+            KDB_COMPILER_URL=https://context-kdb-compiler-137810875111.us-central1.run.app
+            COMPILER_INTERNAL_URL=https://context-kdb-orchestrator-137810875111.us-central1.run.app
+            MAILER_DRY_RUN=true
           secrets: |
-            NEXT_PUBLIC_SUPABASE_URL=SUPABASE_URL:latest
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest
-            SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest
-            DATABASE_URL=DATABASE_URL:latest
+            DATABASE_URL=CONTROL_DATABASE_URL:latest
+            COLD_TIER_URL=COLD_TIER_URL_ORCH:latest
             M2M_API_KEY=M2M_API_KEY:latest
-            COLD_TIER_URL=COLD_TIER_URL:latest
+          env_vars_update_strategy: merge
+          secrets_update_strategy: merge
 
       - name: Print Production URL
         run: echo "🚀 Producción desplegada en ${{ steps.deploy.outputs.url }}"
