@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -19,16 +19,16 @@ export function IntegrationsTab({ tenantId }: { tenantId: string }) {
   const [toolId, setToolId] = useState("");
   const [configJson, setConfigJson] = useState('{\n  "api_key": "",\n  "url": ""\n}');
 
-  useEffect(() => {
-    loadIntegrations();
-  }, [tenantId]);
-
-  async function loadIntegrations() {
+  const loadIntegrations = useCallback(async () => {
     setIsLoading(true);
     const data = await getTenantIntegrations(tenantId);
     setIntegrations(data);
     setIsLoading(false);
-  }
+  }, [tenantId]);
+
+  useEffect(() => {
+    loadIntegrations();
+  }, [loadIntegrations]);
 
   async function handleUpsert() {
     if (!toolId) {
@@ -38,7 +38,7 @@ export function IntegrationsTab({ tenantId }: { tenantId: string }) {
     
     try {
       JSON.parse(configJson); // pre-validate
-    } catch (e) {
+    } catch {
       toast.error("El formato JSON es inválido.");
       return;
     }

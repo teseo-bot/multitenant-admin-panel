@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { AlertTriangle, AlertCircle } from "lucide-react";
 import { diffLines } from "diff";
-import type { PartnerAssistResult, ValidationReport } from "@/lib/partners/compiler-client";
+import type { PartnerAssistResult } from "@/lib/partners/compiler-client";
 
 interface AssistReviewModalProps {
   open: boolean;

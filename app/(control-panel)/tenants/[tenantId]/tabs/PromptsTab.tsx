@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -43,11 +43,7 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
   const [moduleAssigned, setModuleAssigned] = useState("crm");
   const [enabledToolsInput, setEnabledToolsInput] = useState("");
 
-  useEffect(() => {
-    loadAgents();
-  }, [tenantId]);
-
-  async function loadAgents() {
+  const loadAgents = useCallback(async () => {
     setIsLoading(true);
     const [data, keysData] = await Promise.all([
       getTenantAgents(tenantId),
@@ -56,7 +52,11 @@ export function PromptsTab({ tenantId }: { tenantId: string }) {
     setAgents(data);
     setLlmKeys(keysData);
     setIsLoading(false);
-  }
+  }, [tenantId]);
+
+  useEffect(() => {
+    loadAgents();
+  }, [loadAgents]);
 
   async function handleSaveAgent() {
     if (!name || !systemPrompt || !objective) {

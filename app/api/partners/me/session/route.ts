@@ -2,13 +2,13 @@
 // KL4-W3: obtiene la sesión actual del aliado (member_role, partner info).
 // Usado por el cliente para determinar si el botón Publicar es visible/activo.
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { requirePartnerMember } from "@/lib/partners/session";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const guard = await requirePartnerMember();
 

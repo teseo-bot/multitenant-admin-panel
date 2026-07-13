@@ -292,7 +292,7 @@ function CreatePackageDialog({
       setDescription("");
       setSystems([]);
       onSuccess();
-    } catch (err) {
+    } catch {
       setError("Error de conexión. Intenta de nuevo.");
     } finally {
       setIsSubmitting(false);

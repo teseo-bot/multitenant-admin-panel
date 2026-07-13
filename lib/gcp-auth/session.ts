@@ -18,7 +18,7 @@ export async function verifySession(cookieValue: string): Promise<DecodedIdToken
     const auth = adminAuth();
     const decodedCookie = await auth.verifySessionCookie(cookieValue, true);
     return decodedCookie;
-  } catch (err) {
+  } catch {
     return null;
   }
 }

@@ -9,7 +9,6 @@ import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { use } from "react"
 
 export default function EditUserPage({ params }: { params: { userId: string } }) {
   const router = useRouter()

@@ -298,7 +298,7 @@ function UploadDocDialog({
       reset();
       onOpenChange(false);
       onDone();
-    } catch (err) {
+    } catch {
       toast.error("Error de conexión al subir el documento");
     } finally {
       setSaving(false);
@@ -391,7 +391,7 @@ function RegisterUrlDialog({
       reset();
       onOpenChange(false);
       onDone();
-    } catch (err) {
+    } catch {
       toast.error("Error de conexión al registrar la URL");
     } finally {
       setSaving(false);
@@ -482,7 +482,7 @@ function DistillDialog({
       setPackageId("");
       onOpenChange(false);
       onDone();
-    } catch (err) {
+    } catch {
       toast.error("Error de conexión al destilar la fuente");
     } finally {
       setSaving(false);

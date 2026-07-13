@@ -19,7 +19,6 @@ export interface InviteResult {
   reusedIdentity: boolean;
 }
 
-const ALREADY_EXISTS = /already.*regist|already.*exist|exists/i;
 
 /**
  * Invita y aprovisiona: asegura la identidad en Firebase Identity Platform y crea la membresía.

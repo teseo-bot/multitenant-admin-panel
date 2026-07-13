@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { ok: false, error: 'Invalid idToken' },
       { status: 401 }
@@ -57,7 +57,7 @@ export async function DELETE(request: NextRequest) {
     });
 
     return response;
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { ok: false, error: 'Error destroying session' },
       { status: 500 }

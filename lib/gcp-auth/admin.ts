@@ -1,4 +1,4 @@
-import { initializeApp, getApps, cert, applicationDefault } from 'firebase-admin/app';
+import { initializeApp, getApps, applicationDefault } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 
 export function adminAuth(): ReturnType<typeof getAuth> {
@@ -12,7 +12,7 @@ export function adminAuth(): ReturnType<typeof getAuth> {
     initializeApp({
       credential: applicationDefault(),
     });
-  } catch (err) {
+  } catch {
     // If applicationDefault fails, we're in local without proper credentials
     const envName = 'GOOGLE_APPLICATION_CREDENTIALS';
     throw new Error(

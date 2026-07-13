@@ -19,7 +19,6 @@ interface OnboardingWizardProps {
 
 export default function OnboardingWizard({
   partner,
-  memberRole,
 }: OnboardingWizardProps) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);

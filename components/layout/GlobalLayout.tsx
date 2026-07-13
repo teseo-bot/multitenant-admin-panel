@@ -6,7 +6,6 @@ import { AppSidebar } from "./AppSidebar";
 import { AppTopBar } from "./AppTopBar";
 import { HorizontalMenuSlot } from "./HorizontalMenuSlot";
 import { usePageTitle } from "./hooks/use-page-title";
-import { cn } from "@/lib/utils";
 
 interface GlobalLayoutProps {
   children: ReactNode;

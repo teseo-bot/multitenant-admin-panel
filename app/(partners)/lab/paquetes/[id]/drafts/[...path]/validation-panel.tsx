@@ -45,10 +45,13 @@ export function ValidationPanel({
   const [assistResult, setAssistResult] = useState<PartnerAssistResult | null>(null);
   const [assistReviewOpen, setAssistReviewOpen] = useState(false);
 
-  // Validar al abrir y al guardar
+  // Validar al abrir y al guardar (disparo por EVENTO): corre solo cuando cambia `savedAt`,
+  // no en cada tecleo. No incluimos validateNow/markdown en deps a propósito — hacerlo
+  // revalidaría en cada keystroke, contra el diseño (abrir / guardar / botón "Validar ahora").
   useEffect(() => {
     validateNow();
-  }, [savedAt]); // Reevaluar tras guardar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedAt]);
 
   async function validateNow() {
     setLoading(true);
@@ -71,7 +74,7 @@ export function ValidationPanel({
       }
 
       setReport(body as ValidationReport);
-    } catch (err) {
+    } catch {
       setError("No se pudo validar — el editor sigue funcionando");
     } finally {
       setLoading(false);
@@ -118,7 +121,7 @@ export function ValidationPanel({
       const result = (await res.json()) as PartnerAssistResult;
       setAssistResult(result);
       setAssistReviewOpen(true);
-    } catch (err) {
+    } catch {
       toast.error("El asistente no está disponible — el editor sigue funcionando");
     } finally {
       setAssistLoading(false);

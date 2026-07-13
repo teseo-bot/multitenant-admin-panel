@@ -26,7 +26,7 @@ interface StepPackageProps {
 }
 
 const StepPackage = forwardRef(function StepPackageContent(
-  { partner }: StepPackageProps,
+  _props: StepPackageProps,
   ref
 ) {
   const [title, setTitle] = useState("");

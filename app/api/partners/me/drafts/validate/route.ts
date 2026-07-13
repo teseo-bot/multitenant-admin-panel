@@ -21,7 +21,6 @@ import { logger } from "@/lib/logger";
 import {
   validatePartnerDraftViaCompiler,
   CompilerCallError,
-  type ValidationReport,
 } from "@/lib/partners/compiler-client";
 
 export const dynamic = "force-dynamic";
@@ -56,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     const partnerId = guard.partner.id;
-    const { draft_path, markdown, package_id } = parsed.data;
+    const { markdown, package_id } = parsed.data;
 
     // Verificar que el paquete `package_id` sea del partner de sesión
     const { rows } = await pool.query<{ slug: string }>(

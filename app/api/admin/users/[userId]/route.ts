@@ -15,7 +15,7 @@ export async function GET(request: Request, context: { params: Promise<{ userId:
   let authUser;
   try {
     authUser = await adminAuth().getUser(userId);
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Usuario no encontrado en Auth" }, { status: 404 });
   }
 

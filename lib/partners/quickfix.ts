@@ -13,12 +13,6 @@
 
 import type { ValidationFinding } from "@/lib/partners/compiler-client";
 
-function titleFromFilename(filePath: string): string {
-  const base = (filePath.split("/").pop() ?? filePath).replace(/\.md$/i, "");
-  const words = base.split(/[-_]+/).filter(Boolean);
-  return words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-}
-
 function withinFrontmatterBlock(
   markdown: string,
   transform: (block: string) => string

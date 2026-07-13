@@ -138,7 +138,7 @@ async function verifyChallenge(
   contractId: string,
   code: string,
   signerUid: string,
-  contract: Record<string, any>
+  _contract: Record<string, any>
 ) {
   const { rows: otpRows } = await pool.query(
     `SELECT code_hash, expires_at, attempts, locked_until

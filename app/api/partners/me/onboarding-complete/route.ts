@@ -1,14 +1,14 @@
 // app/api/partners/me/onboarding-complete/route.ts
 // KL1-W2: marca el onboarding del miembro como completado.
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { requirePartnerMember } from "@/lib/partners/session";
 import { pool } from "@/lib/db";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
     const guard = await requirePartnerMember();
 
