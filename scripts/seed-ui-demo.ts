@@ -3,6 +3,7 @@
 // LOCAL-ONLY e idempotente. Crea tenants, módulos activos, miembros con roles
 // y estados variados, grants de módulo y una invitación pendiente.
 // Los usuarios demo pueden iniciar sesión (password DEMO_PASSWORD).
+// Migrado a GCP: requiere ADC + GOOGLE_CLOUD_PROJECT=micontexto-control al ejecutar.
 //   node_modules/.bin/tsx scripts/seed-ui-demo.ts
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
@@ -10,22 +11,26 @@ dotenv.config({ path: ".env.local" });
 const DEMO_PASSWORD = "Demo1234!";
 
 (async () => {
-  const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  if (!/127\.0\.0\.1|localhost/.test(supaUrl) || !/127\.0\.0\.1|localhost/.test(process.env.DATABASE_URL || "")) {
-    console.error("ABORT: entorno no es local"); process.exit(1);
+  if (!/127\.0\.0\.1|localhost/.test(process.env.DATABASE_URL || "")) {
+    console.error("ABORT: DATABASE_URL no es local"); process.exit(1);
   }
   const { pool } = await import("@/lib/db");
-  const { getSupabaseAdmin, findUserByEmail } = await import("@/lib/supabase/admin");
-  const admin = getSupabaseAdmin();
+  const { adminAuth } = await import("@/lib/gcp-auth/admin");
+  const auth = adminAuth();
 
   async function ensureUser(email: string, fullName: string): Promise<string> {
-    const existing = await findUserByEmail(email);
-    if (existing) return existing.id;
-    const { data, error } = await admin.auth.admin.createUser({
-      email, password: DEMO_PASSWORD, email_confirm: true, user_metadata: { full_name: fullName },
-    });
-    if (error) throw error;
-    return data.user.id;
+    try {
+      const user = await auth.createUser({
+        email, password: DEMO_PASSWORD, displayName: fullName,
+      });
+      return user.uid;
+    } catch (err: any) {
+      if (err.code === 'auth/email-already-exists') {
+        const existing = await auth.getUserByEmail(email);
+        return existing.uid;
+      }
+      throw err;
+    }
   }
 
   async function ensureTenant(name: string): Promise<string> {

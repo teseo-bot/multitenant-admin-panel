@@ -1,4 +1,5 @@
-import { createClient } from '@/utils/supabase/client';
+import { pool } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export type FinOpsSummary = {
   tenant_id: string;
@@ -11,16 +12,18 @@ export type FinOpsSummary = {
 };
 
 export async function fetchFinancialSummary(): Promise<FinOpsSummary[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from('tenant_financial_summary_view')
-    .select('*')
-    .order('billing_month', { ascending: false });
+  const client = await pool.connect();
+  try {
+    const res = await client.query(
+      `SELECT * FROM tenant_financial_summary_view
+       ORDER BY billing_month DESC`
+    );
 
-  if (error) {
-    console.error('FinOps Service Error:', error);
-    throw new Error(error.message);
+    return res.rows as FinOpsSummary[];
+  } catch (err) {
+    logger.error('finops.service.error', { error: String(err) });
+    throw new Error(`FinOps Service Error: ${String(err)}`);
+  } finally {
+    client.release();
   }
-
-  return data as FinOpsSummary[];
 }

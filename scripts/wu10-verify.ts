@@ -1,4 +1,5 @@
-// WU-10 verificación (zero-trust) contra Supabase + DB LOCAL.
+// WU-10 verificación (zero-trust) contra Firebase Identity Platform + DB LOCAL.
+// Migrado a GCP: requiere ADC + GOOGLE_CLOUD_PROJECT=micontexto-control al ejecutar.
 //   node_modules/.bin/tsx scripts/wu10-verify.ts
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
@@ -15,18 +16,15 @@ async function assertThrows(name: string, fn: () => Promise<unknown>) {
 }
 
 (async () => {
-  const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  if (!/127\.0\.0\.1|localhost/.test(supaUrl) || !/127\.0\.0\.1|localhost/.test(process.env.DATABASE_URL || "")) {
-    console.error("ABORT: entorno no es local"); process.exit(1);
+  if (!/127\.0\.0\.1|localhost/.test(process.env.DATABASE_URL || "")) {
+    console.error("ABORT: DATABASE_URL no es local"); process.exit(1);
   }
   const { pool } = await import("@/lib/db");
   const { inviteAndProvision, acceptInvitation } = await import("@/lib/services/invitations");
-  const { getSupabaseAdmin, findUserByEmail } = await import("@/lib/supabase/admin");
+  const { adminAuth } = await import("@/lib/gcp-auth/admin");
   const { resolveAccess } = await import("@/lib/services/membership");
-  const admin = getSupabaseAdmin();
 
-  const inviter = (await pool.query(`SELECT id FROM auth.users ORDER BY created_at LIMIT 1`)).rows[0]?.id;
-  if (!inviter) { console.error("ABORT: no hay auth.users"); process.exit(1); }
+  const inviter = "uid_wu10_inviter"; // Uid sintético constante
 
   const stamp = Date.now();
   const email = `wu10-${stamp}@local.test`;
@@ -65,8 +63,8 @@ async function assertThrows(name: string, fn: () => Promise<unknown>) {
     // 4) Propiedad crítica: Auth ok / DB falla (tenant inexistente) => SIN membresía huérfana
     await assertThrows("inviteAndProvision falla con tenant inexistente",
       () => inviteAndProvision({ tenantId: fakeTenant, email: email2, role: "MEMBER", invitedBy: inviter }));
-    const u2 = await findUserByEmail(email2);
-    if (u2) createdUserIds.push(u2.id); // la identidad Auth sí pudo crearse (inocua)
+    // Nota: inviteAndProvision ya crea usuarios vía firebase-admin y hace rollback compensado si DB falla.
+    // Aquí NO buscamos u2 porque el flujo ya compensó la creación del usuario en Auth.
     const orphan = await pool.query(`SELECT count(*)::int n FROM public.tenant_users WHERE tenant_id=$1`, [fakeTenant]);
     assert("NO queda membresía huérfana tras fallo de DB", orphan.rows[0].n === 0, orphan.rows[0].n);
   } finally {
@@ -74,7 +72,9 @@ async function assertThrows(name: string, fn: () => Promise<unknown>) {
       await pool.query(`DELETE FROM public.user_management_audit WHERE tenant_id=$1`, [tenantId]);
       await pool.query(`DELETE FROM public.tenants WHERE id=$1`, [tenantId]);
     }
-    for (const id of createdUserIds) { try { await admin.auth.admin.deleteUser(id); } catch {} }
+    // Eliminar usuarios creados (firebase-admin: adminAuth().deleteUser(uid))
+    const auth = adminAuth();
+    for (const id of createdUserIds) { try { await auth.deleteUser(id); } catch {} }
     await pool.end();
   }
 

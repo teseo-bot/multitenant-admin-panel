@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,16 +19,16 @@ export function ApiKeysTab({ tenantId }: { tenantId: string }) {
   const [provider, setProvider] = useState("openai");
   const [apiKey, setApiKey] = useState("");
 
-  useEffect(() => {
-    fetchKeys();
-  }, [tenantId]);
-
-  const fetchKeys = async () => {
+  const fetchKeys = useCallback(async () => {
     setLoading(true);
     const data = await getLLMKeys(tenantId);
     setKeys(data);
     setLoading(false);
-  };
+  }, [tenantId]);
+
+  useEffect(() => {
+    fetchKeys();
+  }, [fetchKeys]);
 
   const handleSave = async () => {
     if (!provider || !apiKey) {

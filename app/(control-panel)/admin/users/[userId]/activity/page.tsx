@@ -5,7 +5,6 @@ import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { use } from "react"
 import {
   Table,
   TableBody,

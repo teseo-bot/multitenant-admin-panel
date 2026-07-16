@@ -2,7 +2,9 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth } from "@/lib/gcp-auth/client";
+import { resolveAuthenticatedRedirect, sanitizeRedirectTo } from "@/lib/host-routing";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -22,12 +25,13 @@ import Link from "next/link";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/admin/users";
+  const reason = searchParams.get("reason");
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClient();
+  const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError(null);
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -35,78 +39,124 @@ function LoginForm() {
     const password = formData.get("password") as string;
 
     if (!email || !password) {
-      toast.error("Por favor completa ambos campos");
+      setError("Por favor completa ambos campos");
       setIsLoading(false);
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const auth = getAuth();
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await userCredential.user.getIdToken();
 
-    if (error) {
-      toast.error(error.message || "Error al iniciar sesión");
+      // Send idToken to backend to create session cookie
+      const sessionResponse = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+
+      if (!sessionResponse.ok) {
+        setError("Error al crear la sesión");
+        setIsLoading(false);
+        return;
+      }
+
+      toast.success("Sesión iniciada correctamente");
+      const host = typeof window !== "undefined" ? window.location.host : null;
+      const redirectTo = sanitizeRedirectTo(searchParams.get("redirectTo"), host);
+      router.push(redirectTo ?? resolveAuthenticatedRedirect(host));
+    } catch (err: any) {
+      const code = err.code || "";
+      let errorMsg = "Error al iniciar sesión";
+
+      if (
+        code === "auth/invalid-credential" ||
+        code === "auth/wrong-password" ||
+        code === "auth/user-not-found"
+      ) {
+        errorMsg = "Correo o contraseña incorrectos.";
+      } else if (code === "auth/user-disabled") {
+        errorMsg = "Tu cuenta está desactivada. Contacta al administrador.";
+      } else if (code === "auth/network-request-failed") {
+        errorMsg = "No se pudo conectar. Intenta de nuevo.";
+      } else if (code === "auth/too-many-requests") {
+        errorMsg = "Demasiados intentos. Espera unos minutos.";
+      }
+
+      setError(errorMsg);
       setIsLoading(false);
-      return;
     }
-
-    toast.success("Sesión iniciada correctamente");
-    router.push(redirectTo);
   }
 
   return (
-    <Card className="w-full max-w-md shadow-lg">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold tracking-tight">Iniciar sesión</CardTitle>
-        <CardDescription>
-          Ingresa tu correo y contraseña para acceder al panel.
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={onSubmit}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Correo electrónico</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="nombre@ejemplo.com"
-              disabled={isLoading}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Contraseña</Label>
-              <Link href="/auth/reset-password" className="text-sm font-medium text-primary hover:underline">
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="••••••••"
-              disabled={isLoading}
-              required
-            />
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Iniciando sesión...
-              </>
-            ) : (
-              "Ingresar"
+    <>
+      {reason === "expired" && (
+        <div className="mb-4 w-full max-w-md">
+          <Alert className="bg-muted text-muted-foreground border-muted">
+            <AlertDescription>
+              Tu sesión expiró. Vuelve a entrar.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold tracking-tight">Iniciar sesión</CardTitle>
+          <CardDescription>
+            Ingresa tu correo y contraseña para acceder al panel.
+          </CardDescription>
+        </CardHeader>
+        <form onSubmit={onSubmit}>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+            <div className="space-y-2">
+              <Label htmlFor="email">Correo electrónico</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="nombre@ejemplo.com"
+                disabled={isLoading}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Contraseña</Label>
+                <Link href="/auth/reset-password" className="text-sm font-medium text-primary hover:underline">
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="••••••••"
+                disabled={isLoading}
+                required
+              />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Iniciando sesión...
+                </>
+              ) : (
+                "Ingresar"
+              )}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
+    </>
   );
 }
 

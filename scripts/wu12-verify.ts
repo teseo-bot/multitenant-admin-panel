@@ -1,4 +1,5 @@
 // WU-12 verificación: entitlements de módulos por tenant (servicio) contra local.
+// Migrado a GCP: utiliza uid sintético (no existe auth.users).
 //   node_modules/.bin/tsx scripts/wu12-verify.ts
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
@@ -13,7 +14,7 @@ const assert = (n: string, c: boolean, e?: unknown) =>
   const { listTenantModules, setTenantModules } = await import("@/lib/services/modules");
   const { resolveAccess } = await import("@/lib/services/membership");
 
-  const actor = (await pool.query(`SELECT id FROM auth.users ORDER BY created_at LIMIT 1`)).rows[0]?.id;
+  const actor = "uid_wu12_owner"; // Uid sintético constante
   let t = "";
   try {
     t = (await pool.query(`INSERT INTO public.tenants (name) VALUES ($1) RETURNING id`, ["wu12"])).rows[0].id;

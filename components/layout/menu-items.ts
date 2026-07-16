@@ -1,11 +1,8 @@
 import {
-  Users,
   CircleDollarSign,
-  MonitorPlay,
   Command
 } from "lucide-react";
 import { MenuItem } from "./types";
-import { UserRole } from "@/types/rbac";
 
 export const crmMenuItems: MenuItem[] = [
   {
@@ -15,6 +12,8 @@ export const crmMenuItems: MenuItem[] = [
       { name: "Users", href: "/admin/users" },
       { name: "Tenants", href: "/tenants" },
       { name: "Auditoría", href: "/admin/audit" },
+      { name: "Aliados", href: "/admin/aliados" },
+      { name: "Catálogo aliados", href: "/admin/catalogo-aliados" },
     ],
   },
   {

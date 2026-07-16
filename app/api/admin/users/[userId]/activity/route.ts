@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
 import { requirePlatformAdmin } from "@/lib/auth/guards";
+import { pool } from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -8,16 +9,24 @@ export async function GET(request: Request, { params }: { params: { userId: stri
   const auth = await requirePlatformAdmin();
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
-  const supabase = await createClient();
   const { userId } = await params;
 
-  const { data: activity, error } = await supabase
-    .from("user_activity")
-    .select("*")
-    .eq("userId", userId)
-    .order("createdAt", { ascending: false });
+  try {
+    const client = await pool.connect();
+    try {
+      const res = await client.query(
+        `SELECT * FROM user_activity
+         WHERE "userId" = $1
+         ORDER BY "createdAt" DESC`,
+        [userId]
+      );
 
-  if (error) {
+      return NextResponse.json(res.rows);
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    logger.error('api.admin.users.activity.error', { error: String(err), userId });
     return NextResponse.json([
       {
         id: "a1",
@@ -35,6 +44,4 @@ export async function GET(request: Request, { params }: { params: { userId: stri
       }
     ]);
   }
-
-  return NextResponse.json(activity);
 }

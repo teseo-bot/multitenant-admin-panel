@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
+import { useRouter, useSearchParams } from "next/navigation";
+import { getAuth } from "@/lib/gcp-auth/client";
+import { confirmPasswordReset } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,8 +13,9 @@ import { Loader2 } from "lucide-react";
 
 function UpdatePasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const oobCode = searchParams.get("oobCode");
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClient();
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -41,18 +43,30 @@ function UpdatePasswordForm() {
       return;
     }
 
-    const { error } = await supabase.auth.updateUser({ password });
+    if (!oobCode) {
+      toast.error("Enlace inválido o expirado. Solicita uno nuevo.");
+      setIsLoading(false);
+      return;
+    }
 
-    if (error) {
-      toast.error(error.message || "Error al actualizar la contraseña.");
+    try {
+      // Identity Platform: confirma el reset con el oobCode del enlace del correo.
+      await confirmPasswordReset(getAuth(), oobCode, password);
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code;
+      if (code === "auth/expired-action-code" || code === "auth/invalid-action-code") {
+        toast.error("El enlace expiró o no es válido. Solicita uno nuevo.");
+      } else if (code === "auth/weak-password") {
+        toast.error("La contraseña es demasiado débil.");
+      } else {
+        toast.error("Error al actualizar la contraseña.");
+      }
       setIsLoading(false);
       return;
     }
 
     toast.success("Contraseña actualizada exitosamente.");
-    
-    // Forzamos el signOut para que inicie sesión con la nueva credencial de forma limpia
-    await supabase.auth.signOut();
+    // Sin sesión activa en este flujo: el usuario entra con la nueva credencial.
     router.push("/auth/login");
     router.refresh();
   }

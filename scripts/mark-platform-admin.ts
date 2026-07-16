@@ -1,46 +1,51 @@
-// WU-08: marca a un usuario como Platform Admin (app_metadata.platform_admin=true)
-// vía Supabase Admin API. Idempotente. Reemplaza el criterio por email.
-//   node_modules/.bin/tsx scripts/mark-platform-admin.ts [email]
-// Sin arg usa PLATFORM_ADMIN_EMAIL.
-import dotenv from "dotenv";
-dotenv.config({ path: ".env.local" });
-import { createClient } from "@supabase/supabase-js";
+// scripts/mark-platform-admin.ts
+// G1-W3 (§A6): marca a un usuario como platform_admin vía CUSTOM CLAIM en Identity Platform.
+// Reemplaza la versión Supabase (WU-08, app_metadata). Idempotente.
+//
+// Uso (MANUAL(CEO), con credenciales del proyecto de control):
+//   gcloud auth application-default login          # cuenta Owner de micontexto-control
+//   gcloud auth application-default set-quota-project micontexto-control
+//   npx tsx scripts/mark-platform-admin.ts <email>
+//
+// adminAuth() usa applicationDefault() (ADC) → opera sobre el IdP del proyecto de
+// las credenciales activas. Nota de seguridad: ya NO hay guard "Supabase local"
+// (obsoleto); la salvaguarda es que el marcado de prod es un acto DELIBERADO del
+// CEO con las credenciales del proyecto control (email explícito, sin default).
+import { adminAuth } from "../lib/gcp-auth/admin";
 
 (async () => {
-  const email = process.argv[2] || process.env.PLATFORM_ADMIN_EMAIL;
-  if (!email) { console.error("ABORT: falta email (arg o PLATFORM_ADMIN_EMAIL)"); process.exit(1); }
-
-  // GUARDA LOCAL-ONLY: este script sólo opera contra Supabase local. Para prod
-  // se ejecuta deliberadamente con otra autorización (no desde aquí).
-  const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  if (!/127\.0\.0\.1|localhost/.test(supaUrl)) {
-    console.error(`ABORT: NEXT_PUBLIC_SUPABASE_URL no es local (${supaUrl}). Este script es local-only.`);
+  const email = process.argv[2];
+  if (!email) {
+    console.error("ABORT: uso: npx tsx scripts/mark-platform-admin.ts <email>");
     process.exit(1);
   }
 
-  const admin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-
-  // Buscar el usuario por email (paginando si hace falta).
-  let target: any = null;
-  for (let page = 1; page <= 20 && !target; page++) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
-    if (error) { console.error("ERROR listUsers:", error.message); process.exit(1); }
-    target = data.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-    if (data.users.length < 200) break;
+  const auth = adminAuth();
+  const user = await auth.getUserByEmail(email).catch(() => null);
+  if (!user) {
+    console.error(
+      `ABORT: no existe usuario con email ${email} en el IdP. ` +
+      `Créalo primero (Console → Identity Platform → Users → Add user).`
+    );
+    process.exit(1);
   }
-  if (!target) { console.error(`ABORT: no existe usuario con email ${email}`); process.exit(1); }
 
-  const { error: upErr } = await admin.auth.admin.updateUserById(target.id, {
-    app_metadata: { ...target.app_metadata, platform_admin: true },
+  // Idempotente: si ya es platform_admin, no-op.
+  if (user.customClaims?.platform_admin === true) {
+    console.log(`✓ ${email} (uid ${user.uid}) ya es platform_admin. Nada que hacer.`);
+    return;
+  }
+
+  // Preservar cualquier claim existente (p.ej. partner_id) al añadir platform_admin.
+  await auth.setCustomUserClaims(user.uid, {
+    ...(user.customClaims ?? {}),
+    platform_admin: true,
   });
-  if (upErr) { console.error("ERROR updateUserById:", upErr.message); process.exit(1); }
-
-  // Verificación
-  const { data: check } = await admin.auth.admin.getUserById(target.id);
-  console.log(`OK: ${email} platform_admin =`, check?.user?.app_metadata?.platform_admin);
-  process.exit(0);
-})().catch((e) => { console.error("ERROR:", e); process.exit(1); });
+  console.log(
+    `✓ ${email} (uid ${user.uid}) marcado platform_admin. ` +
+    `Debe cerrar sesión y volver a entrar para refrescar el claim.`
+  );
+})().catch((e) => {
+  console.error("ERROR:", e);
+  process.exit(1);
+});

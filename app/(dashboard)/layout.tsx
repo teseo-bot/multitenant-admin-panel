@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
+import { getCurrentUser } from "@/lib/auth/guards";
 import { GlobalLayout } from "@/components/layout/GlobalLayout";
 import { logoutAction } from "@/app/(auth)/actions";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,21 +10,11 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  let user = null;
+  const user = await getCurrentUser();
   let role = "MEMBER";
 
-  try {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    user = data?.user;
-    if (user) {
-      role = await getTenantRole(user.id) || "MEMBER";
-    }
-  } catch (err: any) {
-    if (err?.digest === 'DYNAMIC_SERVER_USAGE') {
-      throw err;
-    }
-    console.error("Supabase SSR error in dashboard layout:", err);
+  if (user) {
+    role = await getTenantRole(user.id) || "MEMBER";
   }
 
   if (!user) {
@@ -35,8 +25,8 @@ export default async function DashboardLayout({
   const userProps = {
     id: user.id,
     email: user.email || "",
-    name: user.user_metadata?.name || user.email?.split("@")[0] || "User",
-    avatar_url: user.user_metadata?.avatar_url || "",
+    name: user.email?.split("@")[0] || "User",
+    avatar_url: "",
     role: role || "MEMBER", // Defaulting to member if not found
   };
 

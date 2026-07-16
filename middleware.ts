@@ -1,15 +1,47 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { updateSession } from './utils/supabase/middleware'
+import { isBlockedOnPartnerHost, resolveAuthenticatedRedirect, resolveRootRedirect } from '@/lib/host-routing'
 
-export async function middleware(request: NextRequest) {
-  // Handle root redirect directly in middleware to avoid NEXT_REDIRECT errors in layout/page
-  if (request.nextUrl.pathname === '/') {
+const PROTECTED_PREFIXES = ['/admin', '/tenants', '/settings', '/knowledge-ops', '/lab']
+const AUTH_ROUTES = ['/auth/login', '/auth/callback', '/auth/auth-code-error']
+const SESSION_COOKIE = '__session'
+
+export function middleware(request: NextRequest) {
+  const host = request.headers.get('host')
+  const pathname = request.nextUrl.pathname
+
+  // G2-W6: en el host de aliados, los prefijos del panel de control quedan
+  // bloqueados (no existen para ese dominio).
+  if (isBlockedOnPartnerHost(host, pathname)) {
     const url = request.nextUrl.clone()
-    url.pathname = '/admin'
+    url.pathname = '/unauthorized'
     return NextResponse.redirect(url)
   }
 
-  return await updateSession(request)
+  // Handle root redirect directly in middleware to avoid NEXT_REDIRECT errors in layout/page
+  if (pathname === '/') {
+    const url = request.nextUrl.clone()
+    url.pathname = resolveRootRedirect(host)
+    return NextResponse.redirect(url)
+  }
+
+  const sessionCookie = request.cookies.get(SESSION_COOKIE)?.value
+
+  // If authenticated and trying to access auth routes, redirect to dashboard
+  if (sessionCookie && AUTH_ROUTES.some(r => pathname.startsWith(r))) {
+    const url = request.nextUrl.clone()
+    url.pathname = resolveAuthenticatedRedirect(host)
+    return NextResponse.redirect(url)
+  }
+
+  // If NOT authenticated and trying to access protected routes, redirect to login with reason
+  if (!sessionCookie && PROTECTED_PREFIXES.some(p => pathname.startsWith(p))) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    url.searchParams.set('reason', 'expired')
+    return NextResponse.redirect(url)
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {
