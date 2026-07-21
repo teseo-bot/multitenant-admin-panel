@@ -1,6 +1,6 @@
 "use client"
 
-import { LayoutDashboard, Users, Building2, LogOut, Palette, Shield, User as UserIcon, ScrollText, BrainCircuit } from "lucide-react"
+import { LayoutDashboard, Users, Building2, LogOut, Palette, Shield, User as UserIcon, ScrollText, BrainCircuit, Handshake } from "lucide-react"
 
 import {
   Sidebar,
@@ -96,6 +96,27 @@ export function ControlPanelSidebar({ user }: { user?: any }) {
                     <BrainCircuit />
                     <span>Knowledge Ops</span>
                   </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
+              {isPlatformAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton render={<Link href="/admin/aliados" />}>
+                    <Handshake />
+                    <span>Aliados</span>
+                  </SidebarMenuButton>
+                  <SidebarMenuSub>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton render={<Link href="/admin/aliados" />}>
+                        <span>Alta y directorio</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton render={<Link href="/admin/catalogo-aliados" />}>
+                        <span>Catálogo</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  </SidebarMenuSub>
                 </SidebarMenuItem>
               )}
             </SidebarMenu>
