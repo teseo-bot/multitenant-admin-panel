@@ -8,6 +8,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
@@ -134,7 +135,9 @@ export default function AliadosPage() {
                 partners.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">
-                      <div>{p.legal_name}</div>
+                      <Link href={`/admin/aliados/${p.id}`} className="hover:underline">
+                        {p.legal_name}
+                      </Link>
                       <div className="text-xs text-muted-foreground">{p.slug}</div>
                     </TableCell>
                     <TableCell>
