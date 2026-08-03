@@ -12,6 +12,14 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+
+    // Trinquete contra el patrón que dejó tools mintiendo en `success`: un `return`
+    // incondicional al inicio del cuerpo ("FALLBACK DE SUPERVIVENCIA") deja el resto
+    // inalcanzable, y sin esta bandera tsc no dice nada. Medido el 2026-08-03:
+    // activarlo no añade ni un error a este repo (2 antes, 2 después; los dos son
+    // TS1378 preexistentes en lib/services/membership.test.ts, ajenos a la bandera).
+    "allowUnreachableCode": false,
+
     "plugins": [
       {
         "name": "next"
