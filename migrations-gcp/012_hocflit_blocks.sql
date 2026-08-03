@@ -40,7 +40,7 @@ COMMENT ON COLUMN hocflit_blocks.system_slug IS
     'Slug del sistema OKF al que mapea el bloque. NULL en la Dirección Ejecutiva (E): no es un 8.º slug, se modela sobre la superficie direccion (systems=all, altitude_min=4).';
 
 COMMENT ON COLUMN hocflit_blocks.description IS
-    'Descripción condensada del libro. NULL = pendiente de confirmar con el autor (hoy sólo I3, ilegible en la fuente). Detectable con WHERE description IS NULL.';
+    'Descripción condensada del libro. Las 40 están completas. NULL sería un bloque pendiente de confirmar con el autor: detectable con WHERE description IS NULL.';
 
 COMMENT ON COLUMN hocflit_blocks.placement IS
     'Geometría del modelo: techo (E), transversal (I), columna (H/O/C/F/L), piso (T). De aquí se derivan los roles de agente transversales frente a los de columna.';
@@ -63,10 +63,10 @@ INSERT INTO hocflit_blocks (code, group_code, group_name, placement, level, name
  'Establecer sistemas de optimización constante de los procesos existentes en todas las verticales estructurales, buscando eficiencias funcionales, técnicas y cualitativas mediante cambios sutiles e incrementales.', 'i-innovacion'),
 ('I2', 'I', 'Desarrollo de Innovaciones', 'transversal', 2, 'Gestión del Cambio',
  'Desarrollar resiliencia empresarial: preparar, guiar y apoyar a individuos, equipos y organización en la transición del estado operativo actual al estado futuro deseado, garantizando la adopción de nuevas metodologías.', 'i-innovacion'),
--- I3: descripción PENDIENTE — el párrafo llegó ilegible en la fuente (OCR). No inventar:
--- se confirma con el autor (Lalo López) y se completa en su propia migración.
+-- I3: el párrafo llegó ilegible en el OCR de la fuente; texto confirmado por el autor
+-- (vía CEO, 2026-08-02). Es el contrapunto de I4: I3 innova DENTRO de una vertical, I4 cruza.
 ('I3', 'I', 'Desarrollo de Innovaciones', 'transversal', 3, 'Innovación Vertical',
- NULL, 'i-innovacion'),
+ 'Crear y desarrollar nuevas capacidades, procesos o modelos de negocio dentro de alguna de las cinco verticales (Talento, Operaciones, Comercial, Finanzas y Legal) para maximizar la estabilidad y la ventaja competitiva en los mercados actuales.', 'i-innovacion'),
 ('I4', 'I', 'Desarrollo de Innovaciones', 'transversal', 4, 'Innovación Transversal',
  'Integrar y fomentar la colaboración entre los sistemas empresariales y bloques de responsabilidad, buscando sinergias interdepartamentales que mitiguen riesgos estructurales, reduzcan costos ocultos y creen valor futuro.', 'i-innovacion'),
 ('I5', 'I', 'Desarrollo de Innovaciones', 'transversal', 5, 'Desarrollo de Tecnologías Propias',
