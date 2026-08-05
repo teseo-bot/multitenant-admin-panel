@@ -51,7 +51,7 @@ function getSender(): string {
   const from = process.env.MAIL_FROM;
   if (!from) {
     throw new MailerNotConfiguredError(
-      'MAIL_FROM no seteado (remitente, p.ej. "micontexto <no-reply@micontexto.com>")'
+      'MAIL_FROM no seteado (remitente, p.ej. "micontexto <noreply@micontexto.com>")'
     );
   }
   return from;
