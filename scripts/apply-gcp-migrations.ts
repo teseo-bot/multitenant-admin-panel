@@ -1,9 +1,16 @@
-// G0-W3: aplica las migraciones GCP-Native (001..011) contra el plano de control (CONTROL_DB_URL).
+// G0-W3: aplica las migraciones GCP-Native contra el plano de control (CONTROL_DB_URL).
 //
 // USO:
 //   CONTROL_DB_URL=postgres://... node_modules/.bin/tsx scripts/apply-gcp-migrations.ts
 //
-// Aplica en orden estricto 001 -> 002 -> ... -> 011. Cada archivo se ejecuta en su propia
+// ⚠️ `MIGRATION_FILES` (abajo) es la ÚNICA fuente de verdad: el runner NO descubre archivos
+// del directorio. Una migración que no esté en esa lista no se aplica nunca, y nada avisa —
+// el repo se ve consistente y la columna simplemente no existe en producción. Ya pasó dos
+// veces: la 012 quedó sin aplicar desde el 2026-08-03 (entró de rezagada con la 013) y la 014
+// se escribió el 2026-08-05 sin registrar. Al añadir un archivo a `migrations-gcp/`, añadirlo
+// aquí en el mismo commit. El test `apply-gcp-migrations.test.ts` cruza lista contra disco.
+//
+// Aplica en orden estricto de la lista. Cada archivo se ejecuta en su propia
 // transacción. Las migraciones son idempotentes por diseño (CREATE TABLE IF NOT EXISTS /
 // ON CONFLICT DO NOTHING) o manejan duplicados en capas de error.
 //
@@ -13,6 +20,8 @@
 // partner_sources y onboarded_at para Knowledge Lab. La 010 (PA4-W2) añade
 // partner_contract_otp para la firma simple por OTP de contratos de aliado. La 011 (PA7-W3) añade
 // partner_citation_stats para el metering de citas de conocimiento certificado [INV-5.4].
+// La 012 añade hocflit_blocks; la 013 (ADR-215 WU-1.1) tenant_brands; ambas aplicadas el
+// 2026-08-05. La 014 (ADR-212 D1) añade el mapa tenant → Identity Platform, SIN APLICAR aún.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -20,7 +29,7 @@ import { Client } from 'pg';
 
 const MIGRATIONS_DIR = path.resolve(__dirname, '../migrations-gcp');
 
-const MIGRATION_FILES = [
+export const MIGRATION_FILES = [
   '001_control_base.sql',
   '002_rbac.sql',
   '003_modules_seed.sql',
@@ -34,6 +43,7 @@ const MIGRATION_FILES = [
   '011_partner_citation_stats.sql',
   '012_hocflit_blocks.sql',
   '013_tenant_brands.sql',
+  '014_tenant_idp_map.sql',
 ] as const;
 
 // Códigos de error Postgres que indican "esto ya existía" (re-run seguro).

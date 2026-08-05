@@ -77,16 +77,38 @@ jobs:
           region: ${{ env.REGION }}
           image: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
           flags: '--service-account=${{ env.RUNTIME_SA }} --add-cloudsql-instances=${{ env.CLOUDSQL_INSTANCES }}'
+          # ⚠️ NADA de comentarios DENTRO de los bloques `|` de env_vars/secrets: la acción los
+          # parsea como CLAVE=VALOR e intenta montarlos. Tumbó el deploy 31033445622 (2026-08-05).
+          #
+          # MAIL_FROM: remitente de las invitaciones. El dominio debe estar VERIFICADO en Resend
+          # (SPF/DKIM/DMARC); si no lo está, Resend devuelve 403 y `sendMail` LANZA — ruidoso a
+          # propósito. `noreply@micontexto.com` es el remitente que ya se configuró para este
+          # plano (ver docs/HANDOFF-2026-07-07.md y scripts/create-platform-admin.ts).
           env_vars: |
             NODE_ENV=production
             APP_URL=https://control.micontexto.com
             KDB_COMPILER_URL=https://context-kdb-compiler-137810875111.us-central1.run.app
             COMPILER_INTERNAL_URL=https://context-kdb-orchestrator-137810875111.us-central1.run.app
-            MAILER_DRY_RUN=true
+            MAIL_FROM=micontexto <noreply@micontexto.com>
+          # RESEND_MAIL existe en micontexto-control desde el 2026-07-10, habilitado y hasta hoy
+          # sin un solo lector. La SA de runtime necesita secretmanager.secretAccessor sobre él.
           secrets: |
             DATABASE_URL=CONTROL_DATABASE_URL:latest
             COLD_TIER_URL=COLD_TIER_URL_ORCH:latest
             M2M_API_KEY=M2M_API_KEY:latest
+            RESEND_MAIL=RESEND_MAIL:latest
+          # `merge` sólo AÑADE y PISA las claves listadas: borrar una línea de arriba NO la quita
+          # del servicio vivo. Por eso `MAILER_DRY_RUN=true` —que se quitó de este bloque junto
+          # con el mailer que lo leía— sigue puesto en producción hasta que se borre a mano:
+          #
+          #   gcloud run services update multitenant-admin-panel --project micontexto-control \
+          #     --region us-central1 --remove-env-vars MAILER_DRY_RUN \
+          #     --account jorge.garcia@innoteca.mx
+          #
+          # Hoy es inerte (ningún código lo lee), pero una variable que dice «no envío correo»
+          # en un servicio que sí lo envía es exactamente la clase de mentira que costó la
+          # primera invitación real. No cambiar a `overwrite` para arreglarlo: tiraría toda
+          # variable puesta a mano en el servicio.
           env_vars_update_strategy: merge
           secrets_update_strategy: merge
 
