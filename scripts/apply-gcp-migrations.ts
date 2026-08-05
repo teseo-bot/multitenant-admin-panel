@@ -33,6 +33,7 @@ const MIGRATION_FILES = [
   '010_partner_contract_otp.sql',
   '011_partner_citation_stats.sql',
   '012_hocflit_blocks.sql',
+  '013_tenant_brands.sql',
 ] as const;
 
 // Códigos de error Postgres que indican "esto ya existía" (re-run seguro).
