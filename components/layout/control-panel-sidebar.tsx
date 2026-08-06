@@ -7,7 +7,7 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -22,69 +22,119 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import pkg from "../../package.json"
 import { logoutAction } from "@/app/(auth)/actions"
+import { Logotipo } from "@/components/brand/logotipo"
+
+// Este es el sidebar que ve casi todo el plano de control: el grupo de rutas
+// `(control-panel)` (administración, cuentas, auditoría, aliados). El de
+// `components/layout/AppSidebar.tsx` sólo lo usa `/finops`.
+//
+// Los rótulos van en español: «Platform Admin», «Control Panel» y «Users»
+// describían quién escribió la pantalla, no la tarea de quien la usa.
+
+const CLASE_FILA =
+  "h-auto gap-2.5 px-2 py-1.5 text-[13px] data-active:bg-sidebar-accent data-active:font-medium"
 
 export function ControlPanelSidebar({ user }: { user?: any }) {
   // UXUI-OKF-Knowledge-Ops.md §0: entrada "Knowledge Ops" visible SOLO platform_admin.
   // Mismo flag explícito que lib/auth/guards.ts (isPlatformAdmin): NUNCA por email.
   const isPlatformAdmin = user?.platformAdmin === true;
+  const pathname = usePathname() || "";
 
-  const getInitials = () => {
-    if (user?.email) {
-      return user.email.substring(0, 2).toUpperCase();
-    }
-    return "US";
-  };
+  // Sin esto ninguna entrada se marcaba: el usuario no sabía en qué sección
+  // estaba salvo por el título de la página.
+  const activo = (href: string) =>
+    href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+
+  const iniciales = user?.email ? user.email.substring(0, 2).toUpperCase() : "US";
 
   return (
     <Sidebar>
-      <SidebarContent className="pt-4">
-        <SidebarGroup>
-          <SidebarGroupLabel>Platform Admin</SidebarGroupLabel>
+      <SidebarHeader className="hairline-b justify-center px-3 py-2.5">
+        <Link
+          href="/admin"
+          aria-label="micontexto · plano de control"
+          className="flex items-center gap-2 overflow-hidden"
+        >
+          <span className="min-w-0 flex-1">
+            <Logotipo size={22} />
+            <span className="mt-1 block truncate font-mono text-[10px] leading-none text-muted-foreground">
+              plano de control
+            </span>
+          </span>
+        </Link>
+      </SidebarHeader>
+
+      <SidebarContent className="py-2">
+        <SidebarGroup className="px-2">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton render={<Link href="/admin" />}>
+                <SidebarMenuButton
+                  className={CLASE_FILA}
+                  data-active={activo("/admin") || undefined}
+                  render={<Link href="/admin" />}
+                >
                   <LayoutDashboard />
-                  <span>Control Panel</span>
+                  <span>Resumen</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <SidebarMenuButton render={<Link href="/tenants" />}>
+                <SidebarMenuButton
+                  className={CLASE_FILA}
+                  data-active={activo("/tenants") || undefined}
+                  render={<Link href="/tenants" />}
+                >
                   <Building2 />
-                  <span>Tenants</span>
+                  <span>Cuentas</span>
                 </SidebarMenuButton>
                 <SidebarMenuSub>
                   <SidebarMenuSubItem>
-                    <SidebarMenuSubButton render={<Link href="/tenants" />}>
+                    <SidebarMenuSubButton
+                      data-active={pathname === "/tenants" || undefined}
+                      render={<Link href="/tenants" />}
+                    >
                       <span>Estado</span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                   <SidebarMenuSubItem>
-                    <SidebarMenuSubButton render={<Link href="/tenants/database" />}>
-                      <span>Base de Datos</span>
+                    <SidebarMenuSubButton
+                      data-active={activo("/tenants/database") || undefined}
+                      render={<Link href="/tenants/database" />}
+                    >
+                      <span>Base de datos</span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                 </SidebarMenuSub>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <SidebarMenuButton render={<Link href="/admin/users" />}>
+                <SidebarMenuButton
+                  className={CLASE_FILA}
+                  data-active={activo("/admin/users") || undefined}
+                  render={<Link href="/admin/users" />}
+                >
                   <Users />
-                  <span>Users</span>
+                  <span>Usuarios</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <SidebarMenuButton render={<Link href="/admin/audit" />}>
+                <SidebarMenuButton
+                  className={CLASE_FILA}
+                  data-active={activo("/admin/audit") || undefined}
+                  render={<Link href="/admin/audit" />}
+                >
                   <ScrollText />
                   <span>Auditoría</span>
                 </SidebarMenuButton>
@@ -92,27 +142,41 @@ export function ControlPanelSidebar({ user }: { user?: any }) {
 
               {isPlatformAdmin && (
                 <SidebarMenuItem>
-                  <SidebarMenuButton render={<Link href="/knowledge-ops" />}>
+                  <SidebarMenuButton
+                    className={CLASE_FILA}
+                    data-active={activo("/knowledge-ops") || undefined}
+                    render={<Link href="/knowledge-ops" />}
+                  >
                     <BrainCircuit />
-                    <span>Knowledge Ops</span>
+                    <span>Conocimiento</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
 
               {isPlatformAdmin && (
                 <SidebarMenuItem>
-                  <SidebarMenuButton render={<Link href="/admin/aliados" />}>
+                  <SidebarMenuButton
+                    className={CLASE_FILA}
+                    data-active={activo("/admin/aliados") || undefined}
+                    render={<Link href="/admin/aliados" />}
+                  >
                     <Handshake />
                     <span>Aliados</span>
                   </SidebarMenuButton>
                   <SidebarMenuSub>
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton render={<Link href="/admin/aliados" />}>
+                      <SidebarMenuSubButton
+                        data-active={pathname === "/admin/aliados" || undefined}
+                        render={<Link href="/admin/aliados" />}
+                      >
                         <span>Alta y directorio</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton render={<Link href="/admin/catalogo-aliados" />}>
+                      <SidebarMenuSubButton
+                        data-active={activo("/admin/catalogo-aliados") || undefined}
+                        render={<Link href="/admin/catalogo-aliados" />}
+                      >
                         <span>Catálogo</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
@@ -123,62 +187,63 @@ export function ControlPanelSidebar({ user }: { user?: any }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4 border-t flex flex-col gap-4">
+
+      <SidebarFooter className="hairline-t p-2">
         {user && (
           <DropdownMenu>
-            <DropdownMenuTrigger className="outline-none focus:ring-0 border-0 bg-transparent p-0 w-full">
-              <div className="flex items-center gap-3 cursor-pointer rounded-md p-1 hover:bg-muted transition-colors text-left">
-                <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarImage src={undefined} alt={user.email} />
-                  <AvatarFallback>{getInitials()}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col overflow-hidden flex-1 text-left">
-                  <span className="truncate text-sm font-medium">{user.email || "User"}</span>
-                  <span className="truncate text-xs text-muted-foreground">{user.email}</span>
-                </div>
-              </div>
+            <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left outline-none transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring">
+              <Avatar className="size-6 shrink-0">
+                <AvatarFallback className="bg-accent font-mono text-[10px] font-semibold text-accent-foreground">
+                  {iniciales}
+                </AvatarFallback>
+              </Avatar>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[12px] font-medium leading-tight">
+                  {user.email || "Tu cuenta"}
+                </span>
+                <span className="block truncate text-[10px] leading-tight text-muted-foreground">
+                  {isPlatformAdmin ? "Administración de la plataforma" : "Operación"}
+                </span>
+              </span>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="start">
-              <div className="font-normal px-2 py-1.5 text-sm">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user.email || "User"}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user.id}
-                  </p>
-                </div>
-              </div>
+            <DropdownMenuContent className="w-56" align="start" side="top">
+              <DropdownMenuLabel className="font-normal">
+                <p className="truncate text-[13px] font-medium leading-none">
+                  {user.email || "Tu cuenta"}
+                </p>
+                <p className="mt-1 truncate font-mono text-[11px] leading-none text-muted-foreground">
+                  {user.id}
+                </p>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuItem className="cursor-pointer" render={<Link href="/settings/profile" />}>
-                  <UserIcon className="mr-2 h-4 w-4" />
+                  <UserIcon className="mr-2 size-4" />
                   <span>Perfil</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer" render={<Link href="/settings/appearance" />}>
-                  <Palette className="mr-2 h-4 w-4" />
+                  <Palette className="mr-2 size-4" />
                   <span>Apariencia</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer text-red-500 focus:text-red-500" render={<Link href="/settings/security" />}>
-                  <Shield className="mr-2 h-4 w-4" />
+                <DropdownMenuItem className="cursor-pointer" render={<Link href="/settings/security" />}>
+                  <Shield className="mr-2 size-4" />
                   <span>Seguridad</span>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <form action={logoutAction}>
                 <button type="submit" className="w-full text-left">
-                  <DropdownMenuItem className="cursor-pointer">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Cerrar Sesión</span>
+                  <DropdownMenuItem className="cursor-pointer" render={<div />}>
+                    <LogOut className="mr-2 size-4" />
+                    <span>Cerrar sesión</span>
                   </DropdownMenuItem>
                 </button>
               </form>
+              <DropdownMenuSeparator />
+              <p className="px-2 py-1 font-mono text-[10px] text-muted-foreground">v{pkg.version}</p>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-        <div className="text-center w-full">
-          <span className="text-[10px] font-mono text-muted-foreground/50 select-none">
-            v{pkg.version}
-          </span>
-        </div>
       </SidebarFooter>
     </Sidebar>
   )

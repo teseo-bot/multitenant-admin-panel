@@ -27,26 +27,28 @@ export function GlobalLayout({ children, user, horizontalNav, onLogout }: Global
     <SidebarProvider>
       <div className="min-h-screen bg-background flex flex-col w-full">
         <div className="flex flex-1 overflow-hidden w-full h-screen">
-          <AppSidebar 
-            expanded={true} 
-            user={user} 
+          <AppSidebar
+            expanded={true}
+            user={user}
             onLogout={onLogout}
-            className="hidden md:flex relative left-0 top-0 h-full z-40 border-r"
+            className="relative left-0 top-0 z-40 hidden h-full md:flex"
           />
-          <SidebarInset className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
-            <AppTopBar 
-              expanded={true} 
-              onToggleSidebar={() => {}} 
-              title={title} 
-              user={user} 
+          <SidebarInset className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto">
+            <AppTopBar
+              expanded={true}
+              onToggleSidebar={() => {}}
+              title={title}
+              user={user}
               onLogout={onLogout}
             />
-            
+
             <HorizontalMenuSlot>
               {horizontalNav}
             </HorizontalMenuSlot>
 
-            <main className="flex-1 flex flex-col min-h-0 bg-muted/20">
+            {/* El lienzo es `background`, no un gris intermedio: las secciones se
+                recortan contra él con `card` + hairline, sin sombra. */}
+            <main className="flex min-h-0 flex-1 flex-col bg-background">
               {children}
             </main>
           </SidebarInset>

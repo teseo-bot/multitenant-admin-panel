@@ -31,15 +31,17 @@ export function AppSidebar({ expanded, user, onLogout, className }: AppSidebarPr
   return (
     <aside
       className={cn(
-        "relative flex z-40 h-screen flex flex-col bg-card border-r transition-[width] duration-300 ease-in-out",
-        expanded ? "w-[260px]" : "w-[64px]",
+        // El sidebar es chrome, no contenido: bg-sidebar lo separa del lienzo
+        // sin necesidad de sombra, y un hairline hace de límite.
+        "hairline-r relative z-40 flex h-screen flex-col bg-sidebar transition-[width] duration-150 ease-out",
+        expanded ? "w-[216px]" : "w-[52px]",
         className
       )}
     >
       <SidebarLogo expanded={expanded} />
 
-      <ScrollArea className="flex-1 py-4">
-        <nav className="px-2 space-y-1">
+      <ScrollArea className="min-h-0 flex-1 py-2">
+        <nav className={cn("space-y-0.5", expanded ? "px-2" : "px-1.5")}>
           {visibleItems.map((item, index) => (
             <SidebarMenuItem 
               key={index} 

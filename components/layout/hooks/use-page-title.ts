@@ -6,7 +6,7 @@ import { crmMenuItems } from "../menu-items";
 export function usePageTitle(): string {
   const pathname = usePathname();
 
-  if (!pathname) return "Mission Control";
+  if (!pathname) return "Control";
 
   // Check direct matches in main menu or submenus
   for (const item of crmMenuItems) {
@@ -27,5 +27,5 @@ export function usePageTitle(): string {
     return formatted;
   }
 
-  return "Mission Control";
+  return "Control";
 }

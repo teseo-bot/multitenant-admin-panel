@@ -6,6 +6,9 @@ import { getCurrentUser } from '@/lib/auth/guards';
 
 export const dynamic = 'force-dynamic';
 
+// Sin fila en tenant_configs no hay branding: null significa «usa el sistema de
+// diseño del producto» (app/globals.css). Un color literal aquí lo inyecta
+// <TenantThemeStyle /> como <style> en runtime y pisa la paleta base.
 export async function GET() {
   try {
     const user = await getCurrentUser();
@@ -32,8 +35,8 @@ export async function GET() {
           organization: { id: 'platform', name: 'Teseo Platform', domain: 'teseo.lat' },
           role: 'platform_admin',
           branding: {
-            primaryColor: 'oklch(0.556 0.2 250)',
-            accentColor: 'oklch(0.97 0 0)',
+            primaryColor: null,
+            accentColor: null,
             logoUrl: null,
             themeMode: 'SYSTEM'
           }
@@ -55,8 +58,8 @@ export async function GET() {
         logoUrl: config.logo_url,
         themeMode: config.theme_mode
       } : {
-        primaryColor: 'oklch(0.556 0.2 250)',
-        accentColor: 'oklch(0.97 0 0)',
+        primaryColor: null,
+        accentColor: null,
         logoUrl: null,
         themeMode: 'SYSTEM'
       };
@@ -78,8 +81,8 @@ export async function GET() {
       organization: null,
       role: 'MEMBER',
       branding: {
-        primaryColor: 'oklch(0.556 0.2 250)',
-        accentColor: 'oklch(0.97 0 0)',
+        primaryColor: null,
+        accentColor: null,
         logoUrl: null,
         themeMode: 'SYSTEM'
       }

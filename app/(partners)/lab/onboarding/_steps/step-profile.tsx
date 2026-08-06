@@ -13,7 +13,7 @@ export default function StepProfile({ partner }: StepProfileProps) {
     <>
       <CardHeader>
         <CardTitle className="text-2xl">Tu perfil</CardTitle>
-        <p className="text-slate-600 dark:text-slate-400 mt-2 text-sm">
+        <p className="text-muted-foreground dark:text-muted-foreground mt-2 text-sm">
           Confirma los datos de tu aliado. Este perfil firmará como curator todos
           tus conceptos en el Knowledge Lab.
         </p>
@@ -21,25 +21,25 @@ export default function StepProfile({ partner }: StepProfileProps) {
 
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-medium text-foreground dark:text-muted-foreground">
             Razón social
           </label>
-          <div className="px-4 py-3 bg-slate-100 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
+          <div className="px-4 py-3 bg-muted dark:bg-card rounded-md border border-border dark:border-border text-foreground dark:text-muted-foreground">
             {partner.legal_name}
           </div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-medium text-foreground dark:text-muted-foreground">
             Identificador (slug)
           </label>
-          <div className="px-4 py-3 bg-slate-100 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-mono text-sm">
+          <div className="px-4 py-3 bg-muted dark:bg-card rounded-md border border-border dark:border-border text-foreground dark:text-muted-foreground font-mono text-sm">
             {partner.slug}
           </div>
         </div>
 
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
-          <p className="text-sm text-blue-900 dark:text-blue-100">
+        <div className="bg-primary/10 dark:bg-primary/20 border border-primary/40 dark:border-primary/40 rounded-md p-4">
+          <p className="text-sm text-primary dark:text-primary">
             <strong>Nota:</strong> Estos datos son tu identidad en el Lab. Todos tus
             conceptos serán certificados bajo este nombre. Si necesitas cambios,
             contacta a Knowledge Ops.

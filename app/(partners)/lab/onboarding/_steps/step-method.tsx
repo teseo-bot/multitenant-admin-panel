@@ -35,7 +35,7 @@ export default function StepMethod() {
     <>
       <CardHeader>
         <CardTitle className="text-2xl">El método</CardTitle>
-        <p className="text-slate-600 dark:text-slate-400 mt-2 text-sm">
+        <p className="text-muted-foreground dark:text-muted-foreground mt-2 text-sm">
           Así funciona el Knowledge Lab: convierte tu expertise en conceptos
           certificados en 4 pasos.
         </p>
@@ -46,18 +46,18 @@ export default function StepMethod() {
           {steps.map((stepItem, idx) => (
             <div key={stepItem.number} className="flex gap-4">
               <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-2xl mb-2">
+                <div className="w-12 h-12 rounded-full bg-primary/10 dark:bg-primary/30 flex items-center justify-center text-2xl mb-2">
                   {stepItem.icon}
                 </div>
                 {idx < steps.length - 1 && (
-                  <div className="w-1 h-12 bg-slate-200 dark:bg-slate-700" />
+                  <div className="w-1 h-12 bg-muted dark:bg-card" />
                 )}
               </div>
               <div className="flex-1 pb-4">
-                <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                <h3 className="font-semibold text-foreground dark:text-muted-foreground">
                   {stepItem.title}
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
                   {stepItem.description}
                 </p>
               </div>
@@ -65,8 +65,8 @@ export default function StepMethod() {
           ))}
         </div>
 
-        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md p-4">
-          <p className="text-sm text-amber-900 dark:text-amber-100">
+        <div className="bg-primary/10 dark:bg-primary/20 border border-primary/40 dark:border-primary/40 rounded-md p-4">
+          <p className="text-sm text-primary dark:text-primary">
             <strong>Tu recompensa:</strong> Al publicar, tu paquete lleva el sello
             de <strong>Certificado por {"{tu_nombre}"}</strong> — tu firma digital
             de expertise.

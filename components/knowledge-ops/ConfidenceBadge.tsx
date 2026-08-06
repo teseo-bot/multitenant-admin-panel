@@ -21,8 +21,8 @@ const CONFIDENCE_LABEL: Record<Confidence, string> = {
 
 const CONFIDENCE_STYLES: Record<Confidence, string> = {
   draft: "bg-muted text-muted-foreground border-transparent",
-  reviewed: "bg-amber-100 text-amber-800 border-transparent dark:bg-amber-950 dark:text-amber-300",
-  consolidated: "bg-green-100 text-green-800 border-transparent dark:bg-green-950 dark:text-green-300",
+  reviewed: "bg-primary/10 text-primary border-transparent dark:bg-primary dark:text-primary",
+  consolidated: "bg-chart-2/10 text-chart-2 border-transparent dark:bg-chart-2 dark:text-chart-2",
 };
 
 export function ConfidenceBadge({ confidence, className }: ConfidenceBadgeProps) {

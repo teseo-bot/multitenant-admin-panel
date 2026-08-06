@@ -15,8 +15,65 @@ export const extractChromaHue = (color: string): { c: number, h: number } => {
   };
 };
 
+/** oklch → sRGB (0–1, ya con gamma). Es el inverso de `hexToOklch`. */
+export const oklchToSrgb = (color: string): [number, number, number] => {
+  const L = oklchLightness(color);
+  const { c, h } = extractChromaHue(color);
+  const hRad = (h * Math.PI) / 180;
+  const a = c * Math.cos(hRad);
+  const b = c * Math.sin(hRad);
+
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+  const l = l_ * l_ * l_, m = m_ * m_ * m_, s = s_ * s_ * s_;
+
+  const lr = +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+  const lg = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+  const lb = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
+
+  const gamma = (v: number) => {
+    const x = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(Math.max(v, 0), 1 / 2.4) - 0.055;
+    return Math.min(1, Math.max(0, x));
+  };
+  return [gamma(lr), gamma(lg), gamma(lb)];
+};
+
+/** Luminancia relativa WCAG de un color oklch. */
+export const relativeLuminance = (color: string): number => {
+  const [r, g, b] = oklchToSrgb(color).map((v) =>
+    v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
+  );
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+/** Razón de contraste WCAG entre dos colores oklch. */
+export const contrastRatio = (a: string, b: string): number => {
+  const la = relativeLuminance(a);
+  const lb = relativeLuminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+};
+
+export const FOREGROUND_CLARO = 'oklch(0.985 0 0)';
+export const FOREGROUND_OSCURO = 'oklch(0.145 0 0)';
+
+/**
+ * Elige el texto que se lee mejor sobre un fondo.
+ *
+ * Antes decidía por un umbral de luminosidad (`L < 0.6 → texto claro`). Eso deja
+ * una zona muerta alrededor de L≈0.55–0.60 donde el umbral escoge el peor de los
+ * dos: medido sobre una malla de tonos, cuatro combinaciones bajaban de 4.5:1 y
+ * la peor caía a 3.93:1. Y el croma mueve la frontera, así que ningún umbral fijo
+ * acierta para todos los tonos.
+ *
+ * Ahora se calcula el contraste real contra los dos candidatos y gana el mayor.
+ * No garantiza AA — hay colores de marca sobre los que ningún texto llega a
+ * 4.5:1 — pero nunca elige el peor de los dos.
+ */
 export const contrastingForeground = (color: string): string => {
-  return oklchLightness(color) < 0.6 ? 'oklch(0.985 0 0)' : 'oklch(0.145 0 0)';
+  return contrastRatio(FOREGROUND_CLARO, color) >= contrastRatio(FOREGROUND_OSCURO, color)
+    ? FOREGROUND_CLARO
+    : FOREGROUND_OSCURO;
 };
 
 export const hexToOklch = (hex: string): string => {
@@ -63,24 +120,15 @@ export const normalizeColor = (color: string): string => {
   return color;
 };
 
-export const buildDarkDefaults = (primaryOklch: string) => {
-  const { c, h } = extractChromaHue(primaryOklch);
-  const tintC = c > 0.05 ? 0.01 : 0;
-  
-  return {
-    background:          `oklch(0.145 ${tintC} ${h})`,
-    foreground:          `oklch(0.985 0 0)`,
-    card:                `oklch(0.205 ${tintC} ${h})`,
-    cardForeground:      `oklch(0.985 0 0)`,
-    popover:             `oklch(0.205 ${tintC} ${h})`,
-    popoverForeground:   `oklch(0.985 0 0)`,
-    accent:              `oklch(0.269 ${tintC * 2} ${h})`,
-    accentForeground:    `oklch(0.985 0 0)`,
-    secondary:           `oklch(0.269 ${tintC * 1.5} ${h})`,
-    secondaryForeground: `oklch(0.985 0 0)`,
-    muted:               `oklch(0.269 ${tintC} ${h})`,
-    mutedForeground:     `oklch(0.708 0 0)`,
-    border:              `oklch(0.269 ${tintC} ${h})`,
-    input:               `oklch(0.269 ${tintC} ${h})`,
-  };
+/**
+ * Sube la luminosidad de un color de marca para que respire sobre fondo oscuro,
+ * conservando tono y croma. Un primario pensado para fondo claro se apaga en
+ * modo oscuro; esto lo compensa sin cambiar la marca.
+ */
+export const brightenForDark = (oklchColor: string): string => {
+  const l = oklchLightness(oklchColor);
+  if (l >= 0.68) return oklchColor;
+  const { c, h } = extractChromaHue(oklchColor);
+  const nueva = Math.min(0.78, l + 0.1);
+  return `oklch(${nueva.toFixed(3)} ${c} ${h})`;
 };

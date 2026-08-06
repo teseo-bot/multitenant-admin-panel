@@ -94,7 +94,7 @@ export function AssistReviewModal({
                       <div
                         key={idx}
                         className={`px-2 py-0.5 whitespace-pre-wrap break-all ${
-                          line.removed ? "bg-red-100 text-red-900 dark:bg-red-900/20 dark:text-red-200" : ""
+                          line.removed ? "bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive" : ""
                         }`}
                       >
                         {line.value}
@@ -116,7 +116,7 @@ export function AssistReviewModal({
                       <div
                         key={idx}
                         className={`px-2 py-0.5 whitespace-pre-wrap break-all ${
-                          line.added ? "bg-green-100 text-green-900 dark:bg-green-900/20 dark:text-green-200" : ""
+                          line.added ? "bg-chart-2/10 text-chart-2 dark:bg-chart-2/20 dark:text-chart-2" : ""
                         }`}
                       >
                         {line.value}
@@ -132,15 +132,15 @@ export function AssistReviewModal({
           <div className="space-y-2">
             {/* Aviso stripped_refs */}
             {assistResult.stripped_refs.length > 0 && (
-              <div className="flex items-start gap-3 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm dark:border-yellow-900/30 dark:bg-yellow-900/10">
-                <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 rounded-md border border-primary/40 bg-primary/10 p-3 text-sm dark:border-primary/12 dark:bg-primary/10">
+                <AlertTriangle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="font-medium text-yellow-900 dark:text-yellow-200">
+                  <p className="font-medium text-primary dark:text-primary">
                     Citas descartadas
                   </p>
-                  <p className="text-xs text-yellow-800 dark:text-yellow-300 mt-1">
+                  <p className="text-xs text-primary dark:text-primary mt-1">
                     El asistente intentó citar fuentes no registradas. Se eliminaron: {" "}
-                    <code className="bg-white dark:bg-gray-900 px-1 rounded text-xs">
+                    <code className="bg-white dark:bg-card px-1 rounded text-xs">
                       {assistResult.stripped_refs.join(", ")}
                     </code>
                   </p>
@@ -150,13 +150,13 @@ export function AssistReviewModal({
 
             {/* Advertencia de errores en la propuesta */}
             {errorCount > 0 && (
-              <div className="flex items-start gap-3 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm dark:border-blue-900/30 dark:bg-blue-900/10">
-                <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 rounded-md border border-primary/40 bg-primary/10 p-3 text-sm dark:border-primary/12 dark:bg-primary/10">
+                <AlertCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="font-medium text-blue-900 dark:text-blue-200">
+                  <p className="font-medium text-primary dark:text-primary">
                     La propuesta aún tiene problemas de estructura
                   </p>
-                  <p className="text-xs text-blue-800 dark:text-blue-300 mt-1">
+                  <p className="text-xs text-primary dark:text-primary mt-1">
                     {errorCount} error{errorCount > 1 ? "es" : ""} pendiente{errorCount > 1 ? "s" : ""} de resolver
                     (puedes aceptar y seguir editando; el validador te ayudará).
                   </p>

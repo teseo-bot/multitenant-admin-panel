@@ -150,9 +150,9 @@ function TenantKdbRow({ tenant }: { tenant: TenantRow }) {
             {evalTrend.delta === null ? (
               <Minus className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
             ) : evalTrend.delta > 0 ? (
-              <ArrowUp className="h-3 w-3 text-green-600" aria-label="Mejoró vs corrida anterior" />
+              <ArrowUp className="h-3 w-3 text-chart-2" aria-label="Mejoró vs corrida anterior" />
             ) : evalTrend.delta < 0 ? (
-              <ArrowDown className="h-3 w-3 text-red-600" aria-label="Empeoró vs corrida anterior" />
+              <ArrowDown className="h-3 w-3 text-destructive" aria-label="Empeoró vs corrida anterior" />
             ) : (
               <Minus className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
             )}

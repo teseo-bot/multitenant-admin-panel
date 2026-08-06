@@ -50,8 +50,8 @@ export default function DLQResiliencePage() {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                   <span className={`px-2 py-0.5 rounded text-xs ${
                     item.status === 'dead' ? 'bg-destructive/20 text-destructive' :
-                    item.status === 'failed' ? 'bg-yellow-500/20 text-yellow-700' :
-                    'bg-blue-500/20 text-blue-700'
+                    item.status === 'failed' ? 'bg-primary/20 text-primary' :
+                    'bg-primary/20 text-primary'
                   }`}>
                     {item.status.toUpperCase()}
                   </span>

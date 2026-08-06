@@ -10,6 +10,8 @@ export interface ThemeColors {
 
 export interface ThemeConfig {
   primaryColor: string;
+  /** Nombre de la organización: se muestra bajo la marca en el sidebar. */
+  organizacion?: string;
   colors?: ThemeColors;
   logos?: {
     fullUrl?: string;
@@ -24,7 +26,7 @@ export interface ThemeConfig {
 
 interface TenantState {
   logoUrl: string | null;
-  primaryColor: string;
+  primaryColor: string | null;
   themeConfig: ThemeConfig | null;
   setLogoUrl: (url: string | null) => void;
   setPrimaryColor: (color: string) => void;
@@ -35,7 +37,9 @@ export const useTenantStore = create<TenantState>()(
   persist(
     (set) => ({
       logoUrl: null,
-      primaryColor: 'oklch(0.556 0.2 250)', // OKLCH default equivalent to primary blue
+      // null = el tenant no configuró marca ⇒ manda app/globals.css.
+      // Un color aquí se inyecta como <style> y pisa el sistema de diseño.
+      primaryColor: null,
       themeConfig: null,
       setLogoUrl: (url) => set({ logoUrl: url }),
       setPrimaryColor: (color) => {
@@ -53,6 +57,16 @@ export const useTenantStore = create<TenantState>()(
     }),
     {
       name: 'teseo-tenant-settings',
+      // v2: el azul por defecto quedó persistido en el localStorage de cualquiera
+      // que haya abierto el panel antes. Sin esta migración, el navegador lo
+      // rehidrata y vuelve a pisar la paleta aunque el código ya no lo tenga.
+      version: 2,
+      migrate: (estado: any) => {
+        if (estado?.primaryColor === 'oklch(0.556 0.2 250)') {
+          return { ...estado, primaryColor: null };
+        }
+        return estado;
+      },
     }
   )
 );

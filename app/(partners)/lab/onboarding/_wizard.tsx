@@ -73,7 +73,9 @@ export default function OnboardingWizard({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    // Sin degradado de fondo: el lienzo plano es el mismo del resto del panel y
+    // evita que el onboarding parezca otra aplicación.
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-2xl">
         {/* Indicador de progreso */}
         <div className="mb-8 flex justify-between items-center">
@@ -82,8 +84,8 @@ export default function OnboardingWizard({
               <div
                 className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
                   step >= s
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-200 text-slate-400 dark:bg-slate-700"
+                    ? "bg-primary text-white"
+                    : "bg-muted text-muted-foreground dark:bg-card"
                 }`}
               >
                 {s}
@@ -92,8 +94,8 @@ export default function OnboardingWizard({
                 <div
                   className={`flex-1 h-1 mx-2 ${
                     step > s
-                      ? "bg-blue-600"
-                      : "bg-slate-200 dark:bg-slate-700"
+                      ? "bg-primary"
+                      : "bg-muted dark:bg-card"
                   }`}
                 />
               )}

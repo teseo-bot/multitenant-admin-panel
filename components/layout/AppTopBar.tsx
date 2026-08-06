@@ -2,9 +2,8 @@
 
 import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { AppSidebar } from "./AppSidebar";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 interface AppTopBarProps {
   expanded: boolean;
@@ -17,50 +16,55 @@ interface AppTopBarProps {
     avatar_url?: string;
   };
   onLogout?: () => void;
+  acciones?: ReactNode;
 }
 
-export function AppTopBar({ expanded, onToggleSidebar, title, user, onLogout }: AppTopBarProps) {
+/**
+ * Barra superior. 48px, sin sombra y sin fondo propio: la línea hairline basta
+ * para separarla del contenido. Una sombra en una herramienta que se usa ocho
+ * horas al día es ruido que se paga en cada scroll.
+ *
+ * El título vive aquí y sólo aquí — las pantallas no repiten su nombre en un h1.
+ */
+export function AppTopBar({
+  expanded,
+  onToggleSidebar,
+  title,
+  user,
+  onLogout,
+  acciones,
+}: AppTopBarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 shadow-sm sm:px-6">
-      {/* Mobile Sidebar Trigger (Sheet) */}
+    <header className="hairline-b sticky top-0 z-30 flex h-12 shrink-0 items-center gap-3 bg-background px-3 sm:px-4">
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetTrigger className="md:hidden inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-9 w-9">
-          <Menu className="h-5 w-5" />
-          <span className="sr-only">Toggle navigation menu</span>
+        <SheetTrigger className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden">
+          <Menu className="size-4" />
+          <span className="sr-only">Abrir el menú</span>
         </SheetTrigger>
-        <SheetContent side="left" className="p-0 w-[260px]">
-          {/* We render a duplicate sidebar inside the sheet but force it expanded */}
-          <AppSidebar 
-            expanded={true} 
-            onToggle={() => setMobileOpen(false)} 
-            user={user} 
-            onLogout={onLogout} 
+        <SheetContent side="left" className="w-[216px] p-0">
+          <AppSidebar
+            expanded={true}
+            onToggle={() => setMobileOpen(false)}
+            user={user}
+            onLogout={onLogout}
           />
         </SheetContent>
       </Sheet>
 
-      {/* Desktop Sidebar Toggle */}
-      <Button 
-        variant="ghost" 
-        size="icon" 
+      <button
+        type="button"
         onClick={onToggleSidebar}
-        className="hidden md:flex text-muted-foreground hover:text-foreground"
+        aria-label={expanded ? "Colapsar el menú" : "Expandir el menú"}
+        className="hidden size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:inline-flex"
       >
-        {expanded ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
-        <span className="sr-only">Toggle sidebar</span>
-      </Button>
+        {expanded ? <PanelLeftClose className="size-4" /> : <PanelLeftOpen className="size-4" />}
+      </button>
 
-      {/* Page Title */}
-      <div className="flex-1">
-        <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
-      </div>
+      <h1 className="truncate text-[13px] font-semibold tracking-tight">{title}</h1>
 
-      {/* TopBar Actions (Notifications, etc) can go here */}
-      <div className="flex items-center gap-2">
-        {/* Placeholder for future actions */}
-      </div>
+      {acciones && <div className="ml-auto flex items-center gap-2">{acciones}</div>}
     </header>
   );
 }

@@ -6,20 +6,30 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MenuItem } from "./types";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SidebarMenuItemProps {
   item: MenuItem;
   expanded: boolean;
 }
 
+/**
+ * Elemento de navegación.
+ *
+ * El estado activo es un riel de 2px en el color de marca más un fondo apenas
+ * perceptible, no un bloque relleno: en una lista de diez elementos, un bloque
+ * de color compite con el contenido de la pantalla y es lo primero que delata
+ * una interfaz generada. El riel se lee igual de rápido y no grita.
+ */
 export function SidebarMenuItem({ item, expanded }: SidebarMenuItemProps) {
   const pathname = usePathname() || "";
   const Icon = item.icon;
-  
+
   const hasSubMenus = item.subMenus && item.subMenus.length > 0;
-  
-  const isActive = (item.href && pathname === item.href) || 
-                   (hasSubMenus && item.subMenus!.some(sub => pathname.startsWith(sub.href)));
+
+  const isActive =
+    (item.href && pathname === item.href) ||
+    (hasSubMenus && item.subMenus!.some((sub) => pathname.startsWith(sub.href)));
 
   const [isOpen, setIsOpen] = useState(isActive);
 
@@ -44,54 +54,88 @@ export function SidebarMenuItem({ item, expanded }: SidebarMenuItemProps) {
 
   const isComingSoon = item.comingSoon;
 
-  const content = (
+  // Un grupo con submenú abierto NO se rellena: el submenú desplegado ya dice
+  // dónde estás, y un bloque de color de 216px de ancho vuelve a ser lo primero
+  // que se ve en la pantalla — justo lo que se quitó del resto de la interfaz.
+  // El relleno queda sólo para la hoja activa, que es la que hay que localizar.
+  const activoConRelleno = isActive && !hasSubMenus;
+  const filaBase = cn(
+    "group flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[13px] transition-colors duration-100",
+    activoConRelleno && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
+    isActive && !activoConRelleno && "font-medium text-sidebar-foreground",
+    !isActive && "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+    isComingSoon && "cursor-not-allowed opacity-50 hover:bg-transparent"
+  );
+
+  const contenido = (
     <>
-      <Icon className={cn("h-5 w-5 shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
+      <span className="relative flex shrink-0 items-center">
+        {isActive && (
+          <span aria-hidden className="absolute -left-2 h-4 w-[2px] rounded-full bg-primary" />
+        )}
+        <Icon className="size-4" />
+      </span>
       {expanded && (
-        <span className="ml-3 flex-1 truncate transition-opacity duration-200 flex items-center justify-between">
-          {item.name}
+        <>
+          <span className="flex-1 truncate">{item.name}</span>
           {isComingSoon && (
-            <span className="text-[10px] uppercase tracking-wider bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+            <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               Pronto
             </span>
           )}
-        </span>
-      )}
-      {expanded && hasSubMenus && !isComingSoon && (
-        <div className="shrink-0 transition-transform duration-200 ml-2">
-          {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-        </div>
+          {hasSubMenus && !isComingSoon && (
+            <span className="shrink-0 text-muted-foreground">
+              {isOpen ? (
+                <ChevronDown className="size-3.5" />
+              ) : (
+                <ChevronRight className="size-3.5" />
+              )}
+            </span>
+          )}
+        </>
       )}
     </>
   );
 
+  const fila =
+    hasSubMenus || isComingSoon ? (
+      <div
+        onClick={toggleOpen}
+        role={isComingSoon ? undefined : "button"}
+        tabIndex={isComingSoon ? undefined : 0}
+        onKeyDown={(e) => {
+          if (!isComingSoon && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+          }
+        }}
+        className={cn(filaBase, !isComingSoon && "cursor-pointer")}
+      >
+        {contenido}
+      </div>
+    ) : (
+      <Link href={item.href || "#"} className={filaBase}>
+        {contenido}
+      </Link>
+    );
+
   return (
-    <div className={cn("mb-1", isComingSoon && "opacity-50 cursor-not-allowed")}>
-      {hasSubMenus || isComingSoon ? (
-        <div 
-          onClick={toggleOpen}
-          className={cn(
-            "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-            isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground",
-            !isComingSoon && "cursor-pointer hover:bg-accent hover:text-accent-foreground"
-          )}
-        >
-          {content}
-        </div>
+    <div>
+      {/* Colapsado no hay etiqueta: sin tooltip, el icono es una adivinanza. */}
+      {expanded ? (
+        fila
       ) : (
-        <Link 
-          href={item.href || "#"}
-          className={cn(
-            "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-            isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground"
-          )}
-        >
-          {content}
-        </Link>
+        <Tooltip>
+          <TooltipTrigger render={fila} />
+          <TooltipContent side="right" className="text-xs">
+            {item.name}
+            {isComingSoon && " · Pronto"}
+          </TooltipContent>
+        </Tooltip>
       )}
 
       {expanded && hasSubMenus && isOpen && !isComingSoon && (
-        <div className="mt-1 space-y-1 pl-10 pr-3">
+        <div className="mt-0.5 space-y-0.5 border-l border-sidebar-border pl-3 ml-[15px]">
           {item.subMenus!.map((sub, index) => {
             const isSubActive = pathname === sub.href;
             return (
@@ -99,13 +143,15 @@ export function SidebarMenuItem({ item, expanded }: SidebarMenuItemProps) {
                 key={index}
                 href={sub.href}
                 className={cn(
-                  "block rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-                  isSubActive ? "font-medium text-primary" : "text-muted-foreground"
+                  "block truncate rounded-md px-2 py-1 text-[12px] transition-colors duration-100",
+                  isSubActive
+                    ? "font-medium text-foreground"
+                    : "text-muted-foreground hover:text-sidebar-foreground"
                 )}
               >
                 {sub.name}
                 {sub.comingSoon && (
-                  <span className="ml-2 text-[9px] uppercase tracking-wider bg-muted text-muted-foreground px-1 py-0.5 rounded">
+                  <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                     Pronto
                   </span>
                 )}

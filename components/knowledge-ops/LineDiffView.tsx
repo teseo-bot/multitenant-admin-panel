@@ -22,8 +22,8 @@ export function LineDiffView({ oldText, newText }: LineDiffViewProps) {
   return (
     <div className="flex flex-col gap-2" role="group" aria-label="Diff lado a lado">
       <div className="text-xs text-muted-foreground">
-        <span className="text-green-700 dark:text-green-400">+{addedCount}</span>{" "}
-        <span className="text-red-700 dark:text-red-400">-{removedCount}</span>
+        <span className="text-chart-2 dark:text-chart-2">+{addedCount}</span>{" "}
+        <span className="text-destructive dark:text-destructive">-{removedCount}</span>
       </div>
       <div className="grid grid-cols-2 gap-2 overflow-x-auto rounded-md border font-mono text-xs">
         <div className="border-r">
@@ -39,7 +39,7 @@ export function LineDiffView({ oldText, newText }: LineDiffViewProps) {
                   tabIndex={0}
                   className={cn(
                     "flex gap-2 focus-visible:outline focus-visible:outline-ring",
-                    line.kind === "removed" && "bg-red-50 text-red-900 dark:bg-red-950/40 dark:text-red-300"
+                    line.kind === "removed" && "bg-destructive/10 text-destructive dark:bg-destructive/40 dark:text-destructive"
                   )}
                 >
                   <span className="w-8 shrink-0 select-none text-right text-muted-foreground">
@@ -64,7 +64,7 @@ export function LineDiffView({ oldText, newText }: LineDiffViewProps) {
                   tabIndex={0}
                   className={cn(
                     "flex gap-2 focus-visible:outline focus-visible:outline-ring",
-                    line.kind === "added" && "bg-green-50 text-green-900 dark:bg-green-950/40 dark:text-green-300"
+                    line.kind === "added" && "bg-chart-2/10 text-chart-2 dark:bg-chart-2/40 dark:text-chart-2"
                   )}
                 >
                   <span className="w-8 shrink-0 select-none text-right text-muted-foreground">

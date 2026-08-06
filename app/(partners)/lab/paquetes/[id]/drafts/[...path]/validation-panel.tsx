@@ -143,7 +143,7 @@ export function ValidationPanel({
   if (error && !report) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 border-l border-dashed p-4 text-sm text-muted-foreground">
-        <AlertTriangle className="h-5 w-5 text-yellow-600" />
+        <AlertTriangle className="h-5 w-5 text-primary" />
         <p className="font-medium text-xs">{error}</p>
         <Button
           variant="outline"
@@ -201,9 +201,9 @@ export function ValidationPanel({
             return (
               <div key={level} className="flex items-center gap-2 text-xs">
                 {hasErrors ? (
-                  <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                  <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
                 ) : (
-                  <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 text-chart-2 shrink-0" />
                 )}
                 <span className="text-muted-foreground">
                   {level.toUpperCase()}: {count}
@@ -252,9 +252,9 @@ export function ValidationPanel({
               >
                 <div className="flex items-start gap-2">
                   {finding.severity === "error" ? (
-                    <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                    <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
                   ) : (
-                    <AlertTriangle className="h-4 w-4 text-yellow-600 shrink-0 mt-0.5" />
+                    <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1">
                     <p className="font-medium text-foreground">
@@ -290,7 +290,7 @@ export function ValidationPanel({
 
       {sortedFindings.length === 0 && (
         <div className="flex items-center justify-center gap-2 py-4 text-muted-foreground">
-          <CheckCircle2 className="h-5 w-5 text-green-600" />
+          <CheckCircle2 className="h-5 w-5 text-chart-2" />
           <p className="text-xs font-medium">Sin issues</p>
         </div>
       )}

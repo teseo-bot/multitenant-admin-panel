@@ -38,7 +38,7 @@ export default function UserActivityPage({ params }: { params: { userId: string 
             <Skeleton className="h-10 w-full" />
           </div>
         ) : isError ? (
-          <div className="p-4 text-red-500">Failed to load activity.</div>
+          <div className="p-4 text-destructive">Failed to load activity.</div>
         ) : activity?.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">No activity recorded for this user.</div>
         ) : (

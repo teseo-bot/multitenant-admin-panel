@@ -19,9 +19,9 @@ const STATUS_LABEL: Record<PipelineStatus, string> = {
 };
 
 const STATUS_STYLES: Record<PipelineStatus, string> = {
-  ok: "bg-green-100 text-green-800 border-transparent dark:bg-green-950 dark:text-green-300",
-  partial: "bg-amber-100 text-amber-800 border-transparent dark:bg-amber-950 dark:text-amber-300",
-  error: "bg-red-100 text-red-800 border-transparent dark:bg-red-950 dark:text-red-300",
+  ok: "bg-chart-2/10 text-chart-2 border-transparent dark:bg-chart-2 dark:text-chart-2",
+  partial: "bg-primary/10 text-primary border-transparent dark:bg-primary dark:text-primary",
+  error: "bg-destructive/10 text-destructive border-transparent dark:bg-destructive dark:text-destructive",
 };
 
 export function PipelineStatusBadge({ status, className }: PipelineStatusBadgeProps) {

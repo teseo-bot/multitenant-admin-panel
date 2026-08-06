@@ -63,7 +63,7 @@ export function FinOpsDashboard() {
       <Card className="border-muted/50 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-purple-500" />
+            <TrendingUp className="w-5 h-5 text-muted-foreground" />
             Desglose de Costos por Modelo
           </CardTitle>
           <p className="text-sm text-muted-foreground">
