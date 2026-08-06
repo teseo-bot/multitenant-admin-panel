@@ -259,17 +259,35 @@ export function EsqueletoMetricas({ celdas = 4 }: { celdas?: number }) {
 export function Barra({
   valor,
   de,
+  tono = "neutro",
   className,
 }: {
   valor: number;
   de: number;
+  /** El color sólo si significa algo. Por defecto la barra es neutra: lo que
+   *  comunica es el largo, no el tono. */
+  tono?: "neutro" | "marca" | "ok" | "riesgo";
   className?: string;
 }) {
   const pct = de > 0 ? Math.min(100, Math.max(0, (valor / de) * 100)) : 0;
   return (
-    <span className={cn("relative block h-1 flex-1 overflow-hidden rounded-full bg-border", className)}>
+    <span
+      className={cn(
+        "relative block h-1 flex-1 overflow-hidden rounded-full bg-border",
+        className
+      )}
+    >
+      {/* El relleno tiene que separarse del carril: a `muted-foreground/60` la
+          barra neutra quedaba casi invisible sobre `border` y dejaba de decir
+          nada. Sin color de marca, pero visible. */}
       <span
-        className="absolute inset-y-0 left-0 rounded-full bg-primary transition-[width]"
+        className={cn(
+          "absolute inset-y-0 left-0 rounded-full transition-[width]",
+          tono === "neutro" && "bg-foreground/70",
+          tono === "marca" && "bg-primary",
+          tono === "ok" && "bg-chart-2",
+          tono === "riesgo" && "bg-destructive"
+        )}
         style={{ width: `${pct}%` }}
       />
     </span>
