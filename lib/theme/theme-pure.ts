@@ -63,24 +63,15 @@ export const normalizeColor = (color: string): string => {
   return color;
 };
 
-export const buildDarkDefaults = (primaryOklch: string) => {
-  const { c, h } = extractChromaHue(primaryOklch);
-  const tintC = c > 0.05 ? 0.01 : 0;
-  
-  return {
-    background:          `oklch(0.145 ${tintC} ${h})`,
-    foreground:          `oklch(0.985 0 0)`,
-    card:                `oklch(0.205 ${tintC} ${h})`,
-    cardForeground:      `oklch(0.985 0 0)`,
-    popover:             `oklch(0.205 ${tintC} ${h})`,
-    popoverForeground:   `oklch(0.985 0 0)`,
-    accent:              `oklch(0.269 ${tintC * 2} ${h})`,
-    accentForeground:    `oklch(0.985 0 0)`,
-    secondary:           `oklch(0.269 ${tintC * 1.5} ${h})`,
-    secondaryForeground: `oklch(0.985 0 0)`,
-    muted:               `oklch(0.269 ${tintC} ${h})`,
-    mutedForeground:     `oklch(0.708 0 0)`,
-    border:              `oklch(0.269 ${tintC} ${h})`,
-    input:               `oklch(0.269 ${tintC} ${h})`,
-  };
+/**
+ * Sube la luminosidad de un color de marca para que respire sobre fondo oscuro,
+ * conservando tono y croma. Un primario pensado para fondo claro se apaga en
+ * modo oscuro; esto lo compensa sin cambiar la marca.
+ */
+export const brightenForDark = (oklchColor: string): string => {
+  const l = oklchLightness(oklchColor);
+  if (l >= 0.68) return oklchColor;
+  const { c, h } = extractChromaHue(oklchColor);
+  const nueva = Math.min(0.78, l + 0.1);
+  return `oklch(${nueva.toFixed(3)} ${c} ${h})`;
 };

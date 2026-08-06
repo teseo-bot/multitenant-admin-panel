@@ -108,7 +108,7 @@ export const columns: ColumnDef<UserProfile>[] = [
               <Activity className="mr-2 h-4 w-4" /> View Activity
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuItem className="text-destructive">
               <Trash className="mr-2 h-4 w-4" /> Delete
             </DropdownMenuItem>
           </DropdownMenuContent>

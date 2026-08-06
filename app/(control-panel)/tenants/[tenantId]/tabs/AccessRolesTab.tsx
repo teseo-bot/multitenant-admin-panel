@@ -126,7 +126,7 @@ export function AccessRolesTab({ tenantId }: { tenantId: string }) {
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" title={m.status === "active" ? "Suspender" : "Reactivar"} onClick={() => suspendToggle(m)}>
-                        {m.status === "active" ? <Ban className="h-4 w-4 text-amber-500" /> : <CheckCircle2 className="h-4 w-4 text-green-600" />}
+                        {m.status === "active" ? <Ban className="h-4 w-4 text-primary" /> : <CheckCircle2 className="h-4 w-4 text-chart-2" />}
                       </Button>
                       <Button variant="ghost" size="icon" title="Eliminar" onClick={() => remove(m)}>
                         <Trash2 className="h-4 w-4 text-destructive" />

@@ -237,8 +237,8 @@ export default function KnowledgeOpsReviewPage() {
                         variant="outline"
                         className={
                           proposal.action === "create"
-                            ? "border-transparent bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
-                            : "border-transparent bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                            ? "border-transparent bg-chart-2/10 text-chart-2 dark:bg-chart-2 dark:text-chart-2"
+                            : "border-transparent bg-primary/10 text-primary dark:bg-primary dark:text-primary"
                         }
                       >
                         {proposal.action === "create" ? "Crear" : "Actualizar"}

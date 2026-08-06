@@ -107,7 +107,7 @@ function StatusBadge({ status }: { status: PartnerSourceRow["ingest_status"] }) 
       return <Badge variant="outline">Destilando…</Badge>;
     case "distilled":
       return (
-        <Badge className="bg-green-100 text-green-900 dark:bg-green-900/30 dark:text-green-100">
+        <Badge className="bg-chart-2/10 text-chart-2 dark:bg-chart-2/30 dark:text-chart-2">
           Destilada
         </Badge>
       );

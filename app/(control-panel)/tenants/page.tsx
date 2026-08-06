@@ -48,7 +48,7 @@ export default function TenantsPage() {
           <Skeleton className="h-[400px] w-full" />
         </div>
       ) : error ? (
-        <div className="text-red-500">{error}</div>
+        <div className="text-destructive">{error}</div>
       ) : (
         <div className="rounded-md border">
           <Table>
@@ -66,7 +66,7 @@ export default function TenantsPage() {
               {tenants.map((tenant) => (
                 <TableRow 
                   key={tenant.id} 
-                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="cursor-pointer hover:bg-muted dark:hover:bg-card"
                   onClick={() => router.push(`/tenants/${tenant.id}`)}
                 >
                   <TableCell className="font-medium text-xs">{tenant.id}</TableCell>

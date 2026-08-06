@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "npm run test:node && npm run test:vitest",
-    "test:node": "tsx --test '__tests__/middleware-host.test.ts' '__tests__/lib/knowledge-ops/**/*.test.ts' '__tests__/lib/kdb/**/*.test.ts' '__tests__/lib/partners/**/*.test.ts' 'lib/partners/**/*.test.ts' 'lib/mailer.test.ts' 'scripts/apply-gcp-migrations.test.ts'",
+    "test:node": "tsx --test '__tests__/middleware-host.test.ts' '__tests__/lib/knowledge-ops/**/*.test.ts' '__tests__/lib/kdb/**/*.test.ts' '__tests__/lib/partners/**/*.test.ts' 'lib/partners/**/*.test.ts' 'lib/mailer.test.ts' 'lib/theme/**/*.test.ts' 'scripts/apply-gcp-migrations.test.ts'",
     "test:vitest": "vitest run",
     "test:integration": "tsx --test '__tests__/api/**/*.test.ts'"
   },

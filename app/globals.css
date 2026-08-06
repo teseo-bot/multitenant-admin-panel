@@ -1,94 +1,163 @@
-@import "shadcn/tailwind.css";
+@import "tw-animate-css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
+/*
+ * micontexto — sistema de diseño.
+ *
+ * Tokens semánticos en oklch. Nunca colores literales en los componentes:
+ * siempre `bg-primary`, `text-muted-foreground`, `border-border`.
+ *
+ * `--primary` es el único token que cambia por cliente. El layout tiene que
+ * funcionar con cualquier valor: si una pantalla sólo se ve bien en un color,
+ * está mal. El resto de la paleta es neutra a propósito — la jerarquía la dan
+ * la tipografía y el espaciado, no cajas de color.
+ *
+ * Los overrides por tenant los inyecta <TenantThemeStyle /> en runtime, y sólo
+ * para lo que el tenant realmente configuró (ver lib/theme/theme-utils.ts).
+ * Lo que está aquí es el valor por defecto del producto.
+ */
 
 @layer base {
-  .theme {
-    --font-heading: var(--font-sans);
-    --font-sans: var(--font-sans);
-  }
   :root {
-   --background: oklch(1.0000 0 0);
-   --foreground: oklch(0.2816 0.0392 232.2341);
-   --card: oklch(1.0000 0 0);
-   --card-foreground: oklch(0.2816 0.0392 232.2341);
-   --popover: oklch(1.0000 0 0);
-   --popover-foreground: oklch(0.2816 0.0392 232.2341);
-   --primary: oklch(0.3447 0.0691 233.7107);
-   --primary-foreground: oklch(0.8692 0.0118 264.5044);
-   --secondary: oklch(0.6338 0.1828 36.9208);
-   --secondary-foreground: oklch(1.0000 0 0);
-   --muted: oklch(0.9686 0.0035 247.8590);
-   --muted-foreground: oklch(0.5564 0.0398 256.8166);
-   --accent: oklch(0.9568 0.0173 37.6644);
-   --accent-foreground: oklch(0.4277 0.1279 36.6768);
-   --destructive: oklch(0.6356 0.2082 25.3782);
-   --destructive-foreground: oklch(1.0000 0 0);
-   --border: oklch(0.9258 0.0132 255.0276);
-   --input: oklch(0.9258 0.0132 255.0276);
-   --ring: oklch(0.3447 0.0691 233.7107);
-   --chart-1: oklch(0.3447 0.0691 233.7107);
-   --chart-2: oklch(0.6338 0.1828 36.9208);
-   --chart-3: oklch(0.5289 0.0556 227.0572);
-   --chart-4: oklch(0.7108 0.0710 37.6167);
-   --chart-5: oklch(0.2816 0.0392 232.2341);
-   --sidebar: oklch(0.3447 0.0691 233.7107);
-   --sidebar-foreground: oklch(1.0000 0 0);
-   --sidebar-primary: oklch(0.6338 0.1828 36.9208);
-   --sidebar-primary-foreground: oklch(1.0000 0 0);
-   --sidebar-accent: oklch(0.4210 0.0821 233.2495);
-   --sidebar-accent-foreground: oklch(1.0000 0 0);
-   --sidebar-border: oklch(0.4210 0.0821 233.2495);
-   --sidebar-ring: oklch(0.6338 0.1828 36.9208);
-   --radius: 0.375rem;
+    --radius: 0.375rem;
+
+    --background: oklch(0.985 0.002 90);
+    --foreground: oklch(0.19 0.008 90);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.19 0.008 90);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.19 0.008 90);
+    --primary: oklch(0.62 0.168 46);
+    --primary-foreground: oklch(0.99 0.002 90);
+    --secondary: oklch(0.955 0.004 90);
+    --secondary-foreground: oklch(0.26 0.008 90);
+    --muted: oklch(0.955 0.004 90);
+    --muted-foreground: oklch(0.5 0.008 90);
+    --accent: oklch(0.94 0.005 90);
+    --accent-foreground: oklch(0.24 0.008 90);
+    --destructive: oklch(0.55 0.2 27);
+    --destructive-foreground: oklch(0.99 0.002 90);
+    --border: oklch(0.9 0.004 90);
+    --input: oklch(0.9 0.004 90);
+    --ring: oklch(0.62 0.168 46);
+
+    /* chart-2 es el "bien/ok" del sistema: verde sobrio, no semáforo. */
+    --chart-1: oklch(0.62 0.168 46);
+    --chart-2: oklch(0.52 0.09 155);
+    --chart-3: oklch(0.7 0.09 46);
+    --chart-4: oklch(0.42 0.02 240);
+    --chart-5: oklch(0.78 0.05 90);
+
+    --sidebar: oklch(0.97 0.003 90);
+    --sidebar-foreground: oklch(0.28 0.008 90);
+    --sidebar-primary: oklch(0.62 0.168 46);
+    --sidebar-primary-foreground: oklch(0.99 0.002 90);
+    --sidebar-accent: oklch(0.93 0.005 90);
+    --sidebar-accent-foreground: oklch(0.2 0.008 90);
+    --sidebar-border: oklch(0.9 0.004 90);
+    --sidebar-ring: oklch(0.62 0.168 46);
   }
 
   .dark {
-   --background: oklch(0.1992 0.0234 231.3256);
-   --foreground: oklch(0.8828 0.0027 286.3441);
-   --card: oklch(0.2235 0.0282 231.6530);
-   --card-foreground: oklch(0.9848 0 0);
-   --popover: oklch(0.2235 0.0282 231.6530);
-   --popover-foreground: oklch(0.9848 0 0);
-   --primary: oklch(0.5336 0.1496 37.0220);
-   --primary-foreground: oklch(0.8289 0.0011 197.1350);
-   --secondary: oklch(0.4304 0.0886 234.8204);
-   --secondary-foreground: oklch(0.7149 0.0169 266.2345);
-   --muted: oklch(0.3283 0.0317 230.6251);
-   --muted-foreground: oklch(0.7951 0.0241 256.7505);
-   --accent: oklch(0.6339 0.1822 37.1029);
-   --accent-foreground: oklch(0.8718 0.0543 37.5920);
-   --destructive: oklch(0.3901 0.1297 25.5736);
-   --destructive-foreground: oklch(1.0000 0 0);
-   --border: oklch(0.3283 0.0317 230.6251);
-   --input: oklch(0.3283 0.0317 230.6251);
-   --ring: oklch(0.6338 0.1828 36.9208);
-   --chart-1: oklch(0.6338 0.1828 36.9208);
-   --chart-2: oklch(0.5460 0.1147 235.6705);
-   --chart-3: oklch(0.7509 0.0750 37.6167);
-   --chart-4: oklch(0.7054 0.0695 226.8440);
-   --chart-5: oklch(0.5245 0.1611 36.4517);
-   --sidebar: oklch(0.1620 0.0195 229.1618);
-   --sidebar-foreground: oklch(0.9848 0 0);
-   --sidebar-primary: oklch(0.6338 0.1828 36.9208);
-   --sidebar-primary-foreground: oklch(1.0000 0 0);
-   --sidebar-accent: oklch(0.2751 0.0250 230.4599);
-   --sidebar-accent-foreground: oklch(0.9848 0 0);
-   --sidebar-border: oklch(0.2751 0.0250 230.4599);
-   --sidebar-ring: oklch(0.6338 0.1828 36.9208);
+    --background: oklch(0.165 0.006 90);
+    --foreground: oklch(0.94 0.004 90);
+    --card: oklch(0.196 0.006 90);
+    --card-foreground: oklch(0.94 0.004 90);
+    --popover: oklch(0.21 0.006 90);
+    --popover-foreground: oklch(0.94 0.004 90);
+    --primary: oklch(0.72 0.16 52);
+    --primary-foreground: oklch(0.17 0.02 52);
+    --secondary: oklch(0.245 0.006 90);
+    --secondary-foreground: oklch(0.93 0.004 90);
+    --muted: oklch(0.245 0.006 90);
+    --muted-foreground: oklch(0.66 0.007 90);
+    --accent: oklch(0.27 0.007 90);
+    --accent-foreground: oklch(0.95 0.004 90);
+    --destructive: oklch(0.62 0.19 25);
+    --destructive-foreground: oklch(0.98 0.004 90);
+    --border: oklch(1 0 0 / 9%);
+    --input: oklch(1 0 0 / 13%);
+    --ring: oklch(0.72 0.16 52);
+
+    --chart-1: oklch(0.72 0.16 52);
+    --chart-2: oklch(0.68 0.11 155);
+    --chart-3: oklch(0.82 0.09 60);
+    --chart-4: oklch(0.55 0.03 240);
+    --chart-5: oklch(0.6 0.015 90);
+
+    --sidebar: oklch(0.145 0.005 90);
+    --sidebar-foreground: oklch(0.78 0.006 90);
+    --sidebar-primary: oklch(0.72 0.16 52);
+    --sidebar-primary-foreground: oklch(0.17 0.02 52);
+    --sidebar-accent: oklch(0.235 0.006 90);
+    --sidebar-accent-foreground: oklch(0.95 0.004 90);
+    --sidebar-border: oklch(1 0 0 / 8%);
+    --sidebar-ring: oklch(0.72 0.16 52);
   }
 
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Todo dato duro (montos, conteos, horas, IDs) va en mono con cifras
+     tabulares: las columnas de números alinean y dejan de bailar al
+     actualizarse en vivo. */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "zero" 1;
+  }
+}
+
+@layer components {
+  /* Etiqueta de sección: microtipografía en mayúsculas con tracking amplio.
+     Sustituye a los encabezados de tarjeta — nombra la zona sin dibujar caja. */
+  .label-kicker {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+
+  /* Separador hairline: la forma por defecto de dividir zonas funcionales.
+     Un borde de 1px en lugar de una tarjeta con sombra. */
+  .hairline-b {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hairline-r {
+    border-right: 1px solid var(--border);
+  }
+
+  .hairline-t {
+    border-top: 1px solid var(--border);
+  }
+
+  /* Rejilla hairline: N celdas separadas por 1px de borde, sin tarjetas.
+     El patrón de banda de métricas. */
+  .grid-hairline {
+    display: grid;
+    gap: 1px;
+    background-color: var(--border);
+    overflow: hidden;
+  }
+
+  .grid-hairline > * {
+    background-color: var(--background);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
   }
 }

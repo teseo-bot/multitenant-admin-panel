@@ -196,7 +196,7 @@ export default function UsersPage() {
           <Skeleton className="h-[400px] w-full" />
         </div>
       ) : isError ? (
-        <div className="text-red-500">Error al cargar usuarios.</div>
+        <div className="text-destructive">Error al cargar usuarios.</div>
       ) : (
         <div className="rounded-md border w-full overflow-x-auto">
           <Table className="w-full min-w-full">
@@ -268,8 +268,8 @@ export default function UsersPage() {
                       onClick={() => suspendToggle(m)}
                     >
                       {m.status === "active"
-                        ? <Ban className="h-4 w-4 text-amber-500" />
-                        : <CheckCircle2 className="h-4 w-4 text-green-600" />}
+                        ? <Ban className="h-4 w-4 text-primary" />
+                        : <CheckCircle2 className="h-4 w-4 text-chart-2" />}
                     </Button>
                     <Button
                       variant="ghost" size="icon"

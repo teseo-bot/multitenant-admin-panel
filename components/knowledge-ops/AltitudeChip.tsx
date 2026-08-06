@@ -13,9 +13,9 @@ export interface AltitudeChipProps {
 const ALTITUDE_STYLES: Record<number, string> = {
   1: "bg-muted text-muted-foreground border-transparent",
   2: "bg-muted text-muted-foreground border-transparent",
-  3: "bg-blue-100 text-blue-800 border-transparent dark:bg-blue-950 dark:text-blue-300",
-  4: "bg-amber-100 text-amber-800 border-transparent dark:bg-amber-950 dark:text-amber-300",
-  5: "bg-red-100 text-red-800 border-transparent dark:bg-red-950 dark:text-red-300",
+  3: "bg-primary/10 text-primary border-transparent dark:bg-primary dark:text-primary",
+  4: "bg-primary/10 text-primary border-transparent dark:bg-primary dark:text-primary",
+  5: "bg-destructive/10 text-destructive border-transparent dark:bg-destructive dark:text-destructive",
 };
 
 export function AltitudeChip({ altitude, className }: AltitudeChipProps) {

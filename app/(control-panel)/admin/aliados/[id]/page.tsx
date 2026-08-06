@@ -156,7 +156,7 @@ export default function AliadoDetallePage({ params }: { params: { id: string } }
   if (partnerQuery.isError || !partnerQuery.data) {
     return (
       <div className="flex-1 p-8 pt-6">
-        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-red-800">
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
           <p className="text-sm">{(partnerQuery.error as Error)?.message ?? "Aliado no encontrado"}</p>
           <Link href="/admin/aliados" className="mt-2 inline-block text-sm underline">
             Volver a aliados
@@ -408,7 +408,7 @@ function MembersCard({
         {query.isLoading ? (
           <Skeleton className="h-[160px] w-full" />
         ) : query.isError ? (
-          <p className="text-sm text-red-600">{(query.error as Error).message}</p>
+          <p className="text-sm text-destructive">{(query.error as Error).message}</p>
         ) : (
           <div className="rounded-md border">
             <Table>

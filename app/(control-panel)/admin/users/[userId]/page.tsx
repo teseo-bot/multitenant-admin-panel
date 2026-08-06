@@ -41,7 +41,7 @@ export default function EditUserPage({ params }: { params: { userId: string } })
   }
 
   if (isError || !user) {
-    return <div className="p-8 text-red-500">Failed to load user.</div>
+    return <div className="p-8 text-destructive">Failed to load user.</div>
   }
 
   return (

@@ -4,20 +4,22 @@ import {
 } from "lucide-react";
 import { MenuItem } from "./types";
 
+// En español y sin jerga interna: «Global Admin» y «Users» describen el rol que
+// escribió la pantalla, no la tarea de quien la usa.
 export const crmMenuItems: MenuItem[] = [
   {
-    name: "Global Admin",
+    name: "Administración",
     icon: Command,
     subMenus: [
-      { name: "Users", href: "/admin/users" },
-      { name: "Tenants", href: "/tenants" },
+      { name: "Usuarios", href: "/admin/users" },
+      { name: "Cuentas", href: "/tenants" },
       { name: "Auditoría", href: "/admin/audit" },
       { name: "Aliados", href: "/admin/aliados" },
-      { name: "Catálogo aliados", href: "/admin/catalogo-aliados" },
+      { name: "Catálogo de aliados", href: "/admin/catalogo-aliados" },
     ],
   },
   {
-    name: "Uso y Facturación",
+    name: "Consumo y facturación",
     icon: CircleDollarSign,
     href: "/finops",
   }

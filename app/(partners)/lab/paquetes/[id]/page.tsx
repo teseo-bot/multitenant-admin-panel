@@ -124,7 +124,7 @@ function PiiBadge({ pii }: { pii: string }) {
     return <Badge variant="outline">PII redactada</Badge>;
   }
   return (
-    <Badge className="bg-green-100 text-green-900 dark:bg-green-900/30 dark:text-green-100">
+    <Badge className="bg-chart-2/10 text-chart-2 dark:bg-chart-2/30 dark:text-chart-2">
       Limpio
     </Badge>
   );
@@ -133,13 +133,13 @@ function PiiBadge({ pii }: { pii: string }) {
 function SemaforoIcon({ status }: { status: ValidationStatus }) {
   switch (status) {
     case "green":
-      return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+      return <CheckCircle2 className="h-5 w-5 text-chart-2" />;
     case "amber":
-      return <AlertCircle className="h-5 w-5 text-amber-500" />;
+      return <AlertCircle className="h-5 w-5 text-primary" />;
     case "red":
-      return <Circle className="h-5 w-5 text-red-500 fill-red-500" />;
+      return <Circle className="h-5 w-5 text-destructive fill-destructive" />;
     case "gray":
-      return <Circle className="h-5 w-5 text-gray-400 fill-gray-400" />;
+      return <Circle className="h-5 w-5 text-muted-foreground fill-muted-foreground" />;
   }
 }
 
@@ -471,13 +471,13 @@ export default function PackageDetailPage() {
                     <TableCell>
                       {state?.loading ? (
                         <div className="flex items-center gap-2">
-                          <Circle className="h-4 w-4 text-gray-400 animate-pulse" />
+                          <Circle className="h-4 w-4 text-muted-foreground animate-pulse" />
                           <span className="text-xs text-muted-foreground">validando...</span>
                         </div>
                       ) : state?.error ? (
                         <Tooltip>
                           <TooltipTrigger>
-                            <Circle className="h-5 w-5 text-gray-400 fill-gray-400 cursor-help" />
+                            <Circle className="h-5 w-5 text-muted-foreground fill-muted-foreground cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent>{state.error}</TooltipContent>
                         </Tooltip>

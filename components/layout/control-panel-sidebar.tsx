@@ -157,7 +157,7 @@ export function ControlPanelSidebar({ user }: { user?: any }) {
                   <Palette className="mr-2 h-4 w-4" />
                   <span>Apariencia</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer text-red-500 focus:text-red-500" render={<Link href="/settings/security" />}>
+                <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" render={<Link href="/settings/security" />}>
                   <Shield className="mr-2 h-4 w-4" />
                   <span>Seguridad</span>
                 </DropdownMenuItem>

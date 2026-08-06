@@ -108,7 +108,7 @@ export default function AliadosPage() {
           <Skeleton className="h-[400px] w-full" />
         </div>
       ) : error ? (
-        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-red-800">
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
           <p className="text-sm">{(error as Error).message}</p>
           <button
             onClick={() => refetch()}
@@ -319,7 +319,7 @@ function AltaAliadoDialog({
             </div>
 
             {formError && (
-              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
                 {formError}
               </div>
             )}
