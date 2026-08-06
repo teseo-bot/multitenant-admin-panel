@@ -1,41 +1,35 @@
 # Marca: dónde va cada archivo
 
-Deja los archivos con estos nombres exactos y la aplicación los toma sola —
-no hay que tocar código. Si alguno falta, `components/brand/logotipo.tsx`
-compone un respaldo con la tipografía de la aplicación.
+Estos son los nombres que la aplicación busca. Si alguno falta,
+`components/brand/logotipo.tsx` compone un respaldo con la tipografía de la
+aplicación en vez de romperse.
 
-| Archivo | Dónde va | Para qué |
+| Archivo | Dónde | Para qué |
 |---|---|---|
-| `public/micontexto.svg` | aquí | Logotipo completo: cabecera del sidebar y pantalla de acceso |
-| `public/micontexto-oscuro.svg` | aquí | Sólo si el SVG de arriba lleva el texto en negro fijo (ver abajo) |
-| `public/micontexto-marca.svg` | aquí | Sólo el cuadro naranja con «mi». Sidebar colapsado |
-| `app/icon.svg` | un nivel arriba, en `app/` | Favicon. Next lo cablea solo por el nombre |
-| `app/apple-icon.png` | un nivel arriba, en `app/` | Icono al guardar en pantalla de inicio (180×180) |
+| `public/micontexto.svg` | aquí | Logotipo completo: sidebar y pantalla de acceso |
+| `public/micontexto_obscuro.svg` | aquí | El mismo, con el texto en blanco. Se usa en modo oscuro |
+| `public/micontexto_marca.svg` | aquí | Sólo el cuadro naranja con «mi». Sidebar colapsado |
+| `app/icon.svg` | en `app/`, no en `public/` | Favicon. Es una copia de `micontexto_marca.svg` |
+| `app/apple-icon.png` | en `app/`, no en `public/` | Icono de iOS al guardar en pantalla de inicio |
 
-## Modo oscuro: mejor un solo archivo
+Los dos últimos van en `app/`: Next.js los reconoce ahí por el nombre y genera
+las etiquetas `<link>` solo. En `public/` no hacen nada.
 
-Dentro de `micontexto.svg`, el relleno de la palabra «contexto» debe ser
-`currentColor` en vez de `#000000`. Así el mismo archivo sirve para claro y
-oscuro y no hace falta `micontexto-oscuro.svg`.
+## Por qué el favicon es sólo el cuadro
 
-```svg
-<!-- en vez de esto -->
-<path d="..." fill="#000000"/>
-<!-- esto -->
-<path d="..." fill="currentColor"/>
-```
+A 16×16 el logotipo completo es una mancha ilegible. El cuadro naranja con «mi»
+se distingue en la pestaña.
 
-El cuadro naranja y el punto se quedan con su `#FF9A00` fijo: son la marca y no
-deben cambiar con el tema.
+Se quitó el `app/favicon.ico` que traía el proyecto — era el genérico de Next y
+competía con `icon.svg`. Si hace falta un `.ico` para navegadores viejos, se
+puede volver a añadir, pero exportado de la marca, no el de plantilla.
 
-Si prefieres no editar el SVG, deja también `micontexto-oscuro.svg` con el texto
-en blanco y el componente elige según el tema.
+## Modo oscuro
 
-## Favicon
+Hoy funciona con dos archivos: el claro lleva el texto en `#000000` y el oscuro
+en `#ffffff`. El componente elige según el tema.
 
-`app/icon.svg` conviene que sea **sólo el cuadro con «mi»**: a 16×16 el
-logotipo completo es una mancha ilegible.
-
-Next.js App Router reconoce estos nombres por convención — basta el archivo, sin
-`<link>` ni metadata. Si dejas `app/icon.svg`, borra el `app/favicon.ico` que
-está hoy para que no compitan.
+Alternativa a futuro, si se quiere un solo archivo: cambiar el relleno del texto
+a `currentColor` dentro de `micontexto.svg` y borrar el `_obscuro`. El cuadro
+naranja y el punto se quedan con su `#ff9900` fijo — son la marca y no deben
+cambiar con el tema.

@@ -36,12 +36,13 @@ import { cn } from "@/lib/utils";
  * WCAG 1.4.3 excluye explícitamente los logotipos. Una marca no se «arregla».
  */
 
-// #FF9A00 — el naranja de la marca (docs/plan-teseo-branding.md).
-export const NARANJA_MARCA = "#FF9A00";
+// #ff9900 — el naranja de la marca, tomado de public/micontexto.svg.
+// (docs/plan-teseo-branding.md decía #FF9A00; manda el archivo.)
+export const NARANJA_MARCA = "#ff9900";
 
 const ARCHIVO_LOGOTIPO = "/micontexto.svg";
-const ARCHIVO_LOGOTIPO_OSCURO = "/micontexto-oscuro.svg";
-const ARCHIVO_MARCA = "/micontexto-marca.svg";
+const ARCHIVO_LOGOTIPO_OSCURO = "/micontexto_obscuro.svg";
+const ARCHIVO_MARCA = "/micontexto_marca.svg";
 
 /**
  * ¿Está el archivo oficial en `public/`?
