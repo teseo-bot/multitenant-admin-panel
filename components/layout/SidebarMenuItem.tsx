@@ -54,11 +54,16 @@ export function SidebarMenuItem({ item, expanded }: SidebarMenuItemProps) {
 
   const isComingSoon = item.comingSoon;
 
+  // Un grupo con submenú abierto NO se rellena: el submenú desplegado ya dice
+  // dónde estás, y un bloque de color de 216px de ancho vuelve a ser lo primero
+  // que se ve en la pantalla — justo lo que se quitó del resto de la interfaz.
+  // El relleno queda sólo para la hoja activa, que es la que hay que localizar.
+  const activoConRelleno = isActive && !hasSubMenus;
   const filaBase = cn(
     "group flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[13px] transition-colors duration-100",
-    isActive
-      ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-      : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+    activoConRelleno && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
+    isActive && !activoConRelleno && "font-medium text-sidebar-foreground",
+    !isActive && "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
     isComingSoon && "cursor-not-allowed opacity-50 hover:bg-transparent"
   );
 

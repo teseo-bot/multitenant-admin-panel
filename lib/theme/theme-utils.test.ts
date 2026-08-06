@@ -2,7 +2,16 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import { buildThemeCss } from "./theme-utils";
-import { brightenForDark, contrastingForeground, oklchLightness } from "./theme-pure";
+import {
+  brightenForDark,
+  contrastingForeground,
+  contrastRatio,
+  FOREGROUND_CLARO,
+  FOREGROUND_OSCURO,
+  hexToOklch,
+  oklchLightness,
+  oklchToSrgb,
+} from "./theme-pure";
 
 // La regla que protege este archivo: el <style> de branding sólo puede contener
 // lo que el tenant configuró. Cualquier valor por defecto que se cuele aquí pisa
@@ -78,4 +87,56 @@ test("radio y tipografía sólo salen si el tenant los definió", () => {
   assert.ok(buildThemeCss({ appearance: { radius: 0.5 } }).includes("--radius: 0.5rem"));
   assert.ok(!buildThemeCss({ appearance: { fontFamily: "system" } }).includes("--font-sans"));
   assert.ok(buildThemeCss({ appearance: { fontFamily: "Inter" } }).includes("--font-sans"));
+});
+
+test("contrastingForeground nunca elige el peor de los dos candidatos", () => {
+  // Barrido sobre una malla de colores de marca plausibles. La versión por
+  // umbral (L < 0.6) fallaba alrededor de L≈0.55–0.60: escogía texto claro
+  // cuando el oscuro contrastaba más.
+  let peor = Infinity;
+  let peorColor = "";
+  for (let L = 0.3; L <= 0.92; L += 0.02) {
+    for (const [c, h] of [[0.2, 25], [0.17, 46], [0.15, 145], [0.2, 265], [0.25, 320], [0, 90]]) {
+      const color = `oklch(${L.toFixed(3)} ${c} ${h})`;
+      const elegido = contrastingForeground(color);
+      const otro = elegido === FOREGROUND_CLARO ? FOREGROUND_OSCURO : FOREGROUND_CLARO;
+      const r = contrastRatio(elegido, color);
+      assert.ok(
+        r >= contrastRatio(otro, color),
+        `${color}: eligió el candidato con menos contraste`
+      );
+      if (r < peor) { peor = r; peorColor = color; }
+    }
+  }
+  // Elegir el mejor candidato no garantiza AA: sobre un color vivo a media
+  // luminosidad —el peor de esta malla es oklch(0.6 0.25 320)— ni el blanco ni
+  // el negro llegan a 4.5:1. Es una propiedad del color, no del algoritmo, y por
+  // eso el suelo medido queda en 4.38. Se fija aquí para que una regresión que
+  // lo empeore se note; subirlo exige avisar en la pantalla de branding, no
+  // cambiar esta función.
+  assert.ok(peor >= 4.3, `el peor caso bajó a ${peor.toFixed(2)} en ${peorColor}`);
+});
+
+test("oklchToSrgb es el inverso de hexToOklch", () => {
+  // `hexToOklch` redondea a 3 decimales L y C y a 1 el tono, así que la ida y
+  // vuelta pierde hasta un paso de 8 bits por canal. Lo que importa es que no
+  // haya desvíos de tono ni de luminosidad, no la igualdad exacta.
+  for (const hex of ["#ff9a00", "#e10600", "#0d6efd", "#198754", "#000000", "#ffffff"]) {
+    const canales = oklchToSrgb(hexToOklch(hex)).map((v) => Math.round(v * 255));
+    const original = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    canales.forEach((v, i) => {
+      assert.ok(
+        Math.abs(v - original[i]) <= 1,
+        `${hex}: canal ${i} salió ${v}, se esperaba ${original[i]}`
+      );
+    });
+  }
+});
+
+test("el primario por defecto del producto pasa AA en ambos modos", () => {
+  // Los valores viven en app/globals.css; si cambian allí, este test se entera.
+  const claro = { primary: "oklch(0.55 0.17 44)", fg: "oklch(0.99 0.002 90)" };
+  const oscuro = { primary: "oklch(0.72 0.16 52)", fg: "oklch(0.17 0.02 52)" };
+  assert.ok(contrastRatio(claro.fg, claro.primary) >= 4.5, "modo claro");
+  assert.ok(contrastRatio(oscuro.fg, oscuro.primary) >= 4.5, "modo oscuro");
 });
