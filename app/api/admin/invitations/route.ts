@@ -27,6 +27,7 @@ export async function POST(request: Request) {
       email: body.email,
       role: body.role as Role,
       invitedBy: auth.user.id,
+      invitedByLabel: auth.user.email,
       fullName: body.fullName,
     });
     return NextResponse.json({ success: true, ...result }, { status: 201 });
