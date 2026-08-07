@@ -46,11 +46,27 @@ async function resolveTenantLoginUrl(tenantId: string, esDelTenant: boolean): Pr
   return domain.startsWith("http") ? domain : `https://${domain}`;
 }
 
+/** Escapa lo que se interpola en el HTML del correo. El rol viene de una lista blanca; el
+ *  nombre de quien invita viene del IdP y no se da por seguro. */
+function escaparHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export async function inviteAndProvision(input: {
   tenantId: string;
   email: string;
   role: Role;
   invitedBy: string;
+  /**
+   * Cómo se NOMBRA a quien invita dentro del correo. `invitedBy` es un uid de Identity Platform
+   * y nunca debe enseñarse: a quien recibe la invitación no le dice nada. Si falta, el correo no
+   * nombra a nadie en vez de caer al uid.
+   */
+  invitedByLabel?: string | null;
   fullName?: string;
 }): Promise<InviteResult> {
   // 1) Identidad (Auth primero): createUser o reutiliza si ya existe.
@@ -128,6 +144,11 @@ export async function inviteAndProvision(input: {
   }
 
   // Envía correo de invitación (P-G2).
+  const quienInvita = input.invitedByLabel?.trim();
+  const lineaInvitacion = quienInvita
+    ? `Has sido invitado por <strong>${escaparHtml(quienInvita)}</strong> a unirte con el rol <strong>${input.role}</strong>.`
+    : `Has sido invitado a unirte con el rol <strong>${input.role}</strong>.`;
+
   const htmlBody = `
 <!DOCTYPE html>
 <html>
@@ -137,7 +158,7 @@ export async function inviteAndProvision(input: {
 </head>
 <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
   <p>¡Hola!</p>
-  <p>Has sido invitado por <strong>${input.invitedBy}</strong> a unirte con el rol <strong>${input.role}</strong>.</p>
+  <p>${lineaInvitacion}</p>
   <p>
     <a href="${passwordResetLink}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;">
       Crear contraseña
