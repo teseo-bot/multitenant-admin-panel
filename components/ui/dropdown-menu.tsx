@@ -53,7 +53,34 @@ function DropdownMenuGroup({ ...props }: MenuPrimitive.Group.Props) {
   return <MenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />
 }
 
+const estilosEtiqueta =
+  "px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7"
+
+// `Menu.GroupLabel` de Base UI EXIGE un `Menu.Group` por encima: sin él lanza el error #31
+// durante el render y, al no haber error boundary, se lleva por delante el árbol entero (página
+// en blanco). En Radix `DropdownMenu.Label` funcionaba suelto, y de ahí venía usarlo como
+// cabecera del menú. Se separan los dos casos para que el de cabecera no pueda reventar:
+//
+//   DropdownMenuLabel       cabecera del menú, sin contexto — se usa en cualquier sitio.
+//   DropdownMenuGroupLabel  etiqueta accesible de un grupo — SÓLO dentro de DropdownMenuGroup.
 function DropdownMenuLabel({
+  className,
+  inset,
+  ...props
+}: React.ComponentProps<"div"> & {
+  inset?: boolean
+}) {
+  return (
+    <div
+      data-slot="dropdown-menu-label"
+      data-inset={inset}
+      className={cn(estilosEtiqueta, className)}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuGroupLabel({
   className,
   inset,
   ...props
@@ -62,12 +89,9 @@ function DropdownMenuLabel({
 }) {
   return (
     <MenuPrimitive.GroupLabel
-      data-slot="dropdown-menu-label"
+      data-slot="dropdown-menu-group-label"
       data-inset={inset}
-      className={cn(
-        "px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7",
-        className
-      )}
+      className={cn(estilosEtiqueta, className)}
       {...props}
     />
   )
@@ -256,6 +280,7 @@ export {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuLabel,
+  DropdownMenuGroupLabel,
   DropdownMenuItem,
   DropdownMenuCheckboxItem,
   DropdownMenuRadioGroup,

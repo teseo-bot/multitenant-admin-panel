@@ -9,7 +9,6 @@ import { MoreHorizontal, Activity, Edit, Trash } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -98,9 +97,7 @@ export const columns: ColumnDef<UserProfile>[] = [
             <MoreHorizontal className="h-4 w-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            </DropdownMenuGroup>
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem render={<Link href={`/admin/users/${user.id}`} />}>
               <Edit className="mr-2 h-4 w-4" /> Edit User
             </DropdownMenuItem>
