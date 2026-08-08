@@ -95,14 +95,40 @@ function SelectContent({
   )
 }
 
+const estilosEtiquetaSelect = "px-1.5 py-1 text-xs text-muted-foreground"
+
+// Misma clase de fallo que cerró el PR del menú de usuario (Base UI error #31, 2026-08-07):
+// `Select.GroupLabel` EXIGE un `Select.Group` por encima y, sin él, lanza durante el render; al no
+// haber error boundary se lleva el árbol entero por delante (página en blanco). En Radix
+// `Select.Label` funcionaba suelto, así que el idiom portado invita justo al uso que revienta.
+//
+// Aquí no había bug: hoy no lo consume nadie en ninguno de los tres paneles. Se separa ANTES de
+// que alguien lo use, porque el día que se use fuera de un `Select.Group` es el mismo blanco con
+// otro código, y esa vez cuesta una sesión de producción otra vez.
+//
+//   SelectLabel       rótulo suelto, sin contexto — se usa en cualquier sitio.
+//   SelectGroupLabel  etiqueta accesible de un grupo — SÓLO dentro de SelectGroup.
 function SelectLabel({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="select-label"
+      className={cn(estilosEtiquetaSelect, className)}
+      {...props}
+    />
+  )
+}
+
+function SelectGroupLabel({
   className,
   ...props
 }: SelectPrimitive.GroupLabel.Props) {
   return (
     <SelectPrimitive.GroupLabel
-      data-slot="select-label"
-      className={cn("px-1.5 py-1 text-xs text-muted-foreground", className)}
+      data-slot="select-group-label"
+      className={cn(estilosEtiquetaSelect, className)}
       {...props}
     />
   )
@@ -193,6 +219,7 @@ export {
   SelectGroup,
   SelectItem,
   SelectLabel,
+  SelectGroupLabel,
   SelectScrollDownButton,
   SelectScrollUpButton,
   SelectSeparator,
