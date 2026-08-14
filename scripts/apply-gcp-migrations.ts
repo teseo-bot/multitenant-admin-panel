@@ -22,6 +22,9 @@
 // partner_citation_stats para el metering de citas de conocimiento certificado [INV-5.4].
 // La 012 añade hocflit_blocks; la 013 (ADR-215 WU-1.1) tenant_brands; ambas aplicadas el
 // 2026-08-05. La 014 (ADR-212 D1) añade el mapa tenant → Identity Platform, SIN APLICAR aún.
+// La 015 crea `tenant_agents` en el plano de control, con el módulo como eje: la pestaña
+// «Agentes» del panel escribía en una tabla que sólo existe en el Hot-Tier y su `catch` pintaba
+// el `42P01` como «no hay agentes». SIN APLICAR aún.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -44,6 +47,7 @@ export const MIGRATION_FILES = [
   '012_hocflit_blocks.sql',
   '013_tenant_brands.sql',
   '014_tenant_idp_map.sql',
+  '015_tenant_agents.sql',
 ] as const;
 
 // Códigos de error Postgres que indican "esto ya existía" (re-run seguro).
@@ -135,6 +139,12 @@ async function checkAlreadyApplied(client: Client, file: string): Promise<string
         `SELECT to_regclass('public.partner_citation_stats') IS NOT NULL AS exists`
       );
       return r.rows[0]?.exists ? 'tabla public.partner_citation_stats ya existe' : null;
+    }
+    if (file === '015_tenant_agents.sql') {
+      const r = await client.query(
+        `SELECT to_regclass('public.tenant_agents') IS NOT NULL AS exists`
+      );
+      return r.rows[0]?.exists ? 'tabla public.tenant_agents ya existe' : null;
     }
   } catch {
     // Si el pre-chequeo falla (ej. tabla aún no existe), no es "ya aplicada".
