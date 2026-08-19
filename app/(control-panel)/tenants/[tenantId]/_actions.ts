@@ -1,6 +1,7 @@
 "use server";
 
 import { pool } from "@/lib/db";
+import { normalizarWhitelist } from "@/lib/tenants/telegram-whitelist";
 import { revalidatePath } from "next/cache";
 import { OperationFormValues, ClientFormValues, SuspensionFormValues } from "./schemas";
 
@@ -35,9 +36,7 @@ export async function updateTenantOperationSettings(
   try {
     const statusStr = values.status ? 'active' : 'suspended';
     
-    const telegramGroupIdsArray = values.telegramWhitelistedGroupIds 
-      ? values.telegramWhitelistedGroupIds.split(',').map(id => id.trim()).filter(Boolean)
-      : [];
+    const telegramGroupIdsArray = normalizarWhitelist(values.telegramWhitelistedGroupIds);
 
     // Vacío se guarda como NULL, no como ''. `tenants` tiene UNIQUE (domain): dos tenants
     // en aprovisionamiento con domain = '' chocarían entre sí y el segundo fallaría con un

@@ -34,12 +34,10 @@ export function OperationTab({ tenantId, initialData }: OperationTabProps) {
   }, [initialData, form]);
 
   async function onSubmit(values: any) {
-    const telegramGroupIdsArray = (values.telegramWhitelistedGroupIds ?? '').split(',').map((id: string) => id.trim()).filter(Boolean);
-
-    const response = await updateTenantOperationSettings(tenantId, {
-      ...values,
-      telegramWhitelistedGroupIds: telegramGroupIdsArray,
-    });
+    // La whitelist se manda TAL CUAL, como texto. Aquí se convertía a array y la server
+    // action volvía a hacerle `.split(',')` encima: «split is not a function». La
+    // conversión vive en un solo sitio, lib/tenants/telegram-whitelist.ts.
+    const response = await updateTenantOperationSettings(tenantId, values);
     if (response.success) {
       toast.success('Operation settings updated successfully!');
     } else {
