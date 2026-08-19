@@ -39,15 +39,21 @@ export async function updateTenantOperationSettings(
       ? values.telegramWhitelistedGroupIds.split(',').map(id => id.trim()).filter(Boolean)
       : [];
 
+    // Vacío se guarda como NULL, no como ''. `tenants` tiene UNIQUE (domain): dos tenants
+    // en aprovisionamiento con domain = '' chocarían entre sí y el segundo fallaría con un
+    // 23505 que no dice nada del formulario. En Postgres los NULL no colisionan en un UNIQUE.
+    // Además es lo que `invitations.ts` comprueba (`if (!domain)`) para caer al panel de control.
+    const oNull = (v?: string) => (v && v.trim() !== "" ? v.trim() : null);
+
     await pool.query(
       `UPDATE tenants 
        SET name = $1, domain = $2, orchestrator_url = $3, telegram_bot_token = $4, telegram_whitelisted_group_ids = $5, status = $6
        WHERE id = $7`,
       [
         values.name,
-        values.domain,
-        values.orchestratorUrl,
-        values.telegramBotToken,
+        oNull(values.domain),
+        oNull(values.orchestratorUrl),
+        oNull(values.telegramBotToken),
         JSON.stringify(telegramGroupIdsArray),
         statusStr,
         tenantId
