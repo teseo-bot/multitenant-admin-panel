@@ -1,10 +1,38 @@
 import { z } from "zod";
 
+// Un tenant recién dado de alta NO tiene dominio, ni orquestador desplegado, ni bot de
+// Telegram: los tres llegan después del aprovisionamiento. Las tres columnas son `text`
+// nullable en `migrations-gcp/001_control_base.sql`, y `lib/services/invitations.ts` ya
+// contempla el hueco por escrito («Sin dominio no se inventa uno»). Sólo este formulario
+// los exigía, y eso dejaba un tenant en aprovisionamiento imposible de guardar.
+const estaVacio = (v?: string) => !v || v.trim() === "";
+
+// `domain` es el HOST del tenant, no una URL: invitations.ts hace
+// `domain.startsWith("http") ? domain : \`https://${domain}\``, o sea que le añade el
+// esquema él mismo. Exigir `.url()` obligaba a escribir algo que el consumidor no espera.
+// Se aceptan las dos formas porque puede haber filas viejas con esquema.
+const HOST_O_URL = /^(?:https?:\/\/)?[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+\/?$/i;
+
 export const operationFormSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  domain: z.string().url({ message: "Domain must be a valid URL." }),
-  orchestratorUrl: z.string().url({ message: "Orchestrator URL must be a valid URL." }),
-  telegramBotToken: z.string().min(10, { message: "Telegram Bot Token must be at least 10 characters." }),
+  name: z.string().min(2, { message: "El nombre necesita al menos 2 caracteres." }),
+  domain: z
+    .string()
+    .optional()
+    .refine((v) => estaVacio(v) || HOST_O_URL.test(v!.trim()), {
+      message: "El dominio es el host del tenant, p. ej. comerseg.fleetco.mx. Déjalo vacío si todavía no tiene.",
+    }),
+  orchestratorUrl: z
+    .string()
+    .optional()
+    .refine((v) => estaVacio(v) || z.string().url().safeParse(v!.trim()).success, {
+      message: "Debe ser una URL completa (https://…), o quedar vacío mientras no haya orquestador.",
+    }),
+  telegramBotToken: z
+    .string()
+    .optional()
+    .refine((v) => estaVacio(v) || v!.trim().length >= 10, {
+      message: "El token del bot tiene al menos 10 caracteres, o déjalo vacío.",
+    }),
   telegramWhitelistedGroupIds: z.string().optional(),
   status: z.boolean(),
 });

@@ -34,7 +34,7 @@ export function OperationTab({ tenantId, initialData }: OperationTabProps) {
   }, [initialData, form]);
 
   async function onSubmit(values: any) {
-    const telegramGroupIdsArray = values.telegramWhitelistedGroupIds.split(',').map((id: string) => id.trim()).filter(Boolean);
+    const telegramGroupIdsArray = (values.telegramWhitelistedGroupIds ?? '').split(',').map((id: string) => id.trim()).filter(Boolean);
 
     const response = await updateTenantOperationSettings(tenantId, {
       ...values,
@@ -74,7 +74,7 @@ export function OperationTab({ tenantId, initialData }: OperationTabProps) {
             <FormItem>
               <FormLabel>Tenant Domain</FormLabel>
               <FormControl>
-                <Input placeholder="https://tenant-a.com" {...field} />
+                <Input placeholder="comerseg.fleetco.mx" {...field} />
               </FormControl>
               <FormDescription>
                 The primary domain for this tenant.
@@ -94,7 +94,8 @@ export function OperationTab({ tenantId, initialData }: OperationTabProps) {
                 <Input placeholder="https://orchestrator.tenant-a.com/api" {...field} />
               </FormControl>
               <FormDescription>
-                The URL for the tenant&apos;s orchestration service.
+                Sólo informativo: hoy no lo lee ningún servicio. Déjalo vacío mientras el
+                tenant no tenga orquestador desplegado.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -111,7 +112,9 @@ export function OperationTab({ tenantId, initialData }: OperationTabProps) {
                 <Input type="password" placeholder="xxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxx" {...field} />
               </FormControl>
               <FormDescription>
-                Token for the Telegram bot associated with this tenant.
+                Sólo informativo. El token que el orquestador usa de verdad vive en
+                <code> tenant_channels.credentials.tg_bot_token</code>; pegarlo aquí no
+                conecta ningún bot.
               </FormDescription>
               <FormMessage />
             </FormItem>
