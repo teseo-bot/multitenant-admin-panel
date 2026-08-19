@@ -100,41 +100,16 @@ export function OperationTab({ tenantId, initialData }: OperationTabProps) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="telegramBotToken"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Telegram Bot Token</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="xxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxx" {...field} />
-              </FormControl>
-              <FormDescription>
-                Sólo informativo. El token que el orquestador usa de verdad vive en
-                <code> tenant_channels.credentials.tg_bot_token</code>; pegarlo aquí no
-                conecta ningún bot.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Aquí vivían «Telegram Bot Token» y «Telegram Whitelisted Group IDs».
+            Se retiran: sus columnas NO EXISTEN en el plano de control (las añade
+            `migrations/002`, el directorio que no corre nadie), así que el guardado
+            fallaba con 42703 en cuanto la validación dejaba pasar el formulario.
 
-        <FormField
-          control={form.control}
-          name="telegramWhitelistedGroupIds"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Telegram Whitelisted Group IDs</FormLabel>
-              <FormControl>
-                <Input placeholder="12345,67890" {...field} />
-              </FormControl>
-              <FormDescription>
-                Comma-separated Telegram group IDs that are whitelisted.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            Y no se reponen con una migración a propósito: el modelo real de canales
+            ya existe y es mejor — `tenant_channels` guarda una fila por canal, con
+            marca (ADR-215) y activo/inactivo, y es de donde el orquestador saca el
+            token de verdad. Dar de alta un tenant es identidad; configurar sus
+            canales es otra cosa. */}
 
         <Button type="submit">Save Changes</Button>
       </form>
