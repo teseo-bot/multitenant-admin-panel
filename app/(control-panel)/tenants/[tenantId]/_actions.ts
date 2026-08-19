@@ -1,13 +1,25 @@
 "use server";
 
 import { pool } from "@/lib/db";
-import { normalizarWhitelist } from "@/lib/tenants/telegram-whitelist";
 import { revalidatePath } from "next/cache";
 import { OperationFormValues, ClientFormValues, SuspensionFormValues } from "./schemas";
 
+// Esta consulta pedía CINCO columnas que no existen en el plano de control:
+// telegram_bot_token, telegram_whitelisted_group_ids, suspension_status,
+// suspension_reason y suspension_message. Las añade `migrations/001` y `002` — el
+// directorio que NO corre nadie (el runner sólo aplica `migrations-gcp/`, con lista
+// explícita). Ver la nota de las dos carpetas de migraciones.
+//
+// El efecto era doble y silencioso: el SELECT fallaba con 42703, el `catch` lo
+// convertía en `null`, y el formulario se pintaba VACÍO para un tenant que sí tenía
+// nombre y estado. Parecía «faltan datos por capturar» cuando era «la consulta no
+// corre». Séptima vez del patrón en este programa.
 export async function getTenantOperationSettings(tenantId: string) {
   try {
-    const { rows } = await pool.query(`SELECT name, domain, orchestrator_url, telegram_bot_token, telegram_whitelisted_group_ids, status, suspension_status, suspension_reason, suspension_message FROM tenants WHERE id = $1`, [tenantId]);
+    const { rows } = await pool.query(
+      `SELECT name, domain, orchestrator_url, status FROM tenants WHERE id = $1`,
+      [tenantId]
+    );
     if (rows.length === 0) {
       return null;
     }
@@ -16,14 +28,16 @@ export async function getTenantOperationSettings(tenantId: string) {
       name: tenant.name || "",
       domain: tenant.domain || "",
       orchestratorUrl: tenant.orchestrator_url || "",
-      telegramBotToken: tenant.telegram_bot_token || "",
-      telegramWhitelistedGroupIds: Array.isArray(tenant.telegram_whitelisted_group_ids) ? tenant.telegram_whitelisted_group_ids.join(', ') : "",
+      telegramWhitelistedGroupIds: "",
       status: tenant.status === 'active',
-      suspensionStatus: tenant.suspension_status || "active",
-      suspensionReason: tenant.suspension_reason || "",
-      suspensionMessage: tenant.suspension_message || "",
+      suspensionStatus: "active" as const,
+      suspensionReason: "",
+      suspensionMessage: "",
     };
   } catch (error: any) {
+    // `null` aquí significa «no se pudo leer», y arriba se dibuja como formulario
+    // vacío. Que el error quede en el log es lo único que distingue un tenant sin
+    // datos de una consulta rota: no borrar este console.error.
     console.error("Error fetching tenant operation settings:", error);
     return null;
   }
@@ -36,8 +50,6 @@ export async function updateTenantOperationSettings(
   try {
     const statusStr = values.status ? 'active' : 'suspended';
     
-    const telegramGroupIdsArray = normalizarWhitelist(values.telegramWhitelistedGroupIds);
-
     // Vacío se guarda como NULL, no como ''. `tenants` tiene UNIQUE (domain): dos tenants
     // en aprovisionamiento con domain = '' chocarían entre sí y el segundo fallaría con un
     // 23505 que no dice nada del formulario. En Postgres los NULL no colisionan en un UNIQUE.
@@ -46,14 +58,12 @@ export async function updateTenantOperationSettings(
 
     await pool.query(
       `UPDATE tenants 
-       SET name = $1, domain = $2, orchestrator_url = $3, telegram_bot_token = $4, telegram_whitelisted_group_ids = $5, status = $6
-       WHERE id = $7`,
+       SET name = $1, domain = $2, orchestrator_url = $3, status = $4
+       WHERE id = $5`,
       [
         values.name,
         oNull(values.domain),
         oNull(values.orchestratorUrl),
-        oNull(values.telegramBotToken),
-        JSON.stringify(telegramGroupIdsArray),
         statusStr,
         tenantId
       ]
