@@ -8,7 +8,6 @@
 import { randomUUID } from "crypto";
 import { pool } from "@/lib/db";
 import { logger } from "@/lib/logger";
-import { adminAuth } from "@/lib/gcp-auth/admin";
 import { authForTenantProject } from "@/lib/tenants/tenant-idp";
 import { sendMail } from "@/lib/mailer";
 import type { Role } from "@/lib/services/membership";
@@ -44,6 +43,39 @@ async function resolveTenantLoginUrl(tenantId: string, esDelTenant: boolean): Pr
     return fallback;
   }
   return domain.startsWith("http") ? domain : `https://${domain}`;
+}
+
+/**
+ * Un enlace de acción de Firebase SIN `apiKey` es indistinguible de uno bueno a simple vista,
+ * llega perfectamente al buzón y sólo muere al abrirlo, con un mensaje que no menciona ni la
+ * clave ni el proyecto: «The selected page mode is invalid».
+ *
+ * Pasó con tenant2 el 2026-08-19. Medido entonces: Identity Toolkit devolvía el `oobLink` con
+ * `apiKey=` vacío, nuestro código lo incrustaba tal cual en el correo y `sendMail` reportaba
+ * éxito. Tres capas diciendo que todo fue bien sobre un enlace que no podía funcionar — el
+ * mismo patrón de las tools que mienten en `success`.
+ *
+ * Por eso se comprueba ANTES de enviar. Y falla en seco a propósito: un alta que falla se ve y
+ * se reintenta; un enlace muerto en el buzón de alguien que acaba de ser invitado no se ve —
+ * se interpreta como que el producto no funciona.
+ */
+function exigirEnlaceUtilizable(link: string, contexto: Record<string, unknown>): void {
+  let apiKey: string | null = null;
+  try {
+    apiKey = new URL(link).searchParams.get("apiKey");
+  } catch {
+    throw new Error(`password_reset_link_malformado: Identity Platform devolvió algo que no es una URL`);
+  }
+  if (!apiKey) {
+    logger.error("invitations.passwordResetLink.sinApiKey", contexto);
+    throw new Error(
+      "password_reset_link_sin_apikey: Identity Platform emitió el enlace sin apiKey. " +
+        "Revisar `client.apiKey` en la config de GCIP del proyecto del tenant " +
+        "(GET https://identitytoolkit.googleapis.com/admin/v2/projects/{proyecto}/config) " +
+        "y que exista una browser API key con identitytoolkit.googleapis.com permitido. " +
+        "No se envía el correo: el enlace no podría usarse."
+    );
+  }
 }
 
 /** Escapa lo que se interpola en el HTML del correo. El rol viene de una lista blanca; el
@@ -126,6 +158,10 @@ export async function inviteAndProvision(input: {
     passwordResetLink = await tenantAuth.generatePasswordResetLink(input.email, {
       url: continueUrl,
     });
+    // Dentro del `try` a propósito: así un enlace inservible dispara la MISMA compensación que
+    // un fallo al generarlo (borrar la identidad recién creada). Fuera, dejaría al usuario
+    // creado sin forma de estrenar contraseña.
+    exigirEnlaceUtilizable(passwordResetLink, { email: input.email, tenantId: input.tenantId, idpProjectId });
   } catch (err) {
     logger.error("invitations.generatePasswordResetLink.failed", {
       error: String(err),
@@ -307,10 +343,18 @@ export async function resendInvitation(invitationId: string, actor: string): Pro
   if (!inv) throw new Error("Invitación no encontrada");
 
   // Generar nuevo link de password reset y reenviar correo.
-  const continueUrl = `${process.env.APP_URL || 'http://localhost:3000'}/auth/login`;
-  const passwordResetLink = await adminAuth().generatePasswordResetLink(inv.email, {
+  //
+  // ⛔ Esto usaba `adminAuth()` + `APP_URL`, es decir el IdP y el dominio DE CONTROL, para un
+  // usuario que vive en el IdP del tenant. Es exactamente el bug que ADR-212 D1 arregló en
+  // `inviteAndProvision` —los tokens de Firebase son POR PROYECTO— y que aquí se quedó atrás:
+  // reenviar la invitación de un tenant migrado buscaba la identidad donde no está. Se resuelve
+  // igual que allí, con el mismo puente, para que las dos rutas no puedan volver a divergir.
+  const { auth: tenantAuth, esDelTenant, idpProjectId } = await authForTenantProject(inv.tenant_id);
+  const continueUrl = `${await resolveTenantLoginUrl(inv.tenant_id, esDelTenant)}/auth/login`;
+  const passwordResetLink = await tenantAuth.generatePasswordResetLink(inv.email, {
     url: continueUrl,
   });
+  exigirEnlaceUtilizable(passwordResetLink, { email: inv.email, tenantId: inv.tenant_id, idpProjectId });
 
   const htmlBody = `
 <!DOCTYPE html>
