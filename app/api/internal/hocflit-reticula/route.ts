@@ -24,6 +24,7 @@ import {
   normalizarVolumen,
   type HocflitBlockRow,
 } from "@/lib/kdb/reticula";
+import { construirEjeMarca, type EjeAlcance, type TenantBrandRow } from "@/lib/kdb/alcance";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,33 @@ export async function GET(request: NextRequest) {
     logger.warn("api.internal.hocflit_reticula.tabla_vacia", {});
   }
 
+  // ADR-220 D-220.5 — el eje de alcance del tenant. Va en la MISMA respuesta que la
+  // retícula porque es la misma pantalla y la misma consulta al mismo pool: si el plano de
+  // control no responde, la página ya se cae arriba y no hay un modo de fallo nuevo.
+  //
+  // Tres estados y no dos, igual que el volumen: `null` con `alcance_error` es «no se pudo
+  // leer el catálogo» y `null` a secas es «este tenant no declara ejes». Pintarlos igual
+  // haría que un fallo de lectura se leyera como una decisión de configuración, y el efecto
+  // sería subir sin acotar creyendo que no había nada que acotar.
+  let alcance: EjeAlcance | null = null;
+  let alcanceError: string | null = null;
+
+  if (tenantId) {
+    try {
+      const { rows } = await pool.query<TenantBrandRow>(
+        `SELECT slug, display_name
+           FROM tenant_brands
+          WHERE tenant_id = $1 AND is_active = true
+          ORDER BY display_name`,
+        [tenantId]
+      );
+      alcance = construirEjeMarca(rows);
+    } catch (err) {
+      logger.error("api.internal.hocflit_reticula.alcance_error", { error: String(err) });
+      alcanceError = "no se pudo leer el catálogo de alcance del tenant";
+    }
+  }
+
   let volumen: Record<string, number> | null = null;
   let volumenError: string | null = null;
 
@@ -82,6 +110,8 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     grupos,
+    alcance,
+    alcance_error: alcanceError,
     volumen,
     volumen_error: volumenError,
     // D-218.5: quien dibuje esto para un cliente debe rotular que la geometría es nuestra.
