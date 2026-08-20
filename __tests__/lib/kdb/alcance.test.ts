@@ -5,7 +5,11 @@
 
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import { construirEjeMarca, type TenantBrandRow } from "../../../lib/kdb/alcance";
+import {
+  construirEjeMarca,
+  construirEjeProyecto,
+  type TenantBrandRow,
+} from "../../../lib/kdb/alcance";
 
 const FLEETCO: TenantBrandRow = { slug: "fleetco", display_name: "Fleetco" };
 const CARGALO: TenantBrandRow = { slug: "cargalo", display_name: "Cargalo" };
@@ -62,6 +66,54 @@ describe("construirEjeMarca", () => {
     assert.deepStrictEqual(
       eje?.opciones.map((o) => o.slug),
       ["Marca_Rara", "cargalo"]
+    );
+  });
+});
+
+const ACME: TenantBrandRow = { slug: "acme-2026", display_name: "ACME 2026" };
+const BETA: TenantBrandRow = { slug: "beta-retail", display_name: "Beta Retail" };
+
+describe("construirEjeProyecto", () => {
+  it("con UN solo proyecto YA hay eje — al revés que la marca", () => {
+    // Con una marca, «compartido» y «sólo esa marca» alcanzan al mismo agente. Con un solo
+    // cliente NO es así: hay que separar su material de la metodología común.
+    const eje = construirEjeProyecto([ACME]);
+    assert.ok(eje);
+    assert.strictEqual(eje.clave, "proyecto");
+    assert.deepStrictEqual(eje.opciones.map((o) => o.slug), ["acme-2026"]);
+  });
+
+  it("el vacío NO es el default (D-220.2)", () => {
+    // Es la decisión de fondo del ADR. Si esto fuera `true`, el aislamiento por proyecto
+    // quedaría opt-in y el que se olvida publicaría a todos los clientes.
+    assert.strictEqual(construirEjeProyecto([ACME, BETA])?.compartido.es_default, false);
+  });
+
+  it("y sigue significando «base del tenant», no «nadie»", () => {
+    // Mismo predicado que la marca, a propósito: lo contrario dejaría inaccesible todo lo
+    // cargado antes de que existieran los proyectos.
+    const eje = construirEjeProyecto([ACME]);
+    assert.match(eje!.compartido.descripcion, /todos los agentes del tenant/i);
+  });
+
+  it("sin proyectos no hay eje", () => {
+    assert.strictEqual(construirEjeProyecto([]), null);
+  });
+
+  it("no inventa slugs: los que salen son los del registro", () => {
+    // El panel valida la carga contra estos slugs. Uno derivado aquí haría que la ingesta
+    // rechazara con 400 un valor que el propio selector acaba de ofrecer.
+    const eje = construirEjeProyecto([{ slug: "Proy_Raro", display_name: "Proyecto Raro" }]);
+    assert.deepStrictEqual(eje?.opciones.map((o) => o.slug), ["Proy_Raro"]);
+  });
+
+  it("marca y proyecto son ejes DISTINTOS y se distinguen por `clave`", () => {
+    // De esta clave depende por qué campo viaja la selección al ingerir. Si los dos ejes
+    // dijeran lo mismo, el proyecto montaría la columna de marca — la conflación que D-220.1
+    // prohíbe, y que haría que el predicado correcto dependiera del tenant.
+    assert.notStrictEqual(
+      construirEjeProyecto([ACME])?.clave,
+      construirEjeMarca([FLEETCO, CARGALO])?.clave
     );
   });
 });

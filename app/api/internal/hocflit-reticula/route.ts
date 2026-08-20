@@ -24,7 +24,12 @@ import {
   normalizarVolumen,
   type HocflitBlockRow,
 } from "@/lib/kdb/reticula";
-import { construirEjeMarca, type EjeAlcance, type TenantBrandRow } from "@/lib/kdb/alcance";
+import {
+  construirEjeMarca,
+  construirEjeProyecto,
+  type EjeAlcance,
+  type TenantBrandRow,
+} from "@/lib/kdb/alcance";
 
 export const dynamic = "force-dynamic";
 
@@ -70,14 +75,49 @@ export async function GET(request: NextRequest) {
 
   if (tenantId) {
     try {
-      const { rows } = await pool.query<TenantBrandRow>(
+      // Los dos catálogos en un viaje. `to_regclass` guarda la lectura de `tenant_projects`
+      // porque la 016 no la aplica ningún CD: sin la guarda, este endpoint —del que depende
+      // TODA la pantalla de conocimiento— daría 500 en cualquier entorno sin migrar.
+      const { rows: marcas } = await pool.query<TenantBrandRow>(
         `SELECT slug, display_name
            FROM tenant_brands
           WHERE tenant_id = $1 AND is_active = true
           ORDER BY display_name`,
         [tenantId]
       );
-      alcance = construirEjeMarca(rows);
+
+      let proyectos: TenantBrandRow[] = [];
+      const { rows: existe } = await pool.query<{ hay: string | null }>(
+        `SELECT to_regclass('public.tenant_projects') AS hay`
+      );
+      if (existe[0]?.hay) {
+        const res = await pool.query<TenantBrandRow>(
+          `SELECT slug, display_name
+             FROM tenant_projects
+            WHERE tenant_id = $1 AND is_active = true
+            ORDER BY display_name`,
+          [tenantId]
+        );
+        proyectos = res.rows;
+      }
+
+      const ejeProyecto = construirEjeProyecto(proyectos);
+      const ejeMarca = construirEjeMarca(marcas);
+
+      // ⚠️ UN TENANT CON LOS DOS EJES NO SE SIRVE A MEDIAS. La superficie de carga dibuja UN
+      // paso de alcance, así que elegir uno en silencio haría desaparecer el otro selector —y
+      // con él, la posibilidad de acotar por ese eje— sin que nadie se entere. Que un tenant
+      // pueda tener marca Y proyecto es explícito en D-220.1, así que este caso llegará; lo que
+      // no puede es llegar callado. Se sirve como error, que el panel ya pinta en tono de aviso.
+      if (ejeProyecto && ejeMarca) {
+        alcance = null;
+        alcanceError =
+          "este tenant declara marca Y proyecto, y la superficie de carga sólo dibuja un eje";
+        logger.warn("api.internal.hocflit_reticula.dos_ejes", { tenantId });
+      } else {
+        // El proyecto gana cuando existe: es el eje más restrictivo de los dos.
+        alcance = ejeProyecto ?? ejeMarca;
+      }
     } catch (err) {
       logger.error("api.internal.hocflit_reticula.alcance_error", { error: String(err) });
       alcanceError = "no se pudo leer el catálogo de alcance del tenant";
