@@ -48,6 +48,7 @@ export const MIGRATION_FILES = [
   '013_tenant_brands.sql',
   '014_tenant_idp_map.sql',
   '015_tenant_agents.sql',
+  '016_tenant_projects.sql',
 ] as const;
 
 // Códigos de error Postgres que indican "esto ya existía" (re-run seguro).

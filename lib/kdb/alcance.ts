@@ -12,7 +12,7 @@
 // orquestador para resolver marca por canal. No hay tabla nueva ni migración: esta es la
 // mitad reversible de la decisión (D-220.8).
 
-/** Fila de `tenant_brands` (migrations-gcp/013_tenant_brands.sql). */
+/** Fila de `tenant_brands` (013) o de `tenant_projects` (016): misma forma, mismo uso. */
 export interface TenantBrandRow {
   slug: string;
   display_name: string;
@@ -25,8 +25,13 @@ export interface OpcionAlcance {
 }
 
 export interface EjeAlcance {
-  /** Qué eje es. El panel lo usa para decidir por qué campo viaja al ingerir. */
-  clave: 'marca';
+  /**
+   * Qué eje es. El panel lo usa para decidir POR QUÉ CAMPO viaja la selección al ingerir:
+   * `marca` → `brands` → columna `brand_slugs`; `proyecto` → `projects` → `project_slugs`.
+   * Dejar que el proyecto montara el campo de marca es justo la conflación que D-220.1
+   * prohíbe, y por eso el campo se elige por esta clave y no por «lo que haya».
+   */
+  clave: 'marca' | 'proyecto';
   /** Rótulo del paso en la superficie de carga. */
   rotulo: string;
   /**
@@ -72,6 +77,42 @@ export function construirEjeMarca(marcas: readonly TenantBrandRow[]): EjeAlcance
       slug: m.slug,
       label: `Solo ${m.display_name}`,
       descripcion: `Sólo el agente de ${m.display_name} podrá citarlo.`,
+    })),
+  };
+}
+
+/**
+ * Construye el eje de PROYECTO a partir de los proyectos ACTIVOS del tenant.
+ *
+ * Tres diferencias con la marca, y las tres importan:
+ *
+ * 1. **Basta UNO.** Con marcas, una sola no ofrece decisión: «compartido» y «sólo esa marca»
+ *    alcanzan al mismo agente. Con proyectos no es así — un tenant con un solo cliente ya
+ *    necesita separar el material de ese cliente de la metodología común.
+ *
+ * 2. **`es_default: false`** (D-220.2). El vacío sigue significando «base del tenant» y sigue
+ *    siendo el mismo predicado, pero deja de ser el valor inicial: el panel no preselecciona
+ *    nada y bloquea la carga hasta que el usuario elija. Con marcas, equivocarse cuesta
+ *    relevancia; con proyectos, confidencialidad entre clientes que compiten.
+ *
+ * 3. **La copia nombra a quién alcanza**, no cómo se llama la columna.
+ */
+export function construirEjeProyecto(proyectos: readonly TenantBrandRow[]): EjeAlcance | null {
+  if (proyectos.length === 0) return null;
+
+  return {
+    clave: 'proyecto',
+    rotulo: 'Proyecto',
+    compartido: {
+      label: 'Base del tenant',
+      descripcion:
+        'Lo verán todos los agentes del tenant, en cualquier proyecto. Metodología, guías de tono, políticas.',
+      es_default: false,
+    },
+    opciones: proyectos.map((p) => ({
+      slug: p.slug,
+      label: `Solo ${p.display_name}`,
+      descripcion: `Sólo los agentes de ${p.display_name} podrán citarlo.`,
     })),
   };
 }
