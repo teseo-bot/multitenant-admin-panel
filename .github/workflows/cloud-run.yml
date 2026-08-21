@@ -18,6 +18,32 @@ on:
       - main
   workflow_dispatch:
 
+# ─── UN DESPLIEGUE A LA VEZ CONTRA ESTE SERVICIO ────────────────────────────────────
+# Sin esto, dos merges seguidos a `main` disparan dos runs que compiten por el mismo
+# servicio de Cloud Run, y la revisión que acaba sirviendo es la del run que TERMINA
+# último — no la del commit más nuevo. Ocurrió en el orquestador el 2026-08-20, medido
+# contra Cloud Run: merges a las 23:00:58 y 23:01:07 —NUEVE segundos— y tres revisiones en
+# cinco minutos. Quedó sirviendo la correcta sólo porque la del código viejo estuvo lista
+# 11 s antes que la intermedia; con el orden invertido, producción se habría quedado con el
+# código anterior sin un solo run en rojo. Este repo tiene la misma forma de CD, y además es
+# el PLANO DE CONTROL: lo que aquí sirva código viejo se nota en los tres paneles.
+#
+# `cancel-in-progress: false` = ENCOLAR, nunca cancelar. Cortar un deploy a media promoción
+# puede dejar la revisión a medias; esperar sólo cuesta minutos. Y encolar NO deja atrás el
+# commit nuevo: GitHub mantiene UN único run pendiente por grupo y el más reciente desplaza
+# al que esperaba ⇒ el último commit sigue ganando, ahora por construcción y no por suerte.
+#
+# 🔴 El grupo va LITERAL, no `${{ env.SERVICE_NAME }}`. El contexto `env` NO está disponible
+# en `concurrency` — ni a nivel de workflow (sólo `github`, `inputs`, `vars`) ni a nivel de
+# job. Una referencia a `env` aquí no falla: se expande a cadena VACÍA, y todos los
+# workflows del repo caen en el mismo grupo. Sería el bug contrario, y silencioso. El
+# proyecto va en el nombre por la misma razón: hoy este repo despliega un solo servicio,
+# pero `tenant-admin-panel` y `context-kdb-compiler` ya despliegan el MISMO nombre de
+# servicio a dos proyectos distintos desde un solo repo.
+concurrency:
+  group: deploy-multitenant-admin-panel-micontexto-control
+  cancel-in-progress: false
+
 env:
   PROJECT_ID: micontexto-control
   PROJECT_NUMBER: '1025015138700'
