@@ -9,21 +9,23 @@
 // consumida por tenant-admin-panel/app/api/aliados/route.ts con CONTROL_PLANE_URL + M2M_API_KEY).
 // Añadir CONTROL_DB_URL al panel del tenant reintroduciría el acoplamiento que ADR-206 cerró.
 //
-// Dos orígenes distintos y con destinos de fallo distintos:
-//   - taxonomía y geometría → `hocflit_blocks` en el plano de control (pool). Si falla, 500:
-//     sin retícula no hay página.
-//   - volumen por sistema → `okf_concepts` en el Cold-Tier (withTenant, RLS por tenant). Si
-//     falla, `volumen: null` y 200: la retícula se dibuja igual, sin cifras.
+// Sirve taxonomía, geometría y el eje de alcance del tenant, todo desde el plano de
+// control (pool). Si falla, 500: sin retícula no hay página.
+//
+// NO sirve volumen, y la ausencia es la decisión. Hasta el 2026-08-31 contaba
+// `okf_concepts` del Cold-Tier: 0 filas para todos los tenants —la capa destilada nunca ha
+// producido un concepto— mientras tenant1 tenía 3 documentos cargados y la retícula pintaba
+// sus siete columnas como «vacío». Justo lo que D-218.7 existe para impedir.
+//
+// El corpus real vive en `kdb.documents` del hot-tier DE CADA TENANT (ADR-210 D-210.2), y
+// este plano no tiene —ni debe tener— conexión a esos hot-tiers: el reparto correcto es
+// taxonomía desde aquí por S2S y volumen local, que es lo que hace ahora
+// tenant-admin-panel/app/api/knowledge/reticula. Añadir aquí una credencial por tenant
+// para contar sería reintroducir el acoplamiento que ADR-206 y ADR-210 cerraron.
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import { logger } from "@/lib/logger";
-import { withTenant } from "@/lib/kdb/pool";
-import { HOCFLIT_SYSTEMS } from "@/lib/kdb/schemas";
-import {
-  construirReticula,
-  normalizarVolumen,
-  type HocflitBlockRow,
-} from "@/lib/kdb/reticula";
+import { construirReticula, type HocflitBlockRow } from "@/lib/kdb/reticula";
 import {
   construirEjeMarca,
   construirEjeProyecto,
@@ -40,8 +42,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  // tenant_id es OPCIONAL: la taxonomía es global y el volumen es lo único por tenant.
-  // Sin tenant_id se sirve la retícula sin cifras, que es un uso legítimo (catálogo).
+  // tenant_id es OPCIONAL: la taxonomía es global y el eje de alcance es lo único por
+  // tenant. Sin tenant_id se sirve la retícula a secas, que es un uso legítimo (catálogo).
   const tenantId = new URL(request.url).searchParams.get("tenant_id");
 
   let grupos;
@@ -66,10 +68,10 @@ export async function GET(request: NextRequest) {
   // retícula porque es la misma pantalla y la misma consulta al mismo pool: si el plano de
   // control no responde, la página ya se cae arriba y no hay un modo de fallo nuevo.
   //
-  // Tres estados y no dos, igual que el volumen: `null` con `alcance_error` es «no se pudo
-  // leer el catálogo» y `null` a secas es «este tenant no declara ejes». Pintarlos igual
-  // haría que un fallo de lectura se leyera como una decisión de configuración, y el efecto
-  // sería subir sin acotar creyendo que no había nada que acotar.
+  // Tres estados y no dos: `null` con `alcance_error` es «no se pudo leer el catálogo» y
+  // `null` a secas es «este tenant no declara ejes». Pintarlos igual haría que un fallo de
+  // lectura se leyera como una decisión de configuración, y el efecto sería subir sin
+  // acotar creyendo que no había nada que acotar.
   let alcance: EjeAlcance | null = null;
   let alcanceError: string | null = null;
 
@@ -124,36 +126,14 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  let volumen: Record<string, number> | null = null;
-  let volumenError: string | null = null;
-
-  if (!tenantId) {
-    volumenError = "sin tenant_id: la retícula se sirve sin volumen";
-  } else {
-    try {
-      const rows = await withTenant(tenantId, async (client) => {
-        const res = await client.query<{ system_slug: string | null; total: number }>(
-          `SELECT system_slug, COUNT(*)::int AS total
-             FROM okf_concepts
-            GROUP BY system_slug`
-        );
-        return res.rows;
-      });
-      volumen = normalizarVolumen(rows, HOCFLIT_SYSTEMS);
-    } catch (err) {
-      // Degradación deliberada: `volumen: null` NUNCA se convierte en ceros. Un 0 dibujado
-      // afirma «este sistema está vacío», y eso es justo lo que D-218.7 usa para medir.
-      logger.error("api.internal.hocflit_reticula.cold_tier_error", { error: String(err) });
-      volumenError = "no se pudo contar el conocimiento por sistema";
-    }
-  }
-
+  // Sin `volumen` ni `volumen_error`: los cuenta el panel del tenant contra su propio
+  // corpus. Omitirlos es seguro en cualquier orden de despliegue —la matriz lee
+  // `volumen?.[slug] ?? null` y una clave ausente se dibuja «sin dato», nunca 0—, así que
+  // un panel viejo contra este plano nuevo enseña un hueco honesto, no una cifra falsa.
   return NextResponse.json({
     grupos,
     alcance,
     alcance_error: alcanceError,
-    volumen,
-    volumen_error: volumenError,
     // D-218.5: quien dibuje esto para un cliente debe rotular que la geometría es nuestra.
     // Viaja en la respuesta para que la condición no dependa de que alguien recuerde el ADR.
     geometria_es_interpretacion_propia: true,
