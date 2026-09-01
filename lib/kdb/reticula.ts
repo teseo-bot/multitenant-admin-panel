@@ -107,28 +107,6 @@ export function construirReticula(rows: readonly HocflitBlockRow[]): HocflitGrup
   return grupos;
 }
 
-/**
- * Normaliza el conteo de conceptos por sistema devuelto por el Cold-Tier.
- *
- * D-218.7: la retícula se pinta con el volumen REAL, y un sistema vacío se ve vacío.
- * Por eso este mapa distingue 0 de ausencia: un sistema con 0 conceptos entra con 0
- * (está vacío, y eso es un dato), y sólo la imposibilidad de contar se representa
- * como `null` en el nivel de arriba. Confundir «no pude contar» con «hay cero» es
- * exactamente el modo en que el dibujo dejaría de medir y empezaría a afirmar.
- */
-export function normalizarVolumen(
-  rows: readonly { system_slug: string | null; total: number | string }[],
-  sistemas: readonly string[]
-): Record<string, number> {
-  const volumen: Record<string, number> = {};
-  for (const slug of sistemas) volumen[slug] = 0;
-
-  for (const row of rows) {
-    if (!row.system_slug) continue; // conceptos sin sistema: no cuelgan de ninguna columna
-    const total = typeof row.total === 'string' ? Number.parseInt(row.total, 10) : row.total;
-    if (!Number.isFinite(total)) continue;
-    volumen[row.system_slug] = (volumen[row.system_slug] ?? 0) + total;
-  }
-
-  return volumen;
-}
+// `normalizarVolumen` vivía aquí y se mudó el 2026-08-31 a
+// tenant-admin-panel/lib/knowledge/volumen.ts, junto con sus pruebas: el volumen se cuenta
+// donde está el corpus, que es el hot-tier del tenant, y este plano no lo alcanza.

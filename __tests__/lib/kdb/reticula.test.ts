@@ -1,15 +1,14 @@
 // __tests__/lib/kdb/reticula.test.ts
-// ADR-218 D-218.2 / D-218.7: la retícula se ordena por la geometría de la tabla, y el
-// volumen distingue «cero conceptos» de «no pude contar». Usa node:test (mismo motivo
-// que pool.test.ts). Registrado en el glob '__tests__/lib/kdb/**/*.test.ts' de test:node.
+// ADR-218 D-218.2: la retícula se ordena por la geometría de la tabla. Usa node:test
+// (mismo motivo que pool.test.ts). Registrado en el glob '__tests__/lib/kdb/**/*.test.ts'
+// de test:node.
+//
+// Las pruebas de `normalizarVolumen` se mudaron el 2026-08-31 a
+// tenant-admin-panel/lib/knowledge/volumen.test.ts, con la función.
 
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import {
-  construirReticula,
-  normalizarVolumen,
-  type HocflitBlockRow,
-} from "../../../lib/kdb/reticula";
+import { construirReticula, type HocflitBlockRow } from "../../../lib/kdb/reticula";
 
 function fila(over: Partial<HocflitBlockRow> & Pick<HocflitBlockRow, "code" | "group_code">): HocflitBlockRow {
   return {
@@ -78,39 +77,5 @@ describe("construirReticula", () => {
 
   it("devuelve lista vacía con tabla vacía, sin inventar grupos", () => {
     assert.deepStrictEqual(construirReticula([]), []);
-  });
-});
-
-describe("normalizarVolumen", () => {
-  const SISTEMAS = ["c-comercial", "f-finanzas", "l-legal"] as const;
-
-  it("un sistema sin conceptos vale 0, no se omite (D-218.7: lo vacío se ve vacío)", () => {
-    const volumen = normalizarVolumen([{ system_slug: "c-comercial", total: 12 }], SISTEMAS);
-
-    assert.deepStrictEqual(volumen, { "c-comercial": 12, "f-finanzas": 0, "l-legal": 0 });
-  });
-
-  it("acepta el COUNT como string, que es lo que devuelve pg sin cast", () => {
-    const volumen = normalizarVolumen([{ system_slug: "l-legal", total: "7" }], SISTEMAS);
-
-    assert.strictEqual(volumen["l-legal"], 7);
-  });
-
-  it("ignora conceptos sin sistema en vez de cargárselos a una columna", () => {
-    const volumen = normalizarVolumen(
-      [
-        { system_slug: null, total: 99 },
-        { system_slug: "f-finanzas", total: 2 },
-      ],
-      SISTEMAS
-    );
-
-    assert.deepStrictEqual(volumen, { "c-comercial": 0, "f-finanzas": 2, "l-legal": 0 });
-  });
-
-  it("ignora un total no numérico en vez de propagar NaN al dibujo", () => {
-    const volumen = normalizarVolumen([{ system_slug: "c-comercial", total: "sin-datos" }], SISTEMAS);
-
-    assert.strictEqual(volumen["c-comercial"], 0);
   });
 });
