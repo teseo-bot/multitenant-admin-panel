@@ -19,6 +19,7 @@ import { AccessRolesTab } from "./tabs/AccessRolesTab";
 import { IntegrationsTab } from "./tabs/IntegrationsTab";
 import { ApiKeysTab } from "./tabs/ApiKeysTab";
 import { SuspensionTab } from "./tabs/SuspensionTab";
+import { ProjectsTab } from "./tabs/ProjectsTab";
 
 interface TenantDetailsClientProps {
   tenantId: string;
@@ -105,6 +106,7 @@ export function TenantDetailsClient({
         <TabsList className="flex flex-wrap w-full justify-start border-b rounded-none pb-px bg-transparent h-auto p-0 gap-x-1">
           <TabsTrigger value="operation" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">Operación</TabsTrigger>
           <TabsTrigger value="suspension" className="rounded-none border-b-2 border-transparent flex-none data-active:border-destructive data-active:text-destructive data-active:bg-transparent">Kill Switch</TabsTrigger>
+          <TabsTrigger value="projects" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">Proyectos</TabsTrigger>
           <TabsTrigger value="client" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">Cliente</TabsTrigger>
           <TabsTrigger value="branding" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">Branding & UI</TabsTrigger>
           <TabsTrigger value="behavior" className="rounded-none border-b-2 border-transparent flex-none data-active:border-primary data-active:bg-transparent">Comportamiento</TabsTrigger>
@@ -119,6 +121,9 @@ export function TenantDetailsClient({
         </TabsContent>
         <TabsContent value="suspension" className="pt-4 min-w-0">
           <SuspensionTab tenantId={tenantId} initialData={defaultSuspensionData} />
+        </TabsContent>
+        <TabsContent value="projects" className="pt-4 min-w-0">
+          <ProjectsTab tenantId={tenantId} />
         </TabsContent>
         <TabsContent value="client" className="pt-4 min-w-0">
           <ClientTab tenantId={tenantId} initialData={defaultCliData} />
