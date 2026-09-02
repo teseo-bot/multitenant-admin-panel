@@ -25,6 +25,9 @@
 // La 015 crea `tenant_agents` en el plano de control, con el módulo como eje: la pestaña
 // «Agentes» del panel escribía en una tabla que sólo existe en el Hot-Tier y su `catch` pintaba
 // el `42P01` como «no hay agentes». SIN APLICAR aún.
+// La 016 (ADR-220 D-220.4) añade `tenant_projects`; aplicada el 2026-08-21. La 017 (ADR-221
+// D-221.1) añade `tenant_project_bindings`: el vínculo remitente → proyecto, que es lo que
+// permite que UN número atienda N conferencias. SIN APLICAR aún.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -49,6 +52,7 @@ export const MIGRATION_FILES = [
   '014_tenant_idp_map.sql',
   '015_tenant_agents.sql',
   '016_tenant_projects.sql',
+  '017_tenant_project_bindings.sql',
 ] as const;
 
 // Códigos de error Postgres que indican "esto ya existía" (re-run seguro).
