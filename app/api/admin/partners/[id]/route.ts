@@ -21,7 +21,7 @@ const UpdatePartnerBodySchema = z
   .object({
     legal_name: z.string().min(3).max(160).optional(),
     contact_email: z.string().email().optional(),
-    vertical: z.enum(["legal", "marketing", "consultoria", "reclutamiento", "otro"]).optional(),
+    vertical: z.enum(["legal", "marketing", "consultoria", "reclutamiento", "tecnologia", "otro"]).optional(),
     status: z.enum(["pending_verification", "verified", "suspended", "offboarded"]).optional(),
   })
   .refine((data) => Object.keys(data).length > 0, { message: "Body vacío" });

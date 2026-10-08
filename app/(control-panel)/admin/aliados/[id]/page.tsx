@@ -54,7 +54,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const VERTICALS = ["legal", "marketing", "consultoria", "reclutamiento", "otro"] as const;
+const VERTICALS = ["legal", "marketing", "consultoria", "reclutamiento", "tecnologia", "otro"] as const;
 const STATUSES = ["pending_verification", "verified", "suspended", "offboarded"] as const;
 const ROLES = ["member", "curator"] as const;
 
