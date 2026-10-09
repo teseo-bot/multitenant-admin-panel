@@ -32,6 +32,9 @@
 // `suspension_message`): la pestaña las escribía desde el principio y daba 42703 en cada
 // guardado, porque quien las definía era `migrations/002`+`004`, del directorio que no corre.
 // SIN APLICAR aún.
+// La 019 (ADR-224 D-224.8) añade el contrato de referidos (`partner_referral_agreements`, con su
+// bitácora y su OTP), el registro `partner_lead_referrals` y la vertical `tecnologia`. Probada
+// dos veces contra Postgres 16 local el 2026-10-08. SIN APLICAR aún.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -58,6 +61,7 @@ export const MIGRATION_FILES = [
   '016_tenant_projects.sql',
   '017_tenant_project_bindings.sql',
   '018_tenant_suspension.sql',
+  '019_partner_referrals.sql',
 ] as const;
 
 // Códigos de error Postgres que indican "esto ya existía" (re-run seguro).

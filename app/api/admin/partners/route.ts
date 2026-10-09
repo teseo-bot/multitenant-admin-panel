@@ -33,7 +33,7 @@ const CreatePartnerBodySchema = z.object({
     message: "slug debe empezar con letra/número, minúsculas y guiones, 3-40 chars",
   }),
   legal_name: z.string().min(3).max(160),
-  vertical: z.enum(["legal", "marketing", "consultoria", "reclutamiento", "otro"]),
+  vertical: z.enum(["legal", "marketing", "consultoria", "reclutamiento", "tecnologia", "otro"]),
   contact_email: z.string().email(),
 });
 

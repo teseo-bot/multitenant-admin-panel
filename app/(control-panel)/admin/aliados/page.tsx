@@ -53,7 +53,7 @@ interface Partner {
 }
 
 // Espejo del CreatePartnerBodySchema del backend (app/api/admin/partners/route.ts).
-const VERTICALS = ["legal", "marketing", "consultoria", "reclutamiento", "otro"] as const;
+const VERTICALS = ["legal", "marketing", "consultoria", "reclutamiento", "tecnologia", "otro"] as const;
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{2,39}$/;
 
 interface CreatePartnerInput {
