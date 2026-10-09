@@ -157,7 +157,7 @@ export function ControlPanelSidebar({ user }: { user?: any }) {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     className={CLASE_FILA}
-                    data-active={activo("/admin/aliados") || undefined}
+                    data-active={activo("/admin/aliados") || activo("/admin/casos") || undefined}
                     render={<Link href="/admin/aliados" />}
                   >
                     <Handshake />
@@ -178,6 +178,14 @@ export function ControlPanelSidebar({ user }: { user?: any }) {
                         render={<Link href="/admin/catalogo-aliados" />}
                       >
                         <span>Catálogo</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        data-active={activo("/admin/casos") || undefined}
+                        render={<Link href="/admin/casos" />}
+                      >
+                        <span>Casos en revisión</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   </SidebarMenuSub>
