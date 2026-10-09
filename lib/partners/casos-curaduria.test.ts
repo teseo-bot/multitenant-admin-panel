@@ -7,6 +7,7 @@ import * as assert from "node:assert/strict";
 import type { GuardResult } from "@/lib/auth/guards";
 import { CompilerCallError } from "./compiler-client";
 import {
+  compilerCuraduria,
   casoDeCuraduria,
   colaDeCuraduria,
   devolverCaso,
@@ -143,5 +144,25 @@ describe("errores del compiler", () => {
     const r2 = await colaDeCuraduria(claveMala);
     assert.equal(r2.status, 502);
     assert.match((r2.body as { details: string }).details, /x-api-key/);
+  });
+});
+
+describe("cliente del compiler", () => {
+  test("no usa la caché de datos de Next: el estado de un caso nunca se sirve viejo", async () => {
+    const original = globalThis.fetch;
+    const vistos: RequestInit[] = [];
+    process.env.CURADURIA_M2M_API_KEY = "clave-de-prueba";
+    globalThis.fetch = (async (_url: unknown, init?: RequestInit) => {
+      vistos.push(init ?? {});
+      return new Response(JSON.stringify({ caso: { id: CASO } }), { status: 200 });
+    }) as typeof fetch;
+    try {
+      await compilerCuraduria.obtener(CASO);
+      await compilerCuraduria.listar();
+    } finally {
+      globalThis.fetch = original;
+    }
+    assert.deepEqual(vistos.map((i) => i.cache), ["no-store", "no-store"]);
+    assert.equal((vistos[0]?.headers as Record<string, string>)["x-api-key"], "clave-de-prueba");
   });
 });

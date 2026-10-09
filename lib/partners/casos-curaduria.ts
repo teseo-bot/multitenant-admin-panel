@@ -79,10 +79,15 @@ async function callCuraduria<T>(path: string, payload: unknown): Promise<T> {
     throw new Error("CURADURIA_M2M_API_KEY no está configurado en el panel.");
   }
   const base = process.env.KDB_COMPILER_URL || "http://localhost:8080";
+  // `no-store` explícito: Next 14 guarda en su caché de datos los `fetch` de una ruta —también
+  // los POST— salvo que vayan detrás de `cookies()`. Medido el 2026-10-09: con la sesión resuelta
+  // sin leer la cookie, la ficha seguía en «En revisión» después de devolver el caso. El estado
+  // de un caso no puede depender del orden en que el guard lee la sesión.
   const res = await fetch(`${base}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": apiKey },
     body: JSON.stringify(payload),
+    cache: "no-store",
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
