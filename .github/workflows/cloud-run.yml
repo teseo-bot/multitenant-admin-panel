@@ -74,8 +74,14 @@ jobs:
           workload_identity_provider: 'projects/1025015138700/locations/global/workloadIdentityPools/github-actions/providers/github-provider'
           service_account: 'github-deployer@micontexto-control.iam.gserviceaccount.com'
 
+      # El builder `docker-container` arranca su propio BuildKit, y la imagen de ese BuildKit
+      # (`moby/buildkit:buildx-stable-1`) también sale de Docker Hub sin autenticar: es una
+      # descarga más que puede caer en 429 ANTES de llegar al `FROM` del Dockerfile. Se toma
+      # del mismo espejo que la imagen base (ver la cabecera del Dockerfile).
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: image=mirror.gcr.io/moby/buildkit:buildx-stable-1
 
       - name: Configure Docker for GCP Artifact Registry
         run: gcloud auth configure-docker ${{ env.GAR_LOCATION }} --quiet
