@@ -123,6 +123,13 @@ jobs:
             COLD_TIER_URL=COLD_TIER_URL_ORCH:latest
             M2M_API_KEY=M2M_API_KEY:latest
             RESEND_MAIL=RESEND_MAIL:latest
+            CURADURIA_M2M_API_KEY=COMPILER_CURADURIA_API_KEY:latest
+          # CURADURIA_M2M_API_KEY (ADR-224): la clave con la que la curaduría de casos de éxito
+          # (/admin/casos) llama a `/internal/curaduria-caso*` del compiler para publicar o devolver.
+          # NO es `M2M_API_KEY` (la de control, distinta de la que acepta el compiler). ⛔ Cloud Run
+          # valida cada secreto al crear la revisión: `COMPILER_CURADURIA_API_KEY` tiene que existir,
+          # con `secretAccessor` para `panel-runtime`, ANTES de mergear esto.
+          #
           # `merge` sólo AÑADE y PISA las claves listadas: borrar una línea de arriba NO la quita
           # del servicio vivo. Por eso `MAILER_DRY_RUN=true` —que se quitó de este bloque junto
           # con el mailer que lo leía— sigue puesto en producción hasta que se borre a mano:
