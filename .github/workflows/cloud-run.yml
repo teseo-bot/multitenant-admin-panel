@@ -113,7 +113,7 @@ jobs:
           env_vars: |
             NODE_ENV=production
             APP_URL=https://control.micontexto.com
-            KDB_COMPILER_URL=https://context-kdb-compiler-137810875111.us-central1.run.app
+            KDB_COMPILER_URL=https://context-kdb-compiler-1025015138700.us-central1.run.app
             COMPILER_INTERNAL_URL=https://context-kdb-orchestrator-137810875111.us-central1.run.app
             MAIL_FROM=micontexto <noreply@micontexto.com>
           # RESEND_MAIL existe en micontexto-control desde el 2026-07-10, habilitado y hasta hoy
@@ -124,11 +124,18 @@ jobs:
             M2M_API_KEY=M2M_API_KEY:latest
             RESEND_MAIL=RESEND_MAIL:latest
             CURADURIA_M2M_API_KEY=COMPILER_CURADURIA_API_KEY:latest
+          # KDB_COMPILER_URL: el compiler compartido de micontexto-control (número de proyecto
+          # 1025015138700). Hasta el 2026-10-10 apuntaba a `…-137810875111…`, que quedó del
+          # realineamiento de ADR-206 y responde 404 a TODO: el alta de bundle, el estado de eval y el
+          # sync de licencias del panel nunca llegaron al compiler. Comprobar con un POST sin clave a
+          # una ruta que exista (`/internal/partner-drafts-list`): 401 = es el compiler; 404 = no lo es.
+          #
           # CURADURIA_M2M_API_KEY (ADR-224): la clave con la que la curaduría de casos de éxito
           # (/admin/casos) llama a `/internal/curaduria-caso*` del compiler para publicar o devolver.
-          # NO es `M2M_API_KEY` (la de control, distinta de la que acepta el compiler). ⛔ Cloud Run
-          # valida cada secreto al crear la revisión: `COMPILER_CURADURIA_API_KEY` tiene que existir,
-          # con `secretAccessor` para `panel-runtime`, ANTES de mergear esto.
+          # Lleva clave propia, distinta de `M2M_API_KEY`, para que el portal de aliados (que tiene
+          # esa otra) no pueda publicar. ⛔ Cloud Run valida cada secreto al crear la revisión:
+          # `COMPILER_CURADURIA_API_KEY` existe desde el 2026-10-09 con `secretAccessor` para
+          # `panel-runtime`; si algún día se recrea, va antes del deploy.
           #
           # `merge` sólo AÑADE y PISA las claves listadas: borrar una línea de arriba NO la quita
           # del servicio vivo. Por eso `MAILER_DRY_RUN=true` —que se quitó de este bloque junto
